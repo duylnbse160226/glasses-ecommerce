@@ -1,0 +1,31 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace Domain;
+
+public enum CartStatus
+{
+    Unknown = 0,
+    Active = 1,
+    Abandoned = 2,
+    Converted = 3
+}
+
+public class Cart
+{
+    public string Id { get; set; } = Guid.CreateVersion7(TimeProvider.System.GetUtcNow()).ToString();
+    public string? UserId { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [MaxLength(20)]
+    public required CartStatus Status { get; set; } = CartStatus.Active;
+
+    // Navigation properties
+    public User? User { get; set; }
+
+    public ICollection<CartItem> Items { get; set; } = [];
+
+}

@@ -1,0 +1,43 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Domain;
+
+public class ProductVariant
+{
+    public string Id { get; set; } = Guid.CreateVersion7(TimeProvider.System.GetUtcNow()).ToString();
+    public required string ProductId { get; set; }
+
+    public required string SKU { get; set; }
+
+    public string? VariantName { get; set; }
+
+    public string? Color { get; set; }
+
+    public string? Size { get; set; }
+
+    public string? Material { get; set; }
+
+    public decimal? FrameWidth { get; set; }
+
+    public decimal? LensWidth { get; set; }
+
+    public decimal? BridgeWidth { get; set; }
+
+    public decimal? TempleLength { get; set; }
+
+    public required decimal Price { get; set; }
+
+    public decimal? CompareAtPrice { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    // Navigation properties
+    public Product Product { get; set; } = null!;
+    
+    public Stock? Stock { get; set; }
+    public ICollection<ProductImage> Images { get; set; } = [];
+    public ICollection<CartItem> CartItems { get; set; } = [];
+    public ICollection<OrderItem> OrderItems { get; set; } = [];
+}
