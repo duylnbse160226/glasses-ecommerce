@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace Domain;
 
@@ -19,6 +18,12 @@ public enum ReferenceType
     Adjustment = 4
 }
 
+public enum InventoryTransactionStatus
+{
+    Pending = 0,
+    Completed = 1,
+}
+
 public class InventoryTransaction
 {
     public string Id { get; set; } = Guid.CreateVersion7(TimeProvider.System.GetUtcNow()).ToString();
@@ -27,20 +32,16 @@ public class InventoryTransaction
 
     public required string ProductVariantId { get; set; }
 
-    [MaxLength(20)]
     public TransactionType TransactionType { get; set; } = TransactionType.Inbound;
 
     public required int Quantity { get; set; }
 
-    [MaxLength(20)]
     public ReferenceType ReferenceType { get; set; } = ReferenceType.Order;
 
     public string? ReferenceId { get; set; }
 
-    [MaxLength(20)]
-    public required string Status { get; set; } = "PENDING_APPROVAL";
+    public InventoryTransactionStatus Status { get; set; } = InventoryTransactionStatus.Pending;//Pending, Completed
 
-    [MaxLength(500)]
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

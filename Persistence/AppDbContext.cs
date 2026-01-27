@@ -388,8 +388,95 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
         });
 
         // InventoryTransaction ENTITY CONFIGURATION 
-        //chỉnh status thành enum constraint xuống db + mapping
-        
+        builder.Entity<InventoryTransaction>(entity =>
+        {
+            //Relationships
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ProductVariant)
+                .WithMany()
+                .HasForeignKey(e => e.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Creator)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Approver)
+                .WithMany()
+                .HasForeignKey(e => e.ApprovedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Properties
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            //Indexes
+            entity.HasIndex(e => e.UserId)
+                .HasDatabaseName("IX_InventoryTransaction_UserId");
+            
+            entity.HasIndex(e => e.ProductVariantId)
+                .HasDatabaseName("IX_InventoryTransaction_ProductVariantId");
+            
+            entity.HasIndex(e => e.TransactionType)
+                .HasDatabaseName("IX_InventoryTransaction_TransactionType");
+            
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("IX_InventoryTransaction_Status");
+            
+            entity.HasIndex(e => new { e.ReferenceType, e.ReferenceId })
+                .HasDatabaseName("IX_InventoryTransaction_Reference");
+            
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_InventoryTransaction_CreatedAt");
+            
+            entity.HasIndex(e => e.CreatedBy)
+                .HasDatabaseName("IX_InventoryTransaction_CreatedBy");
+            
+            entity.HasIndex(e => e.ApprovedAt)
+                .HasDatabaseName("IX_InventoryTransaction_ApprovedAt");
+
+            entity.HasIndex(e => e.ApprovedBy)
+                .HasDatabaseName("IX_InventoryTransaction_ApprovedBy");
+
+            //Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_InventoryTransaction_Quantity_Valid",
+                    "Quantity > 0"
+                );
+                t.HasCheckConstraint(
+                    "CK_InventoryTransaction_Type",
+                    "[TransactionType] IN (1, 2, 3)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_InventoryTransaction_ReferenceType",
+                    "[ReferenceType] IN (1, 2, 3, 4)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_InventoryTransaction_ReferenceType_ReferenceId",
+                    "(ReferenceType IN (1,2,3) AND ReferenceId IS NOT NULL)" +
+                    "OR (ReferenceType = 4)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_InventoryTransaction_Status",
+                    "[Status] IN (0, 1)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_InventoryTransaction_Status_ApprovedAt",
+                    "(Status = 0 AND ApprovedAt IS NULL AND ApprovedBy IS NULL)" +
+                    "OR (Status = 1 AND ApprovedAt IS NOT NULL AND ApprovedBy IS NOT NULL)"
+                );
+            });
+        });
 
     }
 
