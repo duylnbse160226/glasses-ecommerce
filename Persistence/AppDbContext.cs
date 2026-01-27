@@ -527,6 +527,50 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
                     "CK_InboundRecord_Status",
                     "[Status] IN (0, 1, 2)"
                 );
+
+                t.HasCheckConstraint(
+                    "CK_InboundRecord_Status_ApprovedAt_RejectedAt",
+                    "(Status = 0 AND ApprovedAt IS NULL AND ApprovedBy IS NULL AND RejectedAt IS NULL AND RejectionReason IS NULL)" +
+                    "OR (Status = 1 AND ApprovedAt IS NOT NULL AND ApprovedBy IS NOT NULL AND RejectedAt IS NULL AND RejectionReason IS NULL)" +
+                    "OR (Status = 2 AND RejectedAt IS NOT NULL AND RejectionReason IS NOT NULL AND ApprovedAt IS NULL AND ApprovedBy IS NULL)"
+                );
+            });
+        });
+
+        //InboundRecordItem ENTITY CONFIGURATION
+        builder.Entity<InboundRecordItem>(entity =>
+        {
+            //Relationships
+            entity.HasOne(iri => iri.InboundRecord)
+                .WithMany(ir => ir.Items)
+                .HasForeignKey(iri => iri.InboundRecordId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(iri => iri.ProductVariant)
+                .WithMany()
+                .HasForeignKey(iri => iri.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Properties
+            entity.Property(iri => iri.Notes).HasMaxLength(400);
+
+            //Indexes
+            entity.HasIndex(e => e.InboundRecordId)
+                .HasDatabaseName("IX_InboundRecordItem_InboundRecordId");
+            
+            entity.HasIndex(e => e.ProductVariantId)
+                .HasDatabaseName("IX_InboundRecordItem_ProductVariantId");
+
+            entity.HasIndex(e => new { e.InboundRecordId, e.ProductVariantId })
+                .IsUnique()
+                .HasDatabaseName("UX_InboundRecordItem_Record_ProductVariant");
+            //Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_InboundRecordItem_Quantity",
+                    "Quantity > 0"
+                );
             });
         });
     }

@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace Domain;
 
@@ -13,7 +11,6 @@ public class InboundRecordItem
 
     public required int Quantity { get; set; }
 
-    [MaxLength(500)]
     public string? Notes { get; set; }
 
     // Navigation properties

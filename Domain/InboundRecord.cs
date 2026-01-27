@@ -22,11 +22,11 @@ public class InboundRecord
 {
     public string Id { get; set; } = Guid.CreateVersion7(TimeProvider.System.GetUtcNow()).ToString();
 
-    public required SourceType SourceType { get; set; }// Supplier, Return, Adjustment
+    public SourceType SourceType { get; set; }// Supplier, Return, Adjustment
 
     public string? SourceReference { get; set; }// mã đơn đặt hàng với supplier, mã phiếu trả hàng
 
-    public required InboundRecordStatus Status { get; set; } = InboundRecordStatus.PendingApproval;// PENDING_APPROVAL, APPROVED, REJECTED
+    public InboundRecordStatus Status { get; set; } = InboundRecordStatus.PendingApproval;// PENDING_APPROVAL, APPROVED, REJECTED
 
     public required int TotalItems { get; set; }
 
