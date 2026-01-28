@@ -710,7 +710,49 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
                     "[PromotionType] IN (0, 1, 2)"
                 );
             });
-        });        
+        }); 
+
+        // PROMO USAGE LOG ENTITY CONFIGURATION
+        builder.Entity<PromoUsageLog>(entity =>
+        {
+            // Relationships
+            entity.HasOne(pul => pul.Order)
+                .WithMany(o => o.PromoUsageLogs)
+                .HasForeignKey(pul => pul.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(pul => pul.Promotion)
+                .WithMany(p => p.UsageLogs)
+                .HasForeignKey(pul => pul.PromotionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Properties
+            entity.Property(pul => pul.DiscountApplied).HasColumnType("decimal(10,2)");
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId)
+                .HasDatabaseName("IX_PromoUsageLog_OrderId");
+
+            entity.HasIndex(e => e.PromotionId)
+                .HasDatabaseName("IX_PromoUsageLog_PromotionId");
+
+            //Mỗi order chỉ được áp dụng một promotion một lần
+            entity.HasIndex(e => new { e.OrderId, e.PromotionId })
+                .IsUnique()
+                .HasDatabaseName("UX_PromoUsageLog_Order_Promotion");
+
+            entity.HasIndex(e => e.UsedAt)
+                .HasDatabaseName("IX_PromoUsageLog_UsedAt");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_PromoUsageLog_DiscountApplied",
+                    "DiscountApplied >= 0"
+                );
+            });
+        });       
     }
 
 }

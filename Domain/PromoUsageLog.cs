@@ -10,7 +10,6 @@ public class PromoUsageLog
 
     public required string PromotionId { get; set; }
 
-    [Column(TypeName = "decimal(10,2)")]
     public required decimal DiscountApplied { get; set; }
 
     public DateTime UsedAt { get; set; } = DateTime.UtcNow;

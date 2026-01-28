@@ -74,6 +74,7 @@ public class Order
     public ShipmentInfo? ShipmentInfo { get; set; }
     public ICollection<Payment> Payments { get; set; } = [];
     public ICollection<AfterSalesTicket> AfterSalesTickets { get; set; } = [];
+    public ICollection<PromoUsageLog> PromoUsageLogs { get; set; } = [];
 
     // Computed method (not mapped to DB)
     public bool CanBeCancelled(DateTime now) => CalculateCanBeCancelled(now);
