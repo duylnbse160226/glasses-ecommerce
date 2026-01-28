@@ -821,7 +821,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
                 .HasConversion<string>()
                 .HasMaxLength(30)
                 .IsRequired();
-                
+
             entity.Property(osh => osh.Notes).HasMaxLength(500);
 
             // Indexes
@@ -834,6 +834,54 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             entity.HasIndex(e => new { e.OrderId, e.CreatedAt })
                 .HasDatabaseName("IX_OrderStatusHistory_OrderId_CreatedAt");
 
+        });
+
+        // PRESCRIPTION ENTITY CONFIGURATION
+        builder.Entity<Prescription>(entity =>
+        {
+            // Relationships
+            entity.HasOne(p => p.Order)
+                .WithOne(o => o.Prescription)
+                .HasForeignKey<Prescription>(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.Verifier)
+                .WithMany()
+                .HasForeignKey(p => p.VerifiedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Properties
+            entity.Property(p => p.VerificationNotes).HasMaxLength(1000);
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId)
+                .IsUnique()
+                .HasDatabaseName("UX_Prescription_OrderId");
+
+            entity.HasIndex(e => e.IsVerified)
+                .HasDatabaseName("IX_Prescription_IsVerified");
+
+            entity.HasIndex(e => e.VerifiedAt)
+                .HasDatabaseName("IX_Prescription_VerifiedAt");
+
+            entity.HasIndex(e => e.VerifiedBy)
+                .HasDatabaseName("IX_Prescription_VerifiedBy");
+            
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_Prescription_CreatedAt");
+
+            //Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_Prescription_Verification_Consistency",
+                    @"
+                    (IsVerified = 0 AND VerifiedAt IS NULL AND VerifiedBy IS NULL)
+                    OR
+                    (IsVerified = 1 AND VerifiedAt IS NOT NULL AND VerifiedBy IS NOT NULL)
+                    "
+                );
+            });
         });
     }
 }

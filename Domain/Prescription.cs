@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace Domain;
 
@@ -15,7 +14,6 @@ public class Prescription
 
     public DateTime? VerifiedAt { get; set; }
 
-    [MaxLength(1000)]
     public string? VerificationNotes { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
