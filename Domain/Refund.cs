@@ -1,12 +1,9 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain;
 
 public enum RefundStatus
 {
-    Unknown = 0,
     Pending = 1,
     Approved = 2,
     Completed = 3,
@@ -21,12 +18,9 @@ public class Refund
 
     public RefundStatus RefundStatus { get; set; } = RefundStatus.Pending; // PENDING, APPROVED, COMPLETED, REJECTED
 
-    [Column(TypeName = "decimal(10,2)")]
     public required decimal Amount { get; set; }
 
     public DateTime? RefundAt { get; set; }
-
-    [MaxLength(500)]
     public string? RefundReason { get; set; }
 
     // Navigation property

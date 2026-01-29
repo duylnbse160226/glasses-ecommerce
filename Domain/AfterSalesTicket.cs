@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain;
 
@@ -14,11 +12,11 @@ public enum AfterSalesTicketType
 
 public enum AfterSalesTicketStatus
 {
-    Pending = 0,
-    InProgress = 1,
-    Resolved = 2,
-    Rejected = 3,
-    Closed = 4
+    Pending = 1,
+    InProgress = 2,
+    Resolved = 3,
+    Rejected = 4,
+    Closed = 5
 }
 
 public class AfterSalesTicket
@@ -35,20 +33,16 @@ public class AfterSalesTicket
 
     public AfterSalesTicketStatus TicketStatus { get; set; } = AfterSalesTicketStatus.Pending; // PENDING, IN_PROGRESS, RESOLVED, REJECTED, CLOSED
 
-    [MaxLength(500)]
     public required string Reason { get; set; } = null!;
 
-    [MaxLength(500)]
     public string? RequestedAction { get; set; }
 
-    [Column(TypeName = "decimal(10,2)")]
     public decimal? RefundAmount { get; set; }
 
     public bool IsRequiredEvidence { get; set; } = true;
 
     public string? AssignedTo { get; set; }
 
-    [MaxLength(500)]
     public string? PolicyViolation { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

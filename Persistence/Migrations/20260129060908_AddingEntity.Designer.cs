@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 
@@ -10,9 +11,11 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260129060908_AddingEntity")]
+    partial class AddingEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -1444,6 +1447,9 @@ namespace Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CreatorId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("EstimatedDeliveryAt")
                         .HasColumnType("TEXT");
 
@@ -1486,6 +1492,8 @@ namespace Persistence.Migrations
 
                     b.HasIndex("CreatedBy")
                         .HasDatabaseName("IX_ShipmentInfo_CreatedBy");
+
+                    b.HasIndex("CreatorId");
 
                     b.HasIndex("OrderId")
                         .IsUnique()
@@ -2199,8 +2207,7 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("Domain.User", "Creator")
                         .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("CreatorId");
 
                     b.HasOne("Domain.Order", "Order")
                         .WithOne("ShipmentInfo")

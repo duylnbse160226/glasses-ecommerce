@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain;
 
@@ -17,8 +15,6 @@ public class PolicyConfiguration
     public string Id { get; set; } = Guid.CreateVersion7(TimeProvider.System.GetUtcNow()).ToString();
 
     public PolicyType PolicyType { get; set; } // RETURN, WARRANTY, REFUND
-
-    [MaxLength(200)]
     public required string PolicyName { get; set; }
 
     public int? ReturnWindowDays { get; set; }
@@ -31,7 +27,6 @@ public class PolicyConfiguration
 
     public bool EvidenceRequired { get; set; } = true;
 
-    [Column(TypeName = "decimal(10,2)")]
     public decimal? MinOrderAmount { get; set; }
 
     public bool IsActive { get; set; } = true;

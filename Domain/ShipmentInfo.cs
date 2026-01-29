@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain;
 
@@ -18,10 +16,8 @@ public class ShipmentInfo
 
     public ShippingCarrier CarrierName { get; set; } // GHN, GHTK
 
-    [MaxLength(100)]
-    public required string TrackingCode { get; set; }
+    public string? TrackingCode { get; set; }
 
-    [MaxLength(500)]
     public string? TrackingUrl { get; set; }
 
     public DateTime? ShippedAt { get; set; }
@@ -30,13 +26,9 @@ public class ShipmentInfo
 
     public DateTime? ActualDeliveryAt { get; set; }
 
-    [Column(TypeName = "decimal(10,2)")]
     public decimal? PackageWeight { get; set; }
 
-    [MaxLength(100)]
     public string? PackageDimensions { get; set; }
-
-    [MaxLength(500)]
     public string? ShippingNotes { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

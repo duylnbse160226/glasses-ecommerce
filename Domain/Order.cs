@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain;
 
@@ -69,7 +67,7 @@ public class Order
     public User? SalesStaff { get; set; }
 
     public ICollection<OrderItem> OrderItems { get; set; } = [];
-    public ICollection<OrderStatusHistory> StatusHistory { get; set; } = [];
+    public ICollection<OrderStatusHistory> StatusHistories { get; set; } = [];
     public Prescription? Prescription { get; set; }
     public ShipmentInfo? ShipmentInfo { get; set; }
     public ICollection<Payment> Payments { get; set; } = [];

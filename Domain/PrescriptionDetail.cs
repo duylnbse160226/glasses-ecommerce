@@ -18,18 +18,12 @@ public class PrescriptionDetail
 
     public EyeType Eye { get; set; } // Left, Right
 
-    [Column(TypeName = "decimal(5,2)")]
     public decimal? SPH { get; set; }
 
-    [Column(TypeName = "decimal(5,2)")]
     public decimal? CYL { get; set; }
 
     public int? AXIS { get; set; }
-
-    [Column(TypeName = "decimal(5,2)")]
     public decimal? PD { get; set; }
-
-    [Column(TypeName = "decimal(5,2)")]
     public decimal? ADD { get; set; }
 
     // Navigation property

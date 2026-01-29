@@ -801,5 +801,568 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
                 );
             });
         });  
+
+        //ORDER STATUS HISTORY ENTITY CONFIGURATION
+        builder.Entity<OrderStatusHistory>(entity =>
+        {
+            // Relationships
+            entity.HasOne(osh => osh.Order)
+                .WithMany(o => o.StatusHistories)
+                .HasForeignKey(osh => osh.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Properties
+            entity.Property(x => x.FromStatus)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.ToStatus)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(osh => osh.Notes).HasMaxLength(500);
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId)
+                .HasDatabaseName("IX_OrderStatusHistory_OrderId");
+            
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_OrderStatusHistory_CreatedAt");
+            
+            entity.HasIndex(e => new { e.OrderId, e.CreatedAt })
+                .HasDatabaseName("IX_OrderStatusHistory_OrderId_CreatedAt");
+
+        });
+
+        // PRESCRIPTION ENTITY CONFIGURATION
+        builder.Entity<Prescription>(entity =>
+        {
+            // Relationships
+            entity.HasOne(p => p.Order)
+                .WithOne(o => o.Prescription)
+                .HasForeignKey<Prescription>(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.Verifier)
+                .WithMany()
+                .HasForeignKey(p => p.VerifiedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Properties
+            entity.Property(p => p.VerificationNotes).HasMaxLength(1000);
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId)
+                .IsUnique()
+                .HasDatabaseName("UX_Prescription_OrderId");
+
+            entity.HasIndex(e => e.IsVerified)
+                .HasDatabaseName("IX_Prescription_IsVerified");
+
+            entity.HasIndex(e => e.VerifiedAt)
+                .HasDatabaseName("IX_Prescription_VerifiedAt");
+
+            entity.HasIndex(e => e.VerifiedBy)
+                .HasDatabaseName("IX_Prescription_VerifiedBy");
+            
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_Prescription_CreatedAt");
+
+            //Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_Prescription_Verification_Consistency",
+                    @"
+                    (IsVerified = 0 AND VerifiedAt IS NULL AND VerifiedBy IS NULL)
+                    OR
+                    (IsVerified = 1 AND VerifiedAt IS NOT NULL AND VerifiedBy IS NOT NULL)
+                    "
+                );
+            });
+        });
+
+        // PRESCRIPTION DETAIL ENTITY CONFIGURATION
+        builder.Entity<PrescriptionDetail>(entity =>
+        {
+            // Relationships
+            entity.HasOne(pd => pd.Prescription)
+                .WithMany(p => p.Details)
+                .HasForeignKey(pd => pd.PrescriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Properties
+            entity.Property(pd => pd.SPH).HasColumnType("decimal(5,2)");
+            entity.Property(pd => pd.CYL).HasColumnType("decimal(5,2)");
+            entity.Property(pd => pd.PD).HasColumnType("decimal(5,2)");
+            entity.Property(pd => pd.ADD).HasColumnType("decimal(5,2)");
+
+            // Indexes
+            entity.HasIndex(e => e.PrescriptionId)
+                .HasDatabaseName("IX_PrescriptionDetail_PrescriptionId");
+            
+            //1 prescription chỉ có 1 detail cho left eye và 1 detail cho right eye
+            entity.HasIndex(e => new { e.PrescriptionId, e.Eye })
+                .IsUnique()
+                .HasDatabaseName("UX_PrescriptionDetail_PrescriptionId_Eye");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_PrescriptionDetail_Eye",
+                    "[Eye] IN (1, 2)"
+                );
+
+                //medical domain
+                t.HasCheckConstraint(
+                    "CK_PrescriptionDetail_SPH",
+                    "[SPH] IS NULL OR ([SPH] BETWEEN -20.00 AND 20.00)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PrescriptionDetail_CYL",
+                    "[CYL] IS NULL OR ([CYL] BETWEEN -6.00 AND 0.00)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PrescriptionDetail_AXIS",
+                    "[AXIS] IS NULL OR ([AXIS] BETWEEN 0 AND 180)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PrescriptionDetail_PD",
+                    "[PD] IS NULL OR ([PD] BETWEEN 40.00 AND 80.00)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PrescriptionDetail_AXIS_Requires_CYL",
+                    @"
+                    (CYL IS NULL AND AXIS IS NULL)
+                    OR
+                    (CYL IS NOT NULL AND AXIS IS NOT NULL)
+                    "
+                );
+            });
+        });
+
+        // PAYMENT ENTITY CONFIGURATION
+        builder.Entity<Payment>(entity =>
+        {
+            // Relationships
+            entity.HasOne(p => p.Order)
+                .WithMany(o => o.Payments)
+                .HasForeignKey(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Properties
+            entity.Property(p => p.PaymentMethod).IsRequired();
+
+            entity.Property(p => p.PaymentStatus).IsRequired();
+
+            entity.Property(p => p.Amount).HasColumnType("decimal(10,2)");
+
+            entity.Property(p => p.TransactionId).HasMaxLength(100);
+
+            entity.Property(p => p.PaymentType).IsRequired();
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId)
+                .HasDatabaseName("IX_Payment_OrderId");
+
+            entity.HasIndex(e => e.PaymentStatus)
+                .HasDatabaseName("IX_Payment_PaymentStatus");
+            
+            entity.HasIndex(e => e.TransactionId)
+                .HasDatabaseName("IX_Payment_TransactionId");
+            
+            entity.HasIndex(e => e.PaymentAt)
+                .HasDatabaseName("IX_Payment_PaymentAt");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_Payment_Method",
+                    "[PaymentMethod] > 0"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_Payment_Status",
+                    "[PaymentStatus] > 0"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_Payment_Type",
+                    "[PaymentType] > 0"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_Payment_Amount",
+                    "[Amount] >= 0"
+                );
+
+                // Conditional constraint on PaymentAt based on PaymentStatus
+                t.HasCheckConstraint(
+                    "CK_Payment_Status_PaymentAt",
+                    @"
+                    (
+                        PaymentStatus = 1 AND PaymentAt IS NULL
+                    )
+                    OR
+                    (
+                        PaymentStatus IN (2,3,4) AND PaymentAt IS NOT NULL
+                    )
+                    "
+                );
+
+                // Conditional constraint on TransactionId based on PaymentMethod
+                t.HasCheckConstraint(
+                    "CK_Payment_Transaction_By_Method",
+                    @"
+                    (
+                        PaymentMethod = 1
+                    )
+                    OR
+                    (
+                        PaymentMethod IN (2,3) AND TransactionId IS NOT NULL
+                    )
+                    "
+                );
+
+            });
+        });
+
+        // REFUND ENTITY CONFIGURATION
+        builder.Entity<Refund>(entity =>
+        {
+            // Relationships
+            entity.HasOne(r => r.Payment)
+                .WithMany(p => p.Refunds)
+                .HasForeignKey(r => r.PaymentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Properties
+            entity.Property(r => r.RefundStatus).IsRequired();
+
+            entity.Property(r => r.Amount).HasColumnType("decimal(10,2)");
+
+            entity.Property(r => r.RefundReason).HasMaxLength(500);
+
+            // Indexes
+            entity.HasIndex(e => e.PaymentId)
+                .HasDatabaseName("IX_Refund_PaymentId");
+
+            entity.HasIndex(e => e.RefundStatus)
+                .HasDatabaseName("IX_Refund_RefundStatus");
+            
+            entity.HasIndex(e => e.RefundAt)
+                .HasDatabaseName("IX_Refund_RefundAt");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_Refund_Status",
+                    "[RefundStatus] IN (1, 2, 3, 4)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_Refund_Amount",
+                    "[Amount] >= 0"
+                );
+            });
+        });
+
+        //SHIPMENT INFO ENTITY CONFIGURATION
+        builder.Entity<ShipmentInfo>(entity =>
+        {
+            //Relationships
+            entity.HasOne(si => si.Order)
+                .WithOne(o => o.ShipmentInfo)
+                .HasForeignKey<ShipmentInfo>(si => si.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(si => si.Creator)
+                .WithMany()
+                .HasForeignKey(si => si.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Properties
+            entity.Property(si => si.TrackingCode).HasMaxLength(100);
+            entity.Property(si => si.TrackingUrl).HasMaxLength(500);
+            entity.Property(si => si.PackageDimensions).HasMaxLength(100);
+            entity.Property(si => si.PackageWeight).HasColumnType("decimal(10,2)");
+            entity.Property(si => si.ShippingNotes).HasMaxLength(500);
+            entity.Property(si => si.CarrierName).IsRequired();
+
+            //Indexes
+            entity.HasIndex(e => e.OrderId)
+                .IsUnique()
+                .HasDatabaseName("UX_ShipmentInfo_OrderId");
+            
+            entity.HasIndex(e => e.ActualDeliveryAt)
+                .HasDatabaseName("IX_ShipmentInfo_DeliveredAt");
+            
+            entity.HasIndex(e => e.TrackingCode)
+                .HasDatabaseName("IX_ShipmentInfo_TrackingCode");
+            
+            entity.HasIndex(e => e.CarrierName)
+                .HasDatabaseName("IX_ShipmentInfo_CarrierName");
+            
+            entity.HasIndex(e => e.ShippedAt)
+                .HasDatabaseName("IX_ShipmentInfo_ShippedAt");
+            
+            entity.HasIndex(e => e.CreatedBy)
+                .HasDatabaseName("IX_ShipmentInfo_CreatedBy");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_ShipmentInfo_Carrier",
+                    "[CarrierName] IN (0, 1, 2)"
+                );
+            });
+        });
+
+        //AfterSalesTicket ENTITY CONFIGURATION
+        builder.Entity<AfterSalesTicket>(entity =>
+        {
+            //Relationships
+            entity.HasOne(ast => ast.Order)
+                .WithMany(o => o.AfterSalesTickets)
+                .HasForeignKey(ast => ast.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ast => ast.OrderItem)
+                .WithMany(oi => oi.AfterSalesTickets)
+                .HasForeignKey(ast => ast.OrderItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ast => ast.AssignedStaff)
+                .WithMany()
+                .HasForeignKey(ast => ast.AssignedTo)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ast => ast.Customer)
+                .WithMany()
+                .HasForeignKey(ast => ast.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Properties
+            entity.Property(ast => ast.Reason).HasMaxLength(500);
+            entity.Property(ast => ast.RequestedAction).HasMaxLength(500);
+            entity.Property(ast => ast.PolicyViolation).HasMaxLength(500);
+            entity.Property(ast => ast.RefundAmount).HasColumnType("decimal(10,2)");
+
+            //Indexes
+            entity.HasIndex(e => e.OrderId)
+                .HasDatabaseName("IX_AfterSalesTicket_OrderId");
+            entity.HasIndex(e => e.OrderItemId)
+                .HasDatabaseName("IX_AfterSalesTicket_OrderItemId");
+            entity.HasIndex(e => e.CustomerId)
+                .HasDatabaseName("IX_AfterSalesTicket_CustomerId");
+            entity.HasIndex(e => e.TicketType)
+                .HasDatabaseName("IX_AfterSalesTicket_TicketType");
+            entity.HasIndex(e => e.TicketStatus)
+                .HasDatabaseName("IX_AfterSalesTicket_TicketStatus");
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_AfterSalesTicket_CreatedAt");
+            entity.HasIndex(e => e.ResolvedAt)
+                .HasDatabaseName("IX_AfterSalesTicket_ResolvedAt");
+            entity.HasIndex(e => e.AssignedTo)
+                .HasDatabaseName("IX_AfterSalesTicket_AssignedTo");
+            entity.HasIndex(e => new { e.CustomerId, e.TicketStatus })
+                .HasDatabaseName("IX_AfterSalesTicket_CustomerId_Status");
+
+            //Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_AfterSalesTicket_TicketType",
+                    "[TicketType] IN (0, 1, 2, 3)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_AfterSalesTicket_TicketStatus",
+                    "[TicketStatus] IN (1, 2, 3, 4, 5)"
+                );
+            });
+        });
+
+        //TicketAttachment ENTITY CONFIGURATION
+        builder.Entity<TicketAttachment>(entity =>
+        {
+            // Relationships
+            entity.HasOne(ta => ta.Ticket)
+                .WithMany(t => t.Attachments)
+                .HasForeignKey(ta => ta.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ta => ta.Deleter)
+                .WithMany()
+                .HasForeignKey(ta => ta.DeletedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Properties
+            entity.Property(ta => ta.FileName).HasMaxLength(200);
+            entity.Property(ta => ta.FileUrl).HasMaxLength(500);
+            entity.Property(ta => ta.FileExtension).HasMaxLength(50);
+
+            // Indexes
+            entity.HasIndex(e => e.TicketId)
+                .HasDatabaseName("IX_TicketAttachment_TicketId");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_TicketAttachment_CreatedAt");
+
+            entity.HasIndex(e => e.DeletedAt)
+                .HasDatabaseName("IX_TicketAttachment_DeletedAt");
+
+            entity.HasIndex(e => e.DeletedBy)
+                .HasDatabaseName("IX_TicketAttachment_DeletedBy");
+
+            entity.HasIndex(e => new { e.TicketId, e.DeletedAt })
+                .HasDatabaseName("IX_TicketAttachment_TicketId_DeletedAt")
+                .HasFilter("[DeletedAt] IS NULL");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_TicketAttachment_Deletion_Consistency",
+                    @"
+                    (DeletedAt IS NULL AND DeletedBy IS NULL)
+                    OR
+                    (DeletedAt IS NOT NULL AND DeletedBy IS NOT NULL)
+                    "
+                );
+            });
+        });
+
+        // POLICY CONFIGURATION ENTITY CONFIGURATION
+        builder.Entity<PolicyConfiguration>(entity =>
+        {
+            // Relationships
+            entity.HasOne(pc => pc.Creator)
+                .WithMany()
+                .HasForeignKey(pc => pc.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(pc => pc.Updater)
+                .WithMany()
+                .HasForeignKey(pc => pc.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(pc => pc.Deleter)
+                .WithMany()
+                .HasForeignKey(pc => pc.DeletedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Properties
+            entity.Property(pc => pc.PolicyName).IsRequired().HasMaxLength(200);
+            entity.Property(pc => pc.MinOrderAmount).HasColumnType("decimal(10,2)");
+
+            // Indexes
+            entity.HasIndex(e => e.PolicyType)
+                .HasDatabaseName("IX_PolicyConfiguration_PolicyType");
+
+            entity.HasIndex(e => e.IsActive)
+                .HasDatabaseName("IX_PolicyConfiguration_IsActive")
+                .HasFilter("[IsActive] = 1");
+
+            entity.HasIndex(e => new { e.IsActive, e.EffectiveFrom, e.EffectiveTo })
+                .HasDatabaseName("IX_PolicyConfiguration_Active_EffectivePeriod");
+
+            entity.HasIndex(e => new { e.PolicyType, e.IsActive, e.IsDeleted })
+                .HasDatabaseName("IX_PolicyConfiguration_Type_Active_Deleted")
+                .HasFilter("[IsActive] = 1 AND [IsDeleted] = 0");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_PolicyConfiguration_PolicyType",
+                    "[PolicyType] IN (1, 2, 3)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PolicyConfiguration_EffectivePeriod",
+                    "EffectiveTo IS NULL OR (EffectiveTo > EffectiveFrom)"
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PolicyConfiguration_ReturnWindowDays_Requires_ReturnPolicy",
+                    @"
+                    (PolicyType != 1 AND ReturnWindowDays IS NULL)
+                    OR
+                    (PolicyType = 1 AND ReturnWindowDays IS NOT NULL AND ReturnWindowDays >= 0)
+                    "
+                );
+
+                t.HasCheckConstraint(
+                    "CK_PolicyConfiguration_WarrantyMonths_Requires_WarrantyPolicy",
+                    @"
+                    (PolicyType != 2 AND WarrantyMonths IS NULL)
+                    OR
+                    (PolicyType = 2 AND WarrantyMonths IS NOT NULL AND WarrantyMonths >= 0)
+                    "
+                );
+            });
+        });
+
+        // FEATURE TOGGLE ENTITY CONFIGURATION
+        builder.Entity<FeatureToggle>(entity =>
+        {
+            // Relationships
+            entity.HasOne(ft => ft.Updater)
+                .WithMany()
+                .HasForeignKey(ft => ft.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Properties
+            entity.Property(ft => ft.FeatureName)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(ft => ft.Description)
+                .HasMaxLength(500);
+
+            entity.Property(ft => ft.Scope)
+                .HasMaxLength(50);
+
+            entity.Property(ft => ft.ScopeValue)
+                .HasMaxLength(200);
+
+            // Indexes
+            entity.HasIndex(e => e.FeatureName)
+                .IsUnique()
+                .HasDatabaseName("UX_FeatureToggle_FeatureName");
+
+            entity.HasIndex(e => e.IsEnabled)
+                .HasDatabaseName("IX_FeatureToggle_IsEnabled")
+                .HasFilter("[IsEnabled] = 1");
+
+            entity.HasIndex(e => new { e.Scope, e.ScopeValue })
+                .HasDatabaseName("IX_FeatureToggle_Scope_ScopeValue");
+
+            entity.HasIndex(e => new { e.FeatureName, e.IsEnabled })
+                .HasDatabaseName("IX_FeatureToggle_FeatureName_IsEnabled");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_FeatureToggle_Scope_ScopeValue",
+                    "(Scope IS NULL AND ScopeValue IS NULL)" +
+                    "OR (Scope IS NOT NULL AND ScopeValue IS NOT NULL)"
+                );
+                t.HasCheckConstraint(
+                    "CK_FeatureToggle_EffectivePeriod",
+                    "EffectiveTo IS NULL OR EffectiveTo > EffectiveFrom"
+                );
+            });
+        });
     }
 }
