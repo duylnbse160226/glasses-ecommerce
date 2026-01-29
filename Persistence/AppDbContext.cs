@@ -1187,5 +1187,55 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
                 );
             });
         });
+
+        //TicketAttachment ENTITY CONFIGURATION
+        builder.Entity<TicketAttachment>(entity =>
+        {
+            // Relationships
+            entity.HasOne(ta => ta.Ticket)
+                .WithMany(t => t.Attachments)
+                .HasForeignKey(ta => ta.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ta => ta.Deleter)
+                .WithMany()
+                .HasForeignKey(ta => ta.DeletedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Properties
+            entity.Property(ta => ta.FileName).HasMaxLength(200);
+            entity.Property(ta => ta.FileUrl).HasMaxLength(500);
+            entity.Property(ta => ta.FileExtension).HasMaxLength(50);
+
+            // Indexes
+            entity.HasIndex(e => e.TicketId)
+                .HasDatabaseName("IX_TicketAttachment_TicketId");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_TicketAttachment_CreatedAt");
+
+            entity.HasIndex(e => e.DeletedAt)
+                .HasDatabaseName("IX_TicketAttachment_DeletedAt");
+
+            entity.HasIndex(e => e.DeletedBy)
+                .HasDatabaseName("IX_TicketAttachment_DeletedBy");
+
+            entity.HasIndex(e => new { e.TicketId, e.DeletedAt })
+                .HasDatabaseName("IX_TicketAttachment_TicketId_DeletedAt")
+                .HasFilter("[DeletedAt] IS NULL");
+
+            // Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_TicketAttachment_Deletion_Consistency",
+                    @"
+                    (DeletedAt IS NULL AND DeletedBy IS NULL)
+                    OR
+                    (DeletedAt IS NOT NULL AND DeletedBy IS NOT NULL)
+                    "
+                );
+            });
+        });
     }
 }
