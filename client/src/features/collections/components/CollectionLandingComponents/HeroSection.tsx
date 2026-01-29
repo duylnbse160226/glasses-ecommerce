@@ -20,7 +20,6 @@ const ROOT_SX = {
     ml: "-50vw",
     mr: "-50vw",
     width: "100vw",
-    bgcolor: "#fff",
     overflow: "hidden",
 } as const;
 

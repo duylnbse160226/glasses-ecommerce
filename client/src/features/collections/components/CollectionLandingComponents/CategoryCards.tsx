@@ -36,7 +36,6 @@ const SECTION_SX = {
     minHeight: { xs: "calc(100svh - 56px)", md: `calc(100vh - ${NAV_H}px)` },
     display: "flex",
     alignItems: "center",
-    bgcolor: "#fff",
     overflow: "hidden",
 } as const;
 

@@ -1,5 +1,5 @@
 import { Box, MenuItem, Select, Typography } from "@mui/material";
-import type { SortKey } from "../types";
+import type { SortKey } from "../../types";
 
 export function CollectionTopBar({
     totalItems,
@@ -30,8 +30,7 @@ export function CollectionTopBar({
                 size="small"
                 sx={{
                     height: 44,
-                    borderRadius: 2,
-                    bgcolor: "#fff",
+                    borderRadius: 2,    
                     minWidth: 210,
                     "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: "rgba(17,24,39,0.18)",

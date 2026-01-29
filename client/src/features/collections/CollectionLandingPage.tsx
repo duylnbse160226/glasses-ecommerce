@@ -1,8 +1,8 @@
 import { Box } from "@mui/material";
-import HeroSection from "./components/HeroSection";
-import CategoryCards from "./components/CategoryCards";
-import ServicesSection from "./components/ServicesSection";
-import ItemTopSeller from "./components/ItemTopSeller";
+import HeroSection from "./components/CollectionLandingComponents/HeroSection";
+import CategoryCards from "./components/CollectionLandingComponents/CategoryCards";
+import ServicesSection from "./components/CollectionLandingComponents/ServicesSection";
+import ItemTopSeller from "./components/CollectionLandingComponents/ItemTopSeller";
 export default function CollectionLandingPage() {
     return (
         <Box>

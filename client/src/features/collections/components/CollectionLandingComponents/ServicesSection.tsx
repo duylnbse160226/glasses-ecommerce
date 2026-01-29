@@ -10,7 +10,6 @@ const SECTION_SX = {
     ml: "-50vw",
     mr: "-50vw",
     width: "100vw",
-    bgcolor: "#fff",
 } as const;
 
 const WRAP_SX = {

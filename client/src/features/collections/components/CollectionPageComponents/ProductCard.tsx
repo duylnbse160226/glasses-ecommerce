@@ -8,7 +8,7 @@ import {
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import { NavLink } from "react-router-dom";
-import type { Product } from "../types";
+import type { Product } from "../../types";
 
 function moneyVND(v: number) {
     return `${v.toLocaleString("vi-VN")}₫`;

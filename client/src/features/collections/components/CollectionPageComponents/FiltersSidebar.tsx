@@ -21,7 +21,7 @@ import type {
     GlassesType,
     Material,
     Shape,
-} from "../types";
+} from "../../types";
 
 const GLASSES_TYPES: { label: string; value: GlassesType }[] = [
     { label: "Eyeglasses", value: "eyeglasses" },
@@ -84,7 +84,6 @@ export function FiltersSidebar({
                     height: 44,
                     borderRadius: 2,
                     border: "1px solid rgba(17,24,39,0.15)",
-                    bgcolor: "#fff",
                 }}
             >
                 <InputBase

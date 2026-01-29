@@ -7,7 +7,7 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 function App() {
   const location = useLocation();
   return (
-    <Box sx={{ bgcolor: "#eeeeee" }} minHeight="100vh">
+    <Box sx={{ bgcolor: "#ffffff" }} minHeight="100vh">
       <ScrollRestoration />
       <CssBaseline /> {/*Reset Css*/}
       {location.pathname === "/" ? (

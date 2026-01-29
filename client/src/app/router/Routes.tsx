@@ -16,6 +16,10 @@ import TestErrors from "../../features/errors/TestErrors";
 import NotFound from "../../features/errors/NotFound";
 import ServerError from "../../features/errors/ServerError";
 
+import CartPage from "../../features/cart/CartPage";
+
+import CheckoutPage from "../../features/checkout/CheckoutPage";
+import OrderSuccessPage from "../../features/checkout/OrderSuccessPage";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
@@ -65,6 +69,11 @@ export const router = createBrowserRouter([
 
       // Fallback
       { path: "*", element: <Navigate replace to="/not-found" /> },
+
+      //guest
+      { path: "cart", element: <CartPage /> },
+      { path: "checkout", element: <CheckoutPage /> },
+      { path: "order-success", element: <OrderSuccessPage /> },
     ],
   },
 ]);

@@ -5,11 +5,11 @@ import { useParams } from "react-router-dom";
 import { MOCK_PRODUCTS } from "./data/mockProducts";
 import type { FiltersState, Product, SortKey } from "./types";
 
-import { CollectionTopBar } from "./components/CollectionTopBar";
-import { FiltersSidebar } from "./components/FiltersSidebar";
-import { ProductGrid } from "./components/ProductGrid";
-import { EmptyState } from "./components/EmptyState";
-import { PaginationBar } from "./components/PaginationBar";
+import { CollectionTopBar } from "./components/CollectionPageComponents/CollectionTopBar";
+import { FiltersSidebar } from "./components/CollectionPageComponents/FiltersSidebar";
+import { ProductGrid } from "./components/CollectionPageComponents/ProductGrid";
+import { EmptyState } from "./components/CollectionPageComponents/EmptyState";
+import { PaginationBar } from "./components/CollectionPageComponents/PaginationBar";
 
 /** Navbar fixed của bạn */
 const NAV_H = 56;

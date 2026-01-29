@@ -51,7 +51,7 @@ export default function ItemBestSeller() {
 
     return (
         <Box sx={{
-            py: 10, backgroundColor: "#ffffff", width: "100vw",
+            py: 10, width: "100vw",
             position: "relative",
             left: "50%",
             right: "50%",

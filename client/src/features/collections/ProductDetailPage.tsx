@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 
 import { MOCK_PRODUCTS } from "./data/mockProducts";
 import type { Product } from "./types";
+import { cartStore } from "../../lib/stores/cartStore"; // ✅ ADD
 
 const NAV_H = 56;
 const GAP_TOP = 24;
@@ -42,7 +43,6 @@ export default function ProductDetailPage() {
         [id]
     );
 
-    // gallery: nếu bạn có nhiều ảnh thì thay bằng array, tạm dùng image chính + 2 biến thể
     const images = useMemo(() => {
         if (!product) return [];
         return [
@@ -61,6 +61,19 @@ export default function ProductDetailPage() {
             (p) => p.category === product.category && p.id !== product.id
         ).slice(0, 4);
     }, [product]);
+
+    // ================= ADD TO CART =================
+    const handleAddToCart = () => {
+        if (!product) return;
+
+        cartStore.addItem({
+            productId: product.id,
+            name: product.name,
+            image: product.image,
+            price: product.price,
+        });
+    };
+    // =================================================
 
     if (!product) {
         return (
@@ -104,7 +117,7 @@ export default function ProductDetailPage() {
                 px: { xs: 2, md: 4, lg: 6 },
             }}
         >
-            {/* Top row: back + breadcrumb */}
+            {/* Back + breadcrumb */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                 <IconButton
                     onClick={() => nav(-1)}
@@ -117,18 +130,14 @@ export default function ProductDetailPage() {
                 </IconButton>
 
                 <Typography sx={{ color: "rgba(17,24,39,0.65)", fontSize: 13.5 }}>
-                    <Box
-                        component={NavLink}
-                        to="/collections"
-                        style={{ textDecoration: "none", color: "inherit" }}
-                    >
+                    <Box component={NavLink} to="/collections" sx={{ textDecoration: "none", color: "inherit" }}>
                         Collections
                     </Box>{" "}
                     /{" "}
                     <Box
                         component={NavLink}
                         to={`/collections/${product.category}`}
-                        style={{ textDecoration: "none", color: "inherit" }}
+                        sx={{ textDecoration: "none", color: "inherit" }}
                     >
                         {labelCategory(product.category)}
                     </Box>{" "}
@@ -140,13 +149,12 @@ export default function ProductDetailPage() {
             </Box>
 
             <Grid container spacing={4}>
-                {/* LEFT: Gallery */}
+                {/* Gallery */}
                 <Grid item xs={12} md={6}>
                     <Box
                         sx={{
                             border: "1px solid rgba(17,24,39,0.10)",
                             bgcolor: "#f3f4f6",
-                            overflow: "hidden",
                         }}
                     >
                         <Box
@@ -155,7 +163,6 @@ export default function ProductDetailPage() {
                             alt={product.name}
                             sx={{
                                 width: "100%",
-                                display: "block",
                                 aspectRatio: "4 / 3",
                                 objectFit: "cover",
                             }}
@@ -163,104 +170,87 @@ export default function ProductDetailPage() {
                     </Box>
 
                     <Box sx={{ display: "flex", gap: 1.2, mt: 1.5 }}>
-                        {images.map((src, idx) => {
-                            const active = idx === activeImg;
-                            return (
-                                <Box
-                                    key={src}
-                                    onClick={() => setActiveImg(idx)}
-                                    role="button"
-                                    tabIndex={0}
-                                    sx={{
-                                        width: 86,
-                                        height: 66,
-                                        border: active
+                        {images.map((src, idx) => (
+                            <Box
+                                key={src}
+                                onClick={() => setActiveImg(idx)}
+                                sx={{
+                                    width: 86,
+                                    height: 66,
+                                    border:
+                                        idx === activeImg
                                             ? "2px solid #111827"
                                             : "1px solid rgba(17,24,39,0.12)",
-                                        overflow: "hidden",
-                                        cursor: "pointer",
-                                        bgcolor: "#f3f4f6",
-                                    }}
-                                >
-                                    <Box
-                                        component="img"
-                                        src={src}
-                                        alt=""
-                                        sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                    />
-                                </Box>
-                            );
-                        })}
+                                    cursor: "pointer",
+                                }}
+                            >
+                                <Box
+                                    component="img"
+                                    src={src}
+                                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                            </Box>
+                        ))}
                     </Box>
                 </Grid>
 
-                {/* RIGHT: Info */}
+                {/* Info */}
                 <Grid item xs={12} md={6}>
-                    <Typography sx={{ fontWeight: 900, letterSpacing: "0.02em" }}>
-                        {product.brand}
-                    </Typography>
-
-                    <Typography sx={{ mt: 0.6, fontWeight: 900, fontSize: 22 }}>
+                    <Typography fontWeight={900}>{product.brand}</Typography>
+                    <Typography fontWeight={900} fontSize={22} mt={0.6}>
                         {product.name}
                     </Typography>
-
-                    <Typography sx={{ mt: 0.8, color: "rgba(17,24,39,0.65)", fontSize: 13.5 }}>
+                    <Typography fontSize={13.5} color="rgba(17,24,39,0.65)" mt={0.8}>
                         {product.code}
-                        {product.frameSize ? `  /  Size: ${product.frameSize}` : ""}
                     </Typography>
 
-                    <Typography sx={{ mt: 2, fontWeight: 900, fontSize: 20 }}>
+                    <Typography fontWeight={900} fontSize={20} mt={2}>
                         {moneyVND(product.price)}
                     </Typography>
 
                     <Divider sx={{ my: 2.5 }} />
 
-                    {/* Color swatches */}
+                    {/* Colors */}
                     {product.colors?.length ? (
-                        <Box sx={{ mb: 2 }}>
-                            <Typography sx={{ fontWeight: 900, mb: 1 }}>
+                        <Box mb={2}>
+                            <Typography fontWeight={900} mb={1}>
                                 Colour
                             </Typography>
                             <Box sx={{ display: "flex", gap: 1 }}>
-                                {product.colors.map((c) => {
-                                    const active = activeColor === c;
-                                    return (
-                                        <Box
-                                            key={c}
-                                            onClick={() => setActiveColor(c)}
-                                            role="button"
-                                            tabIndex={0}
-                                            sx={{
-                                                width: 22,
-                                                height: 22,
-                                                borderRadius: "999px",
-                                                bgcolor: c,
-                                                cursor: "pointer",
-                                                outline: active
+                                {product.colors.map((c) => (
+                                    <Box
+                                        key={c}
+                                        onClick={() => setActiveColor(c)}
+                                        sx={{
+                                            width: 22,
+                                            height: 22,
+                                            borderRadius: "50%",
+                                            bgcolor: c,
+                                            outline:
+                                                activeColor === c
                                                     ? "2px solid #111827"
                                                     : "1px solid rgba(17,24,39,0.18)",
-                                                outlineOffset: 2,
-                                            }}
-                                        />
-                                    );
-                                })}
+                                            outlineOffset: 2,
+                                            cursor: "pointer",
+                                        }}
+                                    />
+                                ))}
                             </Box>
                         </Box>
                     ) : null}
 
                     {/* Actions */}
-                    <Box sx={{ display: "flex", gap: 1.2, alignItems: "center", mt: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1.2, mt: 1 }}>
                         <Button
                             variant="contained"
+                            onClick={handleAddToCart}
                             sx={{
                                 bgcolor: "#111827",
-                                color: "#fff",
                                 borderRadius: 2,
                                 height: 46,
                                 px: 3,
                                 fontWeight: 900,
-                                boxShadow: "none",
-                                "&:hover": { bgcolor: "#0b1220", boxShadow: "none" },
+                                "&:hover": { bgcolor: "#0b1220" },
                             }}
                         >
                             Add to cart
@@ -274,138 +264,70 @@ export default function ProductDetailPage() {
                                 height: 46,
                                 px: 2.2,
                                 fontWeight: 900,
-                                borderColor: "rgba(17,24,39,0.25)",
-                                color: "#111827",
                             }}
                         >
                             Wishlist
                         </Button>
                     </Box>
 
-                    {/* Quick specs */}
-                    <Box sx={{ mt: 3, display: "grid", gap: 0.7 }}>
-                        {product.category === "glasses" ? (
-                            <>
-                                {product.glassesType ? (
-                                    <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 13.5 }}>
-                                        Type: <b>{product.glassesType}</b>
-                                    </Typography>
-                                ) : null}
-                                {product.shape ? (
-                                    <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 13.5 }}>
-                                        Shape: <b>{product.shape}</b>
-                                    </Typography>
-                                ) : null}
-                                {product.material ? (
-                                    <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 13.5 }}>
-                                        Material: <b>{product.material}</b>
-                                    </Typography>
-                                ) : null}
-                                {product.gender ? (
-                                    <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 13.5 }}>
-                                        Gender: <b>{product.gender}</b>
-                                    </Typography>
-                                ) : null}
-                            </>
-                        ) : (
-                            <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 13.5 }}>
-                                Category: <b>{labelCategory(product.category)}</b>
-                            </Typography>
-                        )}
-                    </Box>
-
                     <Divider sx={{ my: 2.5 }} />
 
-                    {/* Info accordions */}
-                    <Accordion defaultExpanded disableGutters elevation={0} sx={{ "&:before": { display: "none" } }}>
+                    {/* Accordions */}
+                    <Accordion defaultExpanded disableGutters elevation={0}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography sx={{ fontWeight: 900 }}>Description</Typography>
+                            <Typography fontWeight={900}>Description</Typography>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ pt: 0 }}>
-                            <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 14, lineHeight: 1.65 }}>
-                                Premium daily-wear design with clean lines, comfortable fit, and a minimal aesthetic.
-                                Perfect for office, streetwear, and everyday photos.
-                            </Typography>
-                        </AccordionDetails>
-                    </Accordion>
-
-                    <Accordion disableGutters elevation={0} sx={{ "&:before": { display: "none" } }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography sx={{ fontWeight: 900 }}>Shipping & Returns</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails sx={{ pt: 0 }}>
-                            <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 14, lineHeight: 1.65 }}>
-                                Standard delivery 2–5 days. Free returns within 7 days if unused and in original packaging.
-                            </Typography>
-                        </AccordionDetails>
-                    </Accordion>
-
-                    <Accordion disableGutters elevation={0} sx={{ "&:before": { display: "none" } }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography sx={{ fontWeight: 900 }}>Care</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails sx={{ pt: 0 }}>
-                            <Typography sx={{ color: "rgba(17,24,39,0.75)", fontSize: 14, lineHeight: 1.65 }}>
-                                Clean with microfiber cloth. Avoid harsh chemicals. Store in case when not in use.
+                        <AccordionDetails>
+                            <Typography fontSize={14} color="rgba(17,24,39,0.75)">
+                                Premium daily-wear design with clean lines and comfortable fit.
                             </Typography>
                         </AccordionDetails>
                     </Accordion>
                 </Grid>
             </Grid>
 
-            {/* Related products */}
+            {/* Related */}
             {related.length ? (
-                <Box sx={{ mt: 6 }}>
-                    <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
+                <Box mt={6}>
+                    <Typography fontWeight={900} fontSize={18}>
                         You may also like
                     </Typography>
-                    <Typography sx={{ mt: 0.5, color: "rgba(17,24,39,0.65)", fontSize: 13.5 }}>
-                        Similar items in {labelCategory(product.category)}.
-                    </Typography>
 
-                    <Box sx={{ mt: 2.5 }}>
-                        <Grid container spacing={3}>
-                            {related.map((p) => (
-                                <Grid key={p.id} item xs={12} sm={6} md={3}>
+                    <Grid container spacing={3} mt={1}>
+                        {related.map((p) => (
+                            <Grid key={p.id} item xs={12} sm={6} md={3}>
+                                <Box
+                                    component={NavLink}
+                                    to={`/product/${p.id}`}
+                                    sx={{
+                                        display: "block",
+                                        border: "1px solid rgba(17,24,39,0.10)",
+                                        textDecoration: "none",
+                                    }}
+                                >
                                     <Box
-                                        component={NavLink}
-                                        to={`/product/${p.id}`}
-                                        style={{ textDecoration: "none" }}
+                                        component="img"
+                                        src={p.image}
                                         sx={{
-                                            display: "block",
-                                            border: "1px solid rgba(17,24,39,0.10)",
-                                            bgcolor: "#fff",
+                                            width: "100%",
+                                            aspectRatio: "4 / 3",
+                                            objectFit: "cover",
+                                            bgcolor: "#f3f4f6",
                                         }}
-                                    >
-                                        <Box
-                                            component="img"
-                                            src={p.image}
-                                            alt={p.name}
-                                            sx={{
-                                                width: "100%",
-                                                aspectRatio: "4 / 3",
-                                                objectFit: "cover",
-                                                display: "block",
-                                                bgcolor: "#f3f4f6",
-                                            }}
-                                        />
-
-                                        <Box sx={{ p: 2 }}>
-                                            <Typography sx={{ fontWeight: 900, color: "#111827" }}>
-                                                {p.brand}
-                                            </Typography>
-                                            <Typography sx={{ color: "rgba(17,24,39,0.65)", fontSize: 12, mt: 0.4 }}>
-                                                {p.code}
-                                            </Typography>
-                                            <Typography sx={{ mt: 1, fontWeight: 900 }}>
-                                                {moneyVND(p.price)}
-                                            </Typography>
-                                        </Box>
+                                    />
+                                    <Box p={2}>
+                                        <Typography fontWeight={900}>{p.brand}</Typography>
+                                        <Typography fontSize={12} color="rgba(17,24,39,0.65)">
+                                            {p.code}
+                                        </Typography>
+                                        <Typography fontWeight={900} mt={1}>
+                                            {moneyVND(p.price)}
+                                        </Typography>
                                     </Box>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Box>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
                 </Box>
             ) : null}
         </Box>

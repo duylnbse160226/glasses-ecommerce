@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
-import { Observer } from "mobx-react-lite";
+import { observer, Observer } from "mobx-react-lite";
 import {
   FavoriteBorder,
   LocalMallOutlined,
@@ -25,8 +25,10 @@ import { alpha } from "@mui/material/styles";
 import { useStore } from "../../lib/hooks/useStore";
 import { useAccount } from "../../lib/hooks/useAccount";
 import UserMenu from "./UserMenu";
+import CartDropdown from "../components/cart/CartDropdown";
+import { cartStore } from "../../lib/stores/cartStore";
 
-// NOTE: keep styles outside component to avoid re-create on every render
+// ===== Styles =====
 const NAV_BTN_SX = {
   textTransform: "none",
   fontWeight: 600,
@@ -66,18 +68,20 @@ const MENU_ITEMS = [
   { label: "Lens", to: "/collections/lens" },
 ] as const;
 
-export default function NavBar() {
+// ================= COMPONENT =================
+const NavBar = observer(function NavBar() {
   const { uiStore } = useStore();
   const { currentUser } = useAccount();
-
-  // NOTE: placeholder số 3 này nên lấy từ store/cart sau.
-  // tách ra để sau thay đổi không phải mò trong JSX.
-  const cartCount = 3;
 
   const menu = useMemo(
     () =>
       MENU_ITEMS.map((item) => (
-        <Button key={item.to} component={NavLink} to={item.to} sx={NAV_BTN_SX}>
+        <Button
+          key={item.to}
+          component={NavLink}
+          to={item.to}
+          sx={NAV_BTN_SX}
+        >
           {item.label}
         </Button>
       )),
@@ -98,7 +102,7 @@ export default function NavBar() {
               px: { xs: 1, md: 0 },
             }}
           >
-            {/* LEFT: Logo */}
+            {/* Logo */}
             <Box
               component={NavLink}
               to="/collections"
@@ -116,36 +120,25 @@ export default function NavBar() {
               </Typography>
             </Box>
 
-            {/* LEFT: Main menu */}
-            <Box
-              sx={{
-                display: { xs: "none", md: "flex" },
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
+            {/* Menu */}
+            <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5 }}>
               {menu}
             </Box>
 
-            {/* CENTER: Search */}
+            {/* Search */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
               <Box sx={SEARCH_BOX_SX}>
                 <Search sx={{ fontSize: 18, color: "rgba(17,24,39,0.55)" }} />
                 <InputBase
                   placeholder="Search eyeglasses, sunglasses, lens..."
-                  inputProps={{ "aria-label": "search products" }}
-                  sx={{
-                    flex: 1,
-                    fontSize: 13.5,
-                    color: "rgba(17,24,39,0.85)",
-                  }}
+                  sx={{ flex: 1, fontSize: 13.5 }}
                 />
               </Box>
             </Box>
 
-            {/* RIGHT: Icons */}
+            {/* Right icons */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton sx={ICON_SX} aria-label="favorites">
+              <IconButton sx={ICON_SX}>
                 <FavoriteBorder />
               </IconButton>
 
@@ -154,31 +147,36 @@ export default function NavBar() {
               {currentUser ? (
                 <UserMenu />
               ) : (
-                <IconButton
-                  component={NavLink}
-                  to="/login"
-                  sx={ICON_SX}
-                  aria-label="login"
-                >
+                <IconButton component={NavLink} to="/login" sx={ICON_SX}>
                   <PersonOutline />
                 </IconButton>
               )}
 
-              <IconButton sx={ICON_SX} aria-label="cart">
-                <Badge badgeContent={cartCount} color="primary">
-                  <LocalMallOutlined />
-                </Badge>
-              </IconButton>
+              {/* CART */}
+              <Box sx={{ position: "relative" }}>
+                <IconButton
+                  sx={ICON_SX}
+                  onClick={() => uiStore.toggleCart()}
+                >
+                  <Badge
+                    badgeContent={cartStore.totalQuantity}
+                    color="primary"
+                  >
+                    <LocalMallOutlined />
+                  </Badge>
+                </IconButton>
+
+                {uiStore.isCartOpen && <CartDropdown />}
+              </Box>
             </Box>
           </Toolbar>
         </Container>
 
-        {/* Loading bar: observe only what needs observing */}
+        {/* Loading bar */}
         <Observer>
           {() =>
             uiStore.isLoading ? (
               <LinearProgress
-                color="secondary"
                 sx={{
                   position: "absolute",
                   bottom: 0,
@@ -193,4 +191,6 @@ export default function NavBar() {
       </AppBar>
     </Box>
   );
-}
+});
+
+export default NavBar;
