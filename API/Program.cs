@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,8 @@ builder.Services.AddControllers(opt =>
     opt.Filters.Add(new AuthorizeFilter(policy));
 
 });
+
+builder.Services.AddOpenApi();
 
 //SQLite
 // builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -131,6 +134,19 @@ app.MapControllers();
 //Routing (apply /api prefix) - Ex : api/login
 app.MapGroup("api").MapIdentityApi<User>();
 
+app.MapOpenApi(); 
+
+app.MapScalarApiReference(options =>
+{
+    options
+        .WithTitle("Glasses API")
+        .WithTheme(ScalarTheme.BluePlanet)
+        .WithDefaultHttpClient(
+            ScalarTarget.JavaScript,
+            ScalarClient.Axios
+        )
+        .ShowSidebar = true;
+});
 
 /*
     We can't get the service provider from the program class directly, (can't get it from class define it)
