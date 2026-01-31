@@ -117,7 +117,7 @@ export const useActivities = (id?: string) => {
 
           const isHost = oldActivity.hostId === currentUser.id;
           const isAttending = oldActivity.attendees.some(
-            (x) => x.id === currentUser.id
+            (x) => x.id === currentUser.id,
           );
 
           return {
@@ -138,7 +138,7 @@ export const useActivities = (id?: string) => {
                   },
                 ],
           };
-        }
+        },
       );
 
       // Return a context with the previous
@@ -150,7 +150,7 @@ export const useActivities = (id?: string) => {
       if (context?.prevActivity) {
         queryClient.setQueryData(
           ["activities", activityId],
-          context.prevActivity
+          context.prevActivity,
         );
       }
     },
