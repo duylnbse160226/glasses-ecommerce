@@ -301,7 +301,7 @@ export default function ProductDetailPage() {
                                     to={`/product/${p.id}`}
                                     sx={{
                                         display: "block",
-                                        border: "1px solid rgba(17,24,39,0.10)",
+                                        border: "1px solid rgba(0, 0, 0, 0.1)",
                                         textDecoration: "none",
                                     }}
                                 >
@@ -317,7 +317,7 @@ export default function ProductDetailPage() {
                                     />
                                     <Box p={2}>
                                         <Typography fontWeight={900}>{p.brand}</Typography>
-                                        <Typography fontSize={12} color="rgba(17,24,39,0.65)">
+                                        <Typography fontSize={12} color="rgba(0, 0, 0, 0.65)">
                                             {p.code}
                                         </Typography>
                                         <Typography fontWeight={900} mt={1}>
