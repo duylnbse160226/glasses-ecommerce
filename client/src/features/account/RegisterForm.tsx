@@ -13,20 +13,20 @@ import {
   type RegisterSchema,
 } from "../../lib/schemas/registerSchema";
 
-import Image2 from "../../app/assets/jordan-andrews-dca_s9Wy8c0-unsplash.jpg"
+import Image2 from "../../app/assets/jordan-andrews-dca_s9Wy8c0-unsplash.jpg";
+
 export default function RegisterForm() {
   const { registerUser } = useAccount();
   const navigate = useNavigate();
 
   const imageUrl = Image2;
-
   const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
     handleSubmit,
     setError,
-    formState: { isValid, isSubmitting },
+    formState: { isValid, isSubmitting, errors },
   } = useForm<RegisterSchema>({
     mode: "onTouched",
     resolver: zodResolver(registerSchema),
@@ -56,7 +56,7 @@ export default function RegisterForm() {
         width: "100%",
         overflow: "hidden",
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" }, // ✅ form trái (2fr) - ảnh phải (1fr)
+        gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
         background:
           "radial-gradient(900px 500px at 10% 10%, rgba(255,219,191,0.55), transparent 60%), linear-gradient(180deg, #FAFAF8, #F1F3F5)",
       }}
@@ -100,16 +100,14 @@ export default function RegisterForm() {
             Back to collections
           </Button>
 
-          {/* ===== Fashion Header (Luxury) ===== */}
+          {/* ===== Header ===== */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-            {/* Brand line */}
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 1.25,
                 pl: "20px",
-                lineHeight: 1,
               }}
             >
               <Box sx={{ width: 34, height: 1, bgcolor: "rgba(15,23,42,0.35)" }} />
@@ -118,74 +116,113 @@ export default function RegisterForm() {
                   fontSize: 12,
                   letterSpacing: 4,
                   color: "rgba(15,23,42,0.65)",
-                  lineHeight: 1,
                 }}
               >
                 EYEWEAR ATELIER
               </Typography>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              {/* Monogram badge */}
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  display: "grid",
-                  placeItems: "center",
-                  border: "1px solid rgba(15,23,42,0.12)",
-                  background: "rgba(255,255,255,0.85)",
-                  boxShadow: "0 14px 30px rgba(15,23,42,0.06)",
-                  flex: "0 0 auto",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 900,
-                    letterSpacing: 1,
-                    color: "rgba(15,23,42,0.9)",
-                    fontSize: 18,
-                  }}
-                >
-                  F
-                </Typography>
-              </Box>
-
-              <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  sx={{
-                    fontSize: { xs: 34, md: 40 },
-                    fontWeight: 900,
-                    letterSpacing: -1.2,
-                    lineHeight: 1.02,
-                    color: "rgba(15,23,42,0.92)",
-                  }}
-                >
-                  Create account
-                </Typography>
-                <Typography sx={{ mt: 0.6, color: "rgba(15,23,42,0.60)" }}>
-                  Join us — curated frames and modern silhouettes.
-                </Typography>
-              </Box>
-            </Box>
+            <Typography
+              sx={{
+                fontSize: { xs: 34, md: 40 },
+                fontWeight: 900,
+                letterSpacing: -1.2,
+                color: "rgba(15,23,42,0.92)",
+              }}
+            >
+              Create account
+            </Typography>
+            <Typography sx={{ color: "rgba(15,23,42,0.60)" }}>
+              Join us — curated frames and modern silhouettes.
+            </Typography>
           </Box>
 
           <Divider sx={{ borderColor: "rgba(15,23,42,0.10)" }} />
 
-          {/* Inputs */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextInput label="Email" control={control} name="email" />
-            <TextInput label="Display Name" control={control} name="displayName" />
+          {/* ================= INPUTS ================= */}
+          {/* ✅ gap 2 → 3 */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
+            {/* EMAIL */}
+            <Box sx={{ position: "relative" }}>
+              {errors.email && (
+                <Typography
+                  fontSize={13}
+                  fontWeight={600}
+                  color="error"
+                  sx={{
+                    position: "absolute",
+                    top: -22,
+                    left: 4,
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {errors.email.message}
+                </Typography>
+              )}
 
-            {/* Password + eye icon */}
+              <TextInput
+                label="Email"
+                control={control}
+                name="email"
+                hideError
+              />
+            </Box>
+
+            {/* DISPLAY NAME */}
+            <Box sx={{ position: "relative" }}>
+              {errors.displayName && (
+                <Typography
+                  fontSize={13}
+                  fontWeight={600}
+                  color="error"
+                  sx={{
+                    position: "absolute",
+                    top: -22,
+                    left: 4,
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {errors.displayName.message}
+                </Typography>
+              )}
+
+              <TextInput
+                label="Display Name"
+                control={control}
+                name="displayName"
+                hideError
+              />
+            </Box>
+
+            {/* PASSWORD */}
             <Box sx={{ position: "relative", "& input": { pr: 5 } }}>
+              {errors.password && (
+                <Typography
+                  fontSize={13}
+                  fontWeight={600}
+                  color="error"
+                  sx={{
+                    position: "absolute",
+                    top: -22,
+                    left: 4,
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {errors.password.message}
+                </Typography>
+              )}
+
               <TextInput
                 label="Password"
                 type={showPassword ? "text" : "password"}
                 control={control}
                 name="password"
+                hideError
               />
+
               <IconButton
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
@@ -252,60 +289,6 @@ export default function RegisterForm() {
               "linear-gradient(120deg, rgba(255,255,255,0.18), rgba(0,0,0,0.18))",
           }}
         />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            p: 5,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            color: "#fff",
-            textShadow: "0 10px 30px rgba(0,0,0,0.35)",
-          }}
-        >
-          <Box>
-            <Typography
-              sx={{
-                fontSize: 11,
-                letterSpacing: 4,
-                color: "rgba(255,255,255,0.75)", // ❄️ trắng ngà, không gắt
-                textTransform: "uppercase",
-              }}
-            >
-              NEW MEMBER • ACCESS
-            </Typography>
-
-            <Typography
-              sx={{
-                mt: 1,
-                fontSize: 32,
-                fontWeight: 900,
-                lineHeight: 1.15,
-                color: "rgba(255,255,255,0.95)", // tiêu đề nổi rõ
-              }}
-            >
-              Join the atelier.
-            </Typography>
-
-            <Typography
-              sx={{
-                mt: 1,
-                fontSize: 14,
-                maxWidth: 280,
-                lineHeight: 1.6,
-                color: "rgba(255,255,255,0.70)", // body dịu
-              }}
-            >
-              Create an account to save favorites and explore new arrivals.
-            </Typography>
-          </Box>
-
-
-          <Typography sx={{ fontSize: 12 }}>
-            Crafted for modern silhouettes.
-          </Typography>
-        </Box>
       </Box>
     </Box>
   );

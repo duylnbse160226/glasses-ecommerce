@@ -69,7 +69,13 @@ export function FiltersSidebar({
     stickyTop?: number;
 }) {
     return (
-        <Box sx={{ position: { md: "sticky" }, top: { md: stickyTop } }}>
+        <Box sx={{
+            position: stickyTop !== undefined ? { md: "sticky" } : "static",
+            top: stickyTop !== undefined ? { md: stickyTop } : undefined,
+
+            px: 2.5,
+            pt: 2,
+            pb: 3, }}>
             <Typography sx={{ fontWeight: 900, mb: 1.5, color: "#111827" }}>
                 Filters
             </Typography>

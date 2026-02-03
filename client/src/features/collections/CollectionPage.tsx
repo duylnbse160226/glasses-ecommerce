@@ -1,4 +1,8 @@
-import { Box, Grid } from "@mui/material";
+import {
+    Box,
+    Drawer,
+    Button,
+} from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -11,15 +15,16 @@ import { ProductGrid } from "./components/CollectionPageComponents/ProductGrid";
 import { EmptyState } from "./components/CollectionPageComponents/EmptyState";
 import { PaginationBar } from "./components/CollectionPageComponents/PaginationBar";
 
-/** Navbar fixed của bạn */
+/* ================== layout const ================== */
 const NAV_H = 56;
 const GAP_TOP = 24;
 const GAP_BOTTOM = 56;
 const FOOT_H = 0;
 
-/** ✅ mỗi trang 12 sản phẩm */
+/** mỗi trang 12 sản phẩm */
 const PAGE_SIZE = 12;
 
+/* ================== helpers ================== */
 function defaultFilters(): FiltersState {
     return {
         keyword: "",
@@ -32,17 +37,23 @@ function defaultFilters(): FiltersState {
     };
 }
 
+/* ================== component ================== */
 export default function CollectionPage() {
     const { category } = useParams();
+
     const [sort, setSort] = useState<SortKey>("featured");
     const [filters, setFilters] = useState<FiltersState>(() => defaultFilters());
 
-    /** ✅ pagination state */
+    /** pagination */
     const [page, setPage] = useState(1);
 
-    /** để scroll lên đầu grid khi đổi trang */
+    /** drawer filter */
+    const [openFilter, setOpenFilter] = useState(false);
+
+    /** scroll top */
     const topRef = useRef<HTMLDivElement | null>(null);
 
+    /* ================== category ================== */
     const allInCategory = useMemo(() => {
         const c = (category || "").toLowerCase();
         if (c === "fashion" || c === "glasses" || c === "lens") {
@@ -51,16 +62,16 @@ export default function CollectionPage() {
         return MOCK_PRODUCTS;
     }, [category]);
 
+    /* ================== filtering + sort ================== */
     const filteredProducts = useMemo(() => {
         let list: Product[] = allInCategory;
 
-        // keyword: match brand, name, code
+        // keyword
         const k = filters.keyword.trim().toLowerCase();
         if (k) {
-            list = list.filter((p) => {
-                const hay = `${p.brand} ${p.name} ${p.code}`.toLowerCase();
-                return hay.includes(k);
-            });
+            list = list.filter((p) =>
+                `${p.brand} ${p.name} ${p.code}`.toLowerCase().includes(k)
+            );
         }
 
         // glasses type
@@ -87,10 +98,11 @@ export default function CollectionPage() {
 
         // colors
         if (filters.colors.length) {
-            list = list.filter((p) => {
-                if (!p.colors?.length) return false;
-                return filters.colors.some((c) => p.colors!.includes(c));
-            });
+            list = list.filter(
+                (p) =>
+                    p.colors?.length &&
+                    filters.colors.some((c) => p.colors!.includes(c))
+            );
         }
 
         // frame size
@@ -133,12 +145,12 @@ export default function CollectionPage() {
         return list;
     }, [allInCategory, filters, sort]);
 
-    /** ✅ reset về trang 1 khi đổi category/filter/sort */
+    /* ================== reset page ================== */
     useEffect(() => {
         setPage(1);
     }, [category, sort, filters]);
 
-    /** ✅ tính pages + cắt list theo trang */
+    /* ================== pagination ================== */
     const totalItems = filteredProducts.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 
@@ -150,12 +162,24 @@ export default function CollectionPage() {
 
     const handleChangePage = (nextPage: number) => {
         setPage(nextPage);
-        // scroll lên đầu khu vực main/grid
         requestAnimationFrame(() => {
-            topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            topRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
         });
     };
 
+    /* ================== active filter count ================== */
+    const activeFilterCount =
+        filters.glassesTypes.length +
+        filters.shapes.length +
+        filters.colors.length +
+        filters.frameSizes.length +
+        filters.materials.length +
+        filters.genders.length;
+
+    /* ================== render ================== */
     return (
         <Box
             component="main"
@@ -173,38 +197,89 @@ export default function CollectionPage() {
                 px: { xs: 2, md: 4, lg: 6 },
             }}
         >
-            <Grid container spacing={4} sx={{ alignItems: "flex-start" }}>
-                {/* LEFT */}
-                <Grid item xs={12} md={3} lg={2.7}>
-                    <FiltersSidebar
-                        filters={filters}
-                        setFilters={setFilters}
-                        onReset={() => setFilters(defaultFilters())}
-                        stickyTop={NAV_H + GAP_TOP}
-                    />
-                </Grid>
+            {/* ================== TOP BAR + FILTER BTN ================== */}
+            <Box ref={topRef} />
 
-                {/* RIGHT */}
-                <Grid item xs={12} md={9} lg={9.3}>
-                    <Box ref={topRef} />
-                    <CollectionTopBar totalItems={totalItems} sort={sort} setSort={setSort} />
+            <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                gap={2}
+            >
+                <CollectionTopBar
+                    totalItems={totalItems}
+                    sort={sort}
+                    setSort={setSort}
+                />
 
-                    <Box sx={{ mt: 3 }}>
-                        {pageProducts.length ? <ProductGrid products={pageProducts} /> : <EmptyState />}
-                    </Box>
+                <Button
+                    variant="outlined"
+                    sx={{
+                        color: "black",
+                        borderColor: "black",
+                        "&:hover": {
+                            borderColor: "black",
+                            color: "black",
+                        },
+                        borderRadius: 4,
+                    }}
+                    onClick={() => setOpenFilter(true)}
+                >
+                    Filter{activeFilterCount > 0 && ` (${activeFilterCount})`}
+                </Button>
+            </Box>
 
-                    {/* ✅ Pagination */}
-                    {totalItems > 0 ? (
-                        <PaginationBar
-                            page={Math.min(page, totalPages)}
-                            totalPages={totalPages}
-                            totalItems={totalItems}
-                            pageSize={PAGE_SIZE}
-                            onChange={handleChangePage}
-                        />
-                    ) : null}
-                </Grid>
-            </Grid>
+            {/* ================== PRODUCTS ================== */}
+            <Box sx={{ mt: 3 }}>
+                {pageProducts.length ? (
+                    <ProductGrid products={pageProducts} />
+                ) : (
+                    <EmptyState />
+                )}
+            </Box>
+
+            {/* ================== PAGINATION ================== */}
+            {totalItems > 0 && (
+                <PaginationBar
+                    page={Math.min(page, totalPages)}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={PAGE_SIZE}
+                    onChange={handleChangePage}
+                />
+            )}
+
+            {/* ================== FILTER DRAWER ================== */}
+            <Drawer
+                variant="temporary"
+                anchor="left"
+                open={openFilter}
+                onClose={() => setOpenFilter(false)}
+                ModalProps={{
+                    disableScrollLock: true,
+                }}
+                sx={{
+                    "& .MuiDrawer-paper": {
+                        top: `${NAV_H}px`,
+                        height: `calc(100vh - ${NAV_H}px)`,
+                        width: { xs: "90vw", sm: 360 },
+                        pt: 2,
+                        boxSizing: "border-box",
+                    },
+                    "& .MuiBackdrop-root": {
+                        top: `${NAV_H}px`,
+                        height: `calc(100vh - ${NAV_H}px)`,
+                    },
+                }}
+            >
+                <FiltersSidebar
+                    filters={filters}
+                    setFilters={setFilters}
+                    onReset={() => setFilters(defaultFilters())}
+                    stickyTop={0}
+                />
+            </Drawer>
+
         </Box>
     );
 }
