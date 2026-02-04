@@ -28,9 +28,9 @@ export default function HomePage() {
         }}
       >
         <Group sx={{ height: 110, width: 110 }} />
-        <Typography variant="h1">Reactivities</Typography>
+        <Typography variant="h1">Glasses</Typography>
       </Box>
-      <Typography variant="h2">Welcome to reactivities</Typography>
+      <Typography variant="h2">Welcome to glasses</Typography>
       <Button
         component={Link}
         to="/activities"

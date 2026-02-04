@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +30,14 @@ builder.Services.AddControllers(opt =>
     */
     var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     opt.Filters.Add(new AuthorizeFilter(policy));
-
+}).AddJsonOptions(options =>
+{
+    // Configure the JSON serializer to convert enum values to their string representations
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
+
+builder.Services.AddOpenApi();
+
 
 //SQLite
 // builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -117,6 +124,10 @@ app.UseCors(options => options.AllowAnyHeader()
 app.UseAuthentication();
 app.UseAuthorization();          
 
+//configure to serve static files (wwwroot)
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseMiddleware<DisableRouteMiddleware>();
 
 /*
@@ -131,6 +142,27 @@ app.MapControllers();
 //Routing (apply /api prefix) - Ex : api/login
 app.MapGroup("api").MapIdentityApi<User>();
 
+app.MapOpenApi(); 
+
+app.MapScalarApiReference("/api/docs", options =>
+{
+    options
+        .WithTitle("Glasses API")
+        .WithTheme(ScalarTheme.Laserwave)
+        .WithDefaultHttpClient(
+            ScalarTarget.JavaScript,
+            ScalarClient.Axios
+        )
+        .ShowOperationId()
+        .SortTagsAlphabetically()
+        .SortOperationsByMethod()
+        .PreserveSchemaPropertyOrder()//SHOULD HAVE
+        .ShowSidebar = true;
+        
+});
+
+app.MapFallbackToController("Index", "Fallback");
+
 
 /*
     We can't get the service provider from the program class directly, (can't get it from class define it)
@@ -143,8 +175,9 @@ try
 {
     var context = services.GetRequiredService<AppDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     await context.Database.MigrateAsync(); // Apply any pending migrations to the database.
-    await DbInitializer.SeedData(context, userManager); // Seed the database with initial data.
+    await DbInitializer.SeedData(context, userManager, roleManager); // Seed the database with initial data.
 }
 catch (Exception ex)
 {

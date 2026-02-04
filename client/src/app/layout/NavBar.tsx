@@ -39,7 +39,7 @@ export default function NavBar() {
               >
                 <Group fontSize="large" /> {/* icon */}
                 <Typography variant="h4" fontWeight="bold">
-                  Reactivities
+                  Glasses
                 </Typography>
               </MenuItem>
             </Box>

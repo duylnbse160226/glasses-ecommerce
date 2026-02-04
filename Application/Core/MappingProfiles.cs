@@ -1,6 +1,8 @@
 using System;
 using Application.Activities.DTOs;
+using Application.Categories.DTOs;
 using Application.Profiles.DTOs;
+using Application.Products.DTOs;
 using AutoMapper;
 using Domain;
 
@@ -28,6 +30,34 @@ public class MappingProfiles : Profile
             .ForMember(d => d.Id, o => o.MapFrom(s => s.User.Id));
         CreateMap<User, UserProfile>();
 
+        // Product mappings
+        CreateMap<ProductCategory, ProductCategoryDto>();
+        
+        CreateMap<ProductImage, ProductImageDto>();
+        
+        CreateMap<ProductVariant, ProductVariantDto>()
+            .ForMember(d => d.QuantityAvailable, o => o.MapFrom(s => 
+                s.Stock != null ? s.Stock.QuantityAvailable : 0));
+        
+        CreateMap<Product, ProductDto>()
+            .ForMember(d => d.Variants, o => o.MapFrom(s => 
+                s.Variants.Where(v => v.IsActive)))
+            .ForMember(d => d.Images, o => o.MapFrom(s => 
+                s.Images.Where(i => !i.IsDeleted && i.ProductId != null)
+                    .OrderBy(i => i.DisplayOrder)));
+        
+        CreateMap<Product, ProductListDto>()
+            .ForMember(d => d.MinPrice, o => o.MapFrom(s => 
+                s.Variants.Any() ? s.Variants.Min(v => v.Price) : 0))
+            .ForMember(d => d.MaxPrice, o => o.MapFrom(s => 
+                s.Variants.Any() ? (decimal?)s.Variants.Max(v => v.Price) : null))
+            .ForMember(d => d.TotalQuantityAvailable, o => o.MapFrom(s => 
+                s.Variants.Where(v => v.Stock != null)
+                    .Sum(v => v.Stock!.QuantityAvailable)))
+            .ForMember(d => d.FirstImage, o => o.MapFrom(s => 
+                s.Images.Where(i => !i.IsDeleted && i.ProductId != null)
+                    .OrderBy(i => i.DisplayOrder)
+                    .FirstOrDefault()));
         
         
     }
