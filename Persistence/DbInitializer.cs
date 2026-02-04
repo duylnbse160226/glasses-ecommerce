@@ -427,6 +427,103 @@ public class DbInitializer
             await context.Products.AddRangeAsync(products);
             await context.SaveChangesAsync();
 
+            // Phase 1.5: Seed Product Images (lifestyle/catalog images)
+            var productImages = new List<ProductImage>
+            {
+                // Slim Metal - Product lifestyle image
+                new()
+                {
+                    ProductId = products[0].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101972/glasses/smrffawtkxqqmgtnibky.png",
+                    AltText = "Slim Metal Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Semi-Rimless Rectangular - Product lifestyle image
+                new()
+                {
+                    ProductId = products[1].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101829/glasses/j3bbtgtdghxndvn7lxv2.png",
+                    AltText = "Semi-Rimless Rectangular Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Rimless - Product lifestyle image
+                new()
+                {
+                    ProductId = products[2].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101800/glasses/nvgmguvxtypfdwukp2re.png",
+                    AltText = "Rimless Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Rectangular Sunglasses - Product lifestyle image
+                new()
+                {
+                    ProductId = products[3].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101699/glasses/gdxjm9mryiwljnsgybcm.png",
+                    AltText = "Rectangular Sunglasses Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Oval Sunglasses - Product lifestyle image
+                new()
+                {
+                    ProductId = products[4].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101634/glasses/xxcswynmwzwvgwwt93up.png",
+                    AltText = "Oval Sunglasses Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Modern Square - Product lifestyle image
+                new()
+                {
+                    ProductId = products[5].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101498/glasses/tujfhvzv1qk1xttsdqlz.png",
+                    AltText = "Modern Square Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Geometric Polygon - Product lifestyle image
+                new()
+                {
+                    ProductId = products[6].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101408/glasses/zhpqlpuhfozs7n93ksgn.png",
+                    AltText = "Geometric Polygon Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Classic Square - Product lifestyle image
+                new()
+                {
+                    ProductId = products[7].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101331/glasses/k0swrksxr7ibujtqmgoo.png",
+                    AltText = "Classic Square Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Classic Browline - Product lifestyle image
+                new()
+                {
+                    ProductId = products[8].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101200/glasses/epihyjbvoxn2wbrp8wf2.png",
+                    AltText = "Classic Browline Collection",
+                    DisplayOrder = 0
+                },
+                
+                // Cat Eye - Product lifestyle image
+                new()
+                {
+                    ProductId = products[9].Id,
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770100885/glasses/alu8clcjhvool7n3ljab.png",
+                    AltText = "Cat Eye Collection",
+                    DisplayOrder = 0
+                }
+            };
+
+            await context.ProductImages.AddRangeAsync(productImages);
+            await context.SaveChangesAsync();
+
             // Phase 2: Seed Product Variants with Images
             var variants = new List<ProductVariant>
             {
