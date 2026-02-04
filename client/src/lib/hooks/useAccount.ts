@@ -5,36 +5,33 @@ import { useLocation, useNavigate } from "react-router";
 import type { RegisterSchema } from "../schemas/registerSchema";
 import { toast } from "react-toastify";
 
+type LoginResponse = {
+  tokenType: string;
+  accessToken: string;
+  expiresIn: number;
+  refreshToken: string;
+};
+
 export const useAccount = () => {
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
 
-  //After user logs in i want to fetch user info to know user already logged in successfully or not
-  //Because i can't access to cookies from client side (httpOnly cookies)
+  // After user logs in we now store JWT and then fetch user-info using Authorization header
   const loginUser = useMutation({
     mutationFn: async (creds: LoginSchema) => {
-      await agent.post("/login?useCookies=true", creds);
+      const response = await agent.post<LoginResponse>("/login", {
+        email: creds.email,
+        password: creds.password,
+        twoFactorCode: null,
+        twoFactorRecoveryCode: null,
+      });
+
+      const { accessToken, refreshToken } = response.data;
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
     },
     onSuccess: async () => {
-      //Invalidate user query that force React Query to refetch user info
-      //Best practice in react query is using invalidateQueries after mutation that change data
-      //But a characteristic of invalidateQueries is not fetch data immediately
-      //  unless query is active (component using the query is mounted)
-      // -> If query is not active invalidateQueries will just mark the query as stale and not fetch data
-      // await queryClient.invalidateQueries({
-      //   queryKey: ["user"],
-      // });
-      //But in this case after login mutation success we need to refetch user info immediately
-      //Because <RequireAuth> need to know user is logged in or not to let user access protected routes
-      //So if we use invalidateQueries the currentUser value in <RequireAuth> may be still undefined
-      //  because the query is not active yet (the component using the query is not mounted yet)
-      //  -> user will be redirected to login page even after login successfully
-      //So in this case we will use queryClient.fetchQuery to fetch user info immediately after login success
-
-      //In conclusion: The difference between the 2 methods is that invalidateQueries will mark the query as stale,
-      //  and if it is currently active it will update immediately otherwise will get the fresh data next time it is used,
-      //  the refetch queries is useful when we want to trigger background updates for inactive queries.
       await queryClient.fetchQuery({
         queryKey: ["user"],
       });
@@ -47,15 +44,22 @@ export const useAccount = () => {
     },
     onSuccess: () => {
       toast.success("Register successful - you can now login");
-      navigate("/login");
+      navigate("/collections");
     },
   });
 
   const logoutUser = useMutation({
     mutationFn: async () => {
-      await agent.post("/account/logout");
+      // Optional: also call backend logout if available
+      try {
+        await agent.post("/account/logout");
+      } catch {
+        // ignore backend logout errors; client will still clear auth state
+      }
     },
     onSuccess: () => {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       queryClient.removeQueries({ queryKey: ["user"] });
       queryClient.removeQueries({ queryKey: ["activities"] });
       navigate("/");
@@ -70,6 +74,7 @@ export const useAccount = () => {
     queryKey: ["user"],
     queryFn: async () => {
       const response = await agent.get<User>("/account/user-info");
+      console.log("USER_INFO from backend:", response.data);
       return response.data;
     },
     //it mean that if we already have user data in cache we don't need to run this query again and the path is not /register

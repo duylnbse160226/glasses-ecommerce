@@ -15,6 +15,16 @@ const agent = axios.create({
 });
 
 agent.interceptors.request.use((config) => {
+  // Attach JWT access token if available
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    config.headers = config.headers ?? {};
+    // Do not overwrite an explicit Authorization header
+    if (!config.headers["Authorization"]) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   store.uiStore.isBusy();
   return config;
 });
@@ -28,7 +38,11 @@ agent.interceptors.response.use(
   async (error) => {
     if (import.meta.env.DEV) await sleep(1000);
     store.uiStore.isIdle();
-    console.log(error.response);
+
+    if (!error.response) {
+      toast.error("Cannot connect to server. Please check if the backend is running.");
+      return Promise.reject(error);
+    }
 
     const { status, data } = error.response;
     switch (status) {

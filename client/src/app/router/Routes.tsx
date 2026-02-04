@@ -20,6 +20,7 @@ import CartPage from "../../features/cart/CartPage";
 
 import CheckoutPage from "../../features/checkout/CheckoutPage";
 import OrderSuccessPage from "../../features/checkout/OrderSuccessPage";
+import ProfilePage from "../../features/profiles/ProfilePage";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
 
       // Other pages
       { path: "counter", element: <Counter /> },
+      { path: "profile", element: <ProfilePage /> },
 
       // Errors
       { path: "errors", element: <TestErrors /> },

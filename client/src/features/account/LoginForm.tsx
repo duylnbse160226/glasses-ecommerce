@@ -29,11 +29,15 @@ export default function LoginForm() {
   });
 
   const onSubmit = async (data: LoginSchema) => {
-    await loginUser.mutateAsync(data, {
-      onSuccess: () => {
-        navigate(location.state?.from || "/activities");
-      },
-    });
+    try {
+      await loginUser.mutateAsync(data, {
+        onSuccess: () => {
+          navigate("/collections");
+        },
+      });
+    } catch {
+      // Lỗi đã xử lý bởi agent (toast)
+    }
   };
 
   return (

@@ -62,3 +62,22 @@ type LocationIQAddress = {
   country_code: string;
   neighbourhood?: string;
 };
+
+/** Query params for GET /api/products */
+type ProductsQueryParams = {
+  /** Default: 1 */
+  pageNumber?: number;
+  /** Default: 10 */
+  pageSize?: number;
+  categoryIds?: string[] | null;
+  brand?: string | null;
+  status?: string | null;
+  type?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  search?: string | null;
+  /** Default: 0 */
+  sortBy?: number;
+  /** Default: 1 */
+  sortOrder?: number;
+};

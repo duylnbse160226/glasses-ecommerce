@@ -33,20 +33,24 @@ export default function RegisterForm() {
   });
 
   const onSubmit = async (data: RegisterSchema) => {
-    await registerUser.mutateAsync(data, {
-      onError: (error) => {
-        if (Array.isArray(error)) {
-          error.forEach((err) => {
-            if (err.includes("Email")) setError("email", { message: err });
-            else if (err.includes("Password"))
-              setError("password", { message: err });
-          });
-        }
-      },
-      onSuccess: () => {
-        navigate("/activities");
-      },
-    });
+    try {
+      await registerUser.mutateAsync(data, {
+        onError: (error) => {
+          if (Array.isArray(error)) {
+            error.forEach((err) => {
+              if (err.includes("Email")) setError("email", { message: err });
+              else if (err.includes("Password"))
+                setError("password", { message: err });
+            });
+          }
+        },
+        onSuccess: () => {
+          navigate("/collections");
+        },
+      });
+    } catch {
+      // Lỗi đã xử lý bởi agent (toast) và/hoặc onError (form errors)
+    }
   };
 
   return (
