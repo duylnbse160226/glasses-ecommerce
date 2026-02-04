@@ -452,7 +452,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[2].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101800/glasses/nvgmguvxtypfdwukp2re.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101628/glasses/wkhg3alhapdbbyiwh8mq.png",
                     AltText = "Rimless Collection",
                     DisplayOrder = 0
                 },
@@ -461,7 +461,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[3].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101699/glasses/gdxjm9mryiwljnsgybcm.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101609/glasses/enjpf5zj1rh634ddroew.png",
                     AltText = "Rectangular Sunglasses Collection",
                     DisplayOrder = 0
                 },
@@ -470,7 +470,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[4].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101634/glasses/xxcswynmwzwvgwwt93up.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101589/glasses/q1nlge8bp63ifcqz2i2n.png",
                     AltText = "Oval Sunglasses Collection",
                     DisplayOrder = 0
                 },
@@ -479,7 +479,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[5].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101498/glasses/tujfhvzv1qk1xttsdqlz.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101475/glasses/ytdn1ntosxnuyoi9lwbe.png",
                     AltText = "Modern Square Collection",
                     DisplayOrder = 0
                 },
@@ -488,7 +488,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[6].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101408/glasses/zhpqlpuhfozs7n93ksgn.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101361/glasses/ztk0bwfcmiwohe74vcvv.png",
                     AltText = "Geometric Polygon Collection",
                     DisplayOrder = 0
                 },
@@ -497,7 +497,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[7].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101331/glasses/k0swrksxr7ibujtqmgoo.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770100968/glasses/jxtqxecyepxbg1hxh2ce.png",
                     AltText = "Classic Square Collection",
                     DisplayOrder = 0
                 },
@@ -506,7 +506,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[8].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101200/glasses/epihyjbvoxn2wbrp8wf2.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770100913/glasses/yxbm35bbcyxdovtcljsz.png",
                     AltText = "Classic Browline Collection",
                     DisplayOrder = 0
                 },
@@ -515,7 +515,7 @@ public class DbInitializer
                 new()
                 {
                     ProductId = products[9].Id,
-                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770100885/glasses/alu8clcjhvool7n3ljab.png",
+                    ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770100852/glasses/ym2kzgsnxtshxajg0hu0.png",
                     AltText = "Cat Eye Collection",
                     DisplayOrder = 0
                 }
@@ -781,7 +781,7 @@ public class DbInitializer
                     [
                         new()
                         {
-                            ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101481/glasses/rvhezt2oetdru6lx9cho.png",
+                            ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101475/glasses/ytdn1ntosxnuyoi9lwbe.png",
                             AltText = "Modern Square Black - Front View",
                             DisplayOrder = 0
                         },
@@ -793,7 +793,7 @@ public class DbInitializer
                         },
                         new()
                         {
-                            ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101475/glasses/ytdn1ntosxnuyoi9lwbe.png",
+                            ImageUrl = "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1770101481/glasses/rvhezt2oetdru6lx9cho.png",
                             AltText = "Modern Square Black - Angle View",
                             DisplayOrder = 2
                         }
