@@ -36,8 +36,15 @@ public class DbInitializer
             new() {DisplayName = "Admin User", UserName = "admin@test.com", Email = "admin@test.com"} ,
         };
 
-        if(!userManager.Users.Any())
+        if (userManager.Users.Count() < 100) // Changed from .Any() to force reseed - change back to .Any() after deployment
         {
+            // Delete existing users to avoid conflicts
+            var existingUsers = userManager.Users.ToList();
+            foreach (var existingUser in existingUsers)
+            {
+                await userManager.DeleteAsync(existingUser);
+            }
+            
             for (int i = 0; i < users.Count; i++)
             {
                 //doc: The password for the user to hash and store.
@@ -53,8 +60,12 @@ public class DbInitializer
         }
 
         // Seed Activities
-        if (!context.Activities.Any())
+        if (context.Activities.Count() < 100) // Changed from .Any() to force reseed - change back to .Any() after deployment
         {
+            // Delete existing activities to avoid conflicts
+            context.Activities.RemoveRange(context.Activities);
+            await context.SaveChangesAsync();
+            
             var activities = new List<Activity>
         {
             new()
@@ -287,8 +298,16 @@ public class DbInitializer
         }
 
         // Seed Product Categories
-        if (!context.ProductCategories.Any())
+        if (context.ProductCategories.Count() < 200) // Changed from .Any() to force reseed - change back to .Any() after deployment
         {
+            // Delete existing data to avoid conflicts (in correct order due to FK constraints)
+            context.ProductImages.RemoveRange(context.ProductImages);
+            context.Stocks.RemoveRange(context.Stocks);
+            context.ProductVariants.RemoveRange(context.ProductVariants);
+            context.Products.RemoveRange(context.Products);
+            context.ProductCategories.RemoveRange(context.ProductCategories);
+            await context.SaveChangesAsync();
+            
             var categories = new List<ProductCategory>
             {
                 new()
