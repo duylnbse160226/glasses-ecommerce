@@ -2,6 +2,7 @@ using Application.Carts.DTOs;
 using Application.Core;
 using Application.Interfaces;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -25,11 +26,10 @@ public sealed class AddItemToCart
         {
             Guid userId = userAccessor.GetUserId();
 
-            // Validate ProductVariant exists and is active
+            // Validate ProductVariant exists, is active, and has stock
             ProductVariant? productVariant = await context.ProductVariants
+                .AsNoTracking()
                 .Include(pv => pv.Stock)
-                .Include(pv => pv.Product)
-                .Include(pv => pv.Images)
                 .FirstOrDefaultAsync(pv => pv.Id == request.AddCartItemDto.ProductVariantId, cancellationToken);
 
             if (productVariant == null)
@@ -49,9 +49,8 @@ public sealed class AddItemToCart
                     $"Insufficient stock. Only {productVariant.Stock?.QuantityAvailable ?? 0} items available.", 400);
             }
 
-            // Get or create active cart for user
+            // Get or create active cart for user (without Items to avoid tracking issues)
             Cart? cart = await context.Carts
-                .Include(c => c.Items)
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.Status == CartStatus.Active, cancellationToken);
 
             if (cart == null)
@@ -63,10 +62,13 @@ public sealed class AddItemToCart
                     CreatedAt = DateTime.UtcNow
                 };
                 context.Carts.Add(cart);
+                await context.SaveChangesAsync(cancellationToken);
             }
 
-            // Check if item already exists in cart (should be prevented by unique constraint, but check anyway)
-            CartItem? existingItem = cart.Items.FirstOrDefault(i => i.ProductVariantId == request.AddCartItemDto.ProductVariantId);
+            // Check if item already exists in cart
+            CartItem? existingItem = await context.CartItems
+                .FirstOrDefaultAsync(ci => ci.CartId == cart.Id 
+                    && ci.ProductVariantId == request.AddCartItemDto.ProductVariantId, cancellationToken);
 
             if (existingItem != null)
             {
@@ -81,7 +83,6 @@ public sealed class AddItemToCart
                 }
 
                 existingItem.Quantity = newQuantity;
-                cart.UpdatedAt = DateTime.UtcNow;
             }
             else
             {
@@ -92,10 +93,10 @@ public sealed class AddItemToCart
                     ProductVariantId = request.AddCartItemDto.ProductVariantId,
                     Quantity = request.AddCartItemDto.Quantity
                 };
-                cart.Items.Add(cartItem);
-                cart.UpdatedAt = DateTime.UtcNow;
+                context.CartItems.Add(cartItem);
             }
 
+            cart.UpdatedAt = DateTime.UtcNow;
             bool success = await context.SaveChangesAsync(cancellationToken) > 0;
 
             if (!success)
@@ -103,18 +104,18 @@ public sealed class AddItemToCart
                 return Result<CartItemDto>.Failure("Failed to add item to cart.", 500);
             }
 
-            // Reload the cart item with all navigation properties for mapping
-            CartItem? addedItem = await context.CartItems
-                .Include(ci => ci.ProductVariant)
-                    .ThenInclude(pv => pv.Stock)
-                .Include(ci => ci.ProductVariant)
-                    .ThenInclude(pv => pv.Product)
-                .Include(ci => ci.ProductVariant)
-                    .ThenInclude(pv => pv.Images)
-                .FirstOrDefaultAsync(ci => ci.CartId == cart.Id 
-                    && ci.ProductVariantId == request.AddCartItemDto.ProductVariantId, cancellationToken);
+            // Use ProjectTo for optimal performance - only select needed data
+            CartItemDto? cartItemDto = await context.CartItems
+                .Where(ci => ci.CartId == cart.Id 
+                    && ci.ProductVariantId == request.AddCartItemDto.ProductVariantId)
+                .ProjectTo<CartItemDto>(mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            CartItemDto cartItemDto = mapper.Map<CartItemDto>(addedItem);
+            if (cartItemDto == null)
+            {
+                return Result<CartItemDto>.Failure("Failed to retrieve cart item.", 500);
+            }
+
             return Result<CartItemDto>.Success(cartItemDto);
         }
     }
