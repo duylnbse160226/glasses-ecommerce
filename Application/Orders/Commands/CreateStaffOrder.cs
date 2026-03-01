@@ -115,15 +115,20 @@ public sealed class CreateStaffOrder
                     .ToListAsync(ct);
                 // EF Core relationship fixup auto-links variant.Stock
 
+                // Ensure all ordered product variants are active
+                foreach (OrderItemInputDto item in mergedItems)
+                {
+                    ProductVariant variant = variants.First(v => v.Id == item.ProductVariantId);
+                    if (!variant.IsActive)
+                        return Result<Guid>.Failure($"Product variant '{variant.VariantName}' is not available.", 400);
+                }
+
                 // Validate stock for ReadyStock orders
                 if (dto.OrderType == OrderType.ReadyStock)
                 {
                     foreach (OrderItemInputDto item in mergedItems)
                     {
                         ProductVariant variant = variants.First(v => v.Id == item.ProductVariantId);
-                        if (!variant.IsActive)
-                            return Result<Guid>.Failure($"Product variant '{variant.VariantName}' is not available.", 400);
-
                         if (variant.Stock == null || variant.Stock.QuantityAvailable < item.Quantity)
                             return Result<Guid>.Failure(
                                 $"Insufficient stock for '{variant.VariantName}'. Available: {variant.Stock?.QuantityAvailable ?? 0}.", 400);
