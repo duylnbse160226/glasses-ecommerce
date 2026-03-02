@@ -26,7 +26,7 @@ import RequireRole from "./RequireRole";
 import SalesDashboard from "../../features/sales/SalesDashboard";
 import OperationsDashboard from "../../features/Operations/OperationsDashboard";
 import ManagerDashboard from "../../features/Manager/ManagerDashboard";
-import AdminDashboard from "../../features/Admin/AdminDashboard";
+import AdminDashboard from "../../features/admin/AdminDashboard";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
@@ -93,8 +93,6 @@ export const router = createBrowserRouter([
         element: <RequireRole allowedRoles={["Customer"]} />,
         children: [{ path: "profile", element: <ProfilePage /> }],
       },
-      
-
       // Errors
       { path: "errors", element: <TestErrors /> },
       { path: "server-error", element: <ServerError /> },
