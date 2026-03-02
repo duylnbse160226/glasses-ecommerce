@@ -11,6 +11,7 @@ import ProductDetailPage from "../../features/collections/ProductDetailPage";
 
 import LoginForm from "../../features/account/LoginForm";
 import RegisterForm from "../../features/account/RegisterForm";
+import PostLoginRedirect from "../../features/account/PostLoginRedirect";
 
 import TestErrors from "../../features/errors/TestErrors";
 import NotFound from "../../features/errors/NotFound";
@@ -20,7 +21,12 @@ import CartPage from "../../features/cart/CartPage";
 
 import CheckoutPage from "../../features/checkout/CheckoutPage";
 import OrderSuccessPage from "../../features/checkout/OrderSuccessPage";
-import AdminPage from "../../features/admin/AdminPage";
+import ProfilePage from "../../features/Customer/profile/ProfilePage";
+import RequireRole from "./RequireRole";
+import SalesDashboard from "../../features/sales/SalesDashboard";
+import OperationsDashboard from "../../features/Operations/OperationsDashboard";
+import ManagerDashboard from "../../features/Manager/ManagerDashboard";
+import AdminDashboard from "../../features/Admin/AdminDashboard";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
@@ -38,6 +44,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "login", element: <LoginForm /> },
       { path: "register", element: <RegisterForm /> },
+      { path: "auth/redirect", element: <PostLoginRedirect /> },
     ],
   },
 
@@ -48,6 +55,26 @@ export const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
+      // ======================
+      // ROLE-BASED AREAS
+      // ======================
+      {
+        element: <RequireRole allowedRoles={["Sales"]} />,
+        children: [{ path: "sales", element: <SalesDashboard /> }],
+      },
+      {
+        element: <RequireRole allowedRoles={["Operations"]} />,
+        children: [{ path: "operations", element: <OperationsDashboard /> }],
+      },
+      {
+        element: <RequireRole allowedRoles={["Manager"]} />,
+        children: [{ path: "manager", element: <ManagerDashboard /> }],
+      },
+      {
+        element: <RequireRole allowedRoles={["Admin"]} />,
+        children: [{ path: "admin", element: <AdminDashboard /> }],
+      },
+
       // Collections group
       {
         path: "collections",
@@ -62,9 +89,11 @@ export const router = createBrowserRouter([
 
       // Other pages
       { path: "counter", element: <Counter /> },
-  // Admin
-  { path: "admin", element: <AdminPage /> },
-
+      {
+        element: <RequireRole allowedRoles={["Customer"]} />,
+        children: [{ path: "profile", element: <ProfilePage /> }],
+      },
+      
 
       // Errors
       { path: "errors", element: <TestErrors /> },
