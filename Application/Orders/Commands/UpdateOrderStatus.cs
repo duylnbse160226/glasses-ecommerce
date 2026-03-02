@@ -50,8 +50,8 @@ public sealed class UpdateOrderStatus
                     return Result<Unit>.Failure(
                         $"Cannot transition from '{oldStatus}' to '{newStatus}'.", 400);
 
-                // Only ReadyStock orders reserve stock on creation — only they need stock adjustments on cancel/complete.
-                if (order.OrderType == OrderType.ReadyStock &&
+                // ReadyStock and Prescription orders reserve stock on creation — they need stock adjustments on cancel/complete.
+                if ((order.OrderType == OrderType.ReadyStock || order.OrderType == OrderType.Prescription) &&
                     (newStatus == OrderStatus.Cancelled || newStatus == OrderStatus.Completed))
                 {
                     List<OrderItem> items = await context.OrderItems

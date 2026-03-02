@@ -111,15 +111,20 @@ public sealed class Checkout
                     .ToListAsync(ct);
                 // EF Core relationship fixup auto-links variant.Stock
 
-                if (dto.OrderType == OrderType.ReadyStock)
+                // Ensure all ordered product variants are active
+                foreach (var mergedItem in mergedItems)
+                {
+                    ProductVariant variant = variants.First(v => v.Id == mergedItem.ProductVariantId);
+                    if (!variant.IsActive)
+                        return Result<Guid>.Failure(
+                            $"Product '{variant.VariantName}' is no longer available.", 400);
+                }
+
+                if (dto.OrderType == OrderType.ReadyStock || dto.OrderType == OrderType.Prescription)
                 {
                     foreach (var mergedItem in mergedItems)
                     {
                         ProductVariant variant = variants.First(v => v.Id == mergedItem.ProductVariantId);
-                        if (!variant.IsActive)
-                            return Result<Guid>.Failure(
-                                $"Product '{variant.VariantName}' is no longer available.", 400);
-
                         if (variant.Stock == null || variant.Stock.QuantityAvailable < mergedItem.Quantity)
                             return Result<Guid>.Failure(
                                 $"Insufficient stock for '{variant.VariantName}'. Available: {variant.Stock?.QuantityAvailable ?? 0}.", 400);
@@ -210,8 +215,8 @@ public sealed class Checkout
                 }
                 context.OrderItems.AddRange(orderItems);
 
-                // 8. Reserve stock (ReadyStock only — only this type reserves on create)
-                if (dto.OrderType == OrderType.ReadyStock)
+                // 8. Reserve stock for ReadyStock and Prescription orders
+                if (dto.OrderType == OrderType.ReadyStock || dto.OrderType == OrderType.Prescription)
                 {
                     foreach (var mergedItem in mergedItems)
                     {

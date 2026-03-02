@@ -53,8 +53,8 @@ public sealed class CancelMyOrder
 
                 OrderStatus oldStatus = order.OrderStatus;
 
-                // Only ReadyStock orders reserve stock on creation — skip stock release for other types.
-                if (order.OrderType == OrderType.ReadyStock)
+                // ReadyStock and Prescription orders reserve stock on creation — skip stock release for other types.
+                if (order.OrderType == OrderType.ReadyStock || order.OrderType == OrderType.Prescription)
                 {
                     List<OrderItem> items = await context.OrderItems
                         .Where(oi => oi.OrderId == order.Id)
