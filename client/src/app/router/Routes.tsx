@@ -37,6 +37,7 @@ import {
 } from "../../features/Operations/screens";
 import ManagerDashboard from "../../features/Manager/ManagerDashboard";
 import AdminDashboard from "../../features/Admin/AdminDashboard";
+import RoleManagement from "../../features/Admin/RoleManagement";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
@@ -96,7 +97,16 @@ export const router = createBrowserRouter([
       },
       {
         element: <RequireRole allowedRoles={["Admin"]} />,
-        children: [{ path: "admin", element: <AdminDashboard /> }],
+        children: [
+          {
+            path: "admin",
+            element: <Outlet />,
+            children: [
+              { index: true, element: <AdminDashboard /> },
+              { path: "roles", element: <RoleManagement /> },
+            ],
+          },
+        ],
       },
 
       // Collections group

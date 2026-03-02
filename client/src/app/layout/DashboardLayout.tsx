@@ -21,6 +21,8 @@ import AddBoxOutlined from "@mui/icons-material/AddBoxOutlined";
 import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import ScheduleOutlined from "@mui/icons-material/ScheduleOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import SecurityIcon from "@mui/icons-material/Security";
+import GroupIcon from "@mui/icons-material/Group";
 import { useAccount } from "../../lib/hooks/useAccount";
 
 const SIDEBAR_WIDTH = 260;
@@ -39,6 +41,11 @@ const OPERATIONS_SUB_LINKS: { path: string; label: string; icon: React.ReactNode
   { path: "/operations/tracking", label: "Update tracking", icon: <TrackChangesOutlined /> },
   { path: "/operations/pre-order", label: "Pre-order", icon: <ScheduleOutlined /> },
   { path: "/operations/prescription", label: "Prescription", icon: <VisibilityOutlined /> },
+];
+
+const ADMIN_SUB_LINKS: { path: string; label: string; icon: React.ReactNode }[] = [
+  { path: "/admin", label: "Dashboard", icon: <AdminPanelSettingsIcon /> },
+  { path: "/admin/roles", label: "Role Management", icon: <SecurityIcon /> },
 ];
 
 export default function DashboardLayout() {
@@ -120,6 +127,45 @@ export default function DashboardLayout() {
                   Operations
                 </Typography>
                 {OPERATIONS_SUB_LINKS.map((sub) => (
+                  <ListItemButton
+                    key={sub.path}
+                    component={NavLink}
+                    to={sub.path}
+                    sx={{
+                      borderRadius: 2,
+                      mb: 0.5,
+                      color: "rgba(0,0,0,0.7)",
+                      "&.active": {
+                        bgcolor: "rgba(25,118,210,0.12)",
+                        color: "primary.main",
+                      },
+                      "&:hover": {
+                        bgcolor: "rgba(0,0,0,0.04)",
+                        color: "rgba(0,0,0,0.9)",
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{sub.icon}</ListItemIcon>
+                    <ListItemText primary={sub.label} primaryTypographyProps={{ fontWeight: 600 }} />
+                  </ListItemButton>
+                ))}
+              </Fragment>
+            ) : path === "/admin" ? (
+              <Fragment key="admin">
+                <Typography
+                  sx={{
+                    fontSize: 11,
+                    letterSpacing: 4,
+                    textTransform: "uppercase",
+                    color: "text.secondary",
+                    px: 2,
+                    py: 1,
+                    mt: 1,
+                  }}
+                >
+                  Admin
+                </Typography>
+                {ADMIN_SUB_LINKS.map((sub) => (
                   <ListItemButton
                     key={sub.path}
                     component={NavLink}
