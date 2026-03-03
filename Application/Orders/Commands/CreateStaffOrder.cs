@@ -246,6 +246,9 @@ public sealed class CreateStaffOrder
                     foreach (OrderItemInputDto item in mergedItems)
                     {
                         ProductVariant variant = variants.First(v => v.Id == item.ProductVariantId);
+                        if (variant.Stock == null)
+                            return Result<Guid>.Failure(
+                                $"Stock record not found for product variant '{variant.VariantName}'.", 409);
                         if (variant.IsPreOrder && variant.Stock != null)
                         {
                             variant.Stock.QuantityPreOrdered += item.Quantity;

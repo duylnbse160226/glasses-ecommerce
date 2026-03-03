@@ -254,9 +254,8 @@ public sealed class Checkout
                 }
                 else if (resolvedOrderType == OrderType.PreOrder)
                 {
-                    // Không reserve (hàng chưa có), chỉ ghi nhận demand để biết cần nhập thêm bao nhiêu.
-                    // Regular items trong mixed cart cũng được ghi vào QuantityPreOrdered
-                    // vì toàn đơn sẽ giữ lại chờ đóng gói 1 lần khi đủ hàng.
+                    // PreOrder items (IsPreOrder = true): hàng chưa có trong kho → ghi nhận demand vào QuantityPreOrdered.
+                    // Regular items trong mixed cart (IsPreOrder = false): hàng có sẵn → reserve bình thường vào QuantityReserved.
                     foreach (var mergedItem in mergedItems)
                     {
                         ProductVariant variant = variants.First(v => v.Id == mergedItem.ProductVariantId);
@@ -265,6 +264,11 @@ public sealed class Checkout
                             variant.Stock.QuantityPreOrdered += mergedItem.Quantity;
                             variant.Stock.UpdatedAt = DateTime.UtcNow;
                             variant.Stock.UpdatedBy = userId;
+                        }
+                        else if (variant.IsPreOrder && variant.Stock == null)
+                        {
+                            return Result<Guid>.Failure(
+                                $"PreOrder variant '{variant.VariantName}' has no stock record configured.", 400);
                         }
                         else if (!variant.IsPreOrder)
                         {
