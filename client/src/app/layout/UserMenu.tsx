@@ -1,6 +1,7 @@
 import * as React from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import { useState } from "react";
 import {
   Avatar,
   Divider,
@@ -8,29 +9,26 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { observer } from "mobx-react-lite";
 import { useAccount } from "../../lib/hooks/useAccount";
-import { useStore } from "../../lib/hooks/useStore";
-import { Link } from "react-router";
-import { Logout, Person, ShoppingBag } from "@mui/icons-material";
+import { Link } from "react-router-dom";
+import { Logout, Person, AdminPanelSettings } from "@mui/icons-material";
 
-const UserMenu = observer(function UserMenu() {
-  const { uiStore } = useStore();
+export default function UserMenu() {
   const { currentUser, logoutUser } = useAccount();
-  const anchorEl = uiStore.userMenuAnchor;
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Toggle: click avatar again to close dropdown
     if (open) {
-      uiStore.setUserMenuAnchor(null);
+      setAnchorEl(null);
     } else {
-      uiStore.closeCart();
-      uiStore.setUserMenuAnchor(event.currentTarget);
+      setAnchorEl(event.currentTarget);
     }
   };
 
   const handleClose = () => {
-    uiStore.setUserMenuAnchor(null);
+    setAnchorEl(null);
   };
 
   return (
@@ -98,11 +96,12 @@ const UserMenu = observer(function UserMenu() {
           </ListItemIcon>
           <ListItemText>My profile</ListItemText>
         </MenuItem>
-        <MenuItem component={Link} to="/orders" onClick={handleClose}>
+        <Divider />
+        <MenuItem component={Link} to="/admin" onClick={handleClose}>
           <ListItemIcon>
-            <ShoppingBag />
+            <AdminPanelSettings />
           </ListItemIcon>
-          <ListItemText>View my orders</ListItemText>
+          <ListItemText>Admin</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem
@@ -119,6 +118,4 @@ const UserMenu = observer(function UserMenu() {
       </Menu>
     </>
   );
-});
-
-export default UserMenu;
+}
