@@ -93,10 +93,38 @@ export default function OrderDetailPage() {
           ← My orders
         </Button>
         <Chip label={orderLabel} sx={{ fontWeight: 700 }} />
-        <Chip size="small" label={order.orderType} sx={{ textTransform: "none" }} variant="outlined" />
+        <Box
+          component="span"
+          sx={{
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+            border: "1px solid #0ea5e9",
+            bgcolor: "rgba(14,165,233,0.12)",
+            color: "#0369a1",
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          {order.orderType}
+        </Box>
         <Chip size="small" label={orderStatus} sx={{ textTransform: "capitalize" }} color="primary" />
         {order.orderSource && (
-          <Chip size="small" label={order.orderSource} variant="outlined" sx={{ textTransform: "none" }} />
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              border: "1px solid #22c55e",
+              bgcolor: "rgba(34,197,94,0.12)",
+              color: "#15803d",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {order.orderSource}
+          </Box>
         )}
       </Box>
 
@@ -124,16 +152,46 @@ export default function OrderDetailPage() {
               <Typography fontSize={14} component="span" sx={{ wordBreak: "break-all" }}>{order.id}</Typography>
             </Box>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
-              <Box sx={{ px: 1.5, py: 0.5, borderRadius: 1, border: "1px solid #0ea5e9", bgcolor: "rgba(14,165,233,0.12)", color: "#0369a1" }}>
-                <Typography fontSize={13} fontWeight={600}>Type: {order.orderType ?? "—"}</Typography>
-              </Box>
+              <Typography fontSize={14} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <b>Type:</b>
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    border: "1px solid #0ea5e9",
+                    bgcolor: "rgba(14,165,233,0.12)",
+                    color: "#0369a1",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {order.orderType ?? "—"}
+                </Box>
+              </Typography>
               <Box sx={{ px: 1.5, py: 0.5, borderRadius: 1, border: "1px solid #8b5cf6", bgcolor: "rgba(139,92,246,0.12)", color: "#5b21b6" }}>
                 <Typography fontSize={13} fontWeight={600}>Status: {orderStatus}</Typography>
               </Box>
               {order.orderSource && (
-                <Box sx={{ px: 1.5, py: 0.5, borderRadius: 1, border: "1px solid #22c55e", bgcolor: "rgba(34,197,94,0.12)", color: "#15803d" }}>
-                  <Typography fontSize={13} fontWeight={600}>Source: {order.orderSource}</Typography>
-                </Box>
+                <Typography fontSize={14} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <b>Source:</b>
+                  <Box
+                    component="span"
+                    sx={{
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 1,
+                      border: "1px solid #22c55e",
+                      bgcolor: "rgba(34,197,94,0.12)",
+                      color: "#15803d",
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {order.orderSource}
+                  </Box>
+                </Typography>
               )}
             </Box>
             <Typography fontSize={14}>

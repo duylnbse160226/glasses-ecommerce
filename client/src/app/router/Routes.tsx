@@ -29,7 +29,6 @@ import RequireRole from "./RequireRole";
 import SalesLayout from "../../features/Sales/SalesLayout";
 import { OverviewScreen as SalesOverviewScreen } from "../../features/Sales/screens/OverviewScreen";
 import { OrdersScreen as SalesOrdersScreen } from "../../features/Sales/screens/OrdersScreen";
-import { OrderDetailScreen as SalesOrderDetailScreen } from "../../features/Sales/screens/OrderDetailScreen";
 import OperationsLayout from "../../features/Operations/OperationsLayout";
 import {
   PackScreen,
@@ -88,7 +87,6 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <SalesOverviewScreen /> },
               { path: "orders", element: <SalesOrdersScreen /> },
-              { path: "orders/:id", element: <SalesOrderDetailScreen /> },
             ],
           },
         ],

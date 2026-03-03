@@ -2,12 +2,12 @@ import { useMemo, useState } from "react";
 import { Box, Grid, InputAdornment, LinearProgress, Paper, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { isSameDay } from "date-fns";
 
 import { useOperations } from "../context/OperationsContext";
 import { OrderCard, SummaryCard } from "../components";
 import type { OrderDto } from "../../../lib/types";
+import { OperationsPageHeader } from "../components/OperationsPageHeader";
 
 function filterAndSortOrders(
   list: OrderDto[],
@@ -44,17 +44,10 @@ export function PrescriptionScreen() {
 
   return (
     <>
-      <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontSize: 12, letterSpacing: 5, textTransform: "uppercase", color: "text.secondary" }}>
-          Operations Center
-        </Typography>
-        <Typography sx={{ mt: 1, fontSize: 26, fontWeight: 900 }} color="text.primary">
-          Prescription
-        </Typography>
-        <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: 14 }}>
-          Handle prescription orders: fabrication, lens fitting, ship.
-        </Typography>
-      </Box>
+      <OperationsPageHeader
+        title="Prescription"
+        subtitle="Handle prescription orders: fabrication, lens fitting, ship."
+      />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={4}>
@@ -85,11 +78,14 @@ export function PrescriptionScreen() {
               }}
               sx={{ minWidth: 220 }}
             />
-            <DatePicker
+            <TextField
+              type="date"
+              size="small"
               label="Date"
-              value={dateFilter}
-              onChange={(d) => setDateFilter(d ?? null)}
-              slotProps={{ textField: { size: "small", sx: { minWidth: 160 } } }}
+              value={dateFilter ? dateFilter.toISOString().slice(0, 10) : ""}
+              onChange={(e) => setDateFilter(e.target.value ? new Date(e.target.value) : null)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 160 }}
             />
           </Box>
         </Box>

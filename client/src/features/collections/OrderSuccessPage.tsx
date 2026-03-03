@@ -67,9 +67,40 @@ export default function OrderSuccessPage() {
         <Typography color="rgba(17,24,39,0.65)" mt={1}>
           Thank you for your purchase. Your order has been received.
         </Typography>
-        <Box mt={2} display="flex" justifyContent="center" gap={1} flexWrap="wrap">
+        <Box mt={2} display="flex" justifyContent="center" gap={1} flexWrap="wrap" alignItems="center">
           <Chip label={order.id} sx={{ fontWeight: 900 }} />
-          <Chip label={order.orderType} variant="outlined" />
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              border: "1px solid #0ea5e9",
+              bgcolor: "rgba(14,165,233,0.12)",
+              color: "#0369a1",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {order.orderType}
+          </Box>
+          {order.orderSource && (
+            <Box
+              component="span"
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                border: "1px solid #22c55e",
+                bgcolor: "rgba(34,197,94,0.12)",
+                color: "#15803d",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {order.orderSource}
+            </Box>
+          )}
           <Chip label={order.orderStatus} color="primary" variant="outlined" />
         </Box>
       </Paper>
@@ -89,11 +120,41 @@ export default function OrderSuccessPage() {
               Order Information
             </Typography>
             <Divider sx={{ my: 2 }} />
-            <Typography fontSize={14} mb={1}>
-              <b>Source:</b> {order.orderSource}
+            <Typography fontSize={14} mb={1} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <b>Source:</b>
+              <Box
+                component="span"
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  border: "1px solid #22c55e",
+                  bgcolor: "rgba(34,197,94,0.12)",
+                  color: "#15803d",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {order.orderSource}
+              </Box>
             </Typography>
-            <Typography fontSize={14} mb={1}>
-              <b>Type:</b> {order.orderType}
+            <Typography fontSize={14} mb={1} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <b>Type:</b>
+              <Box
+                component="span"
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  border: "1px solid #0ea5e9",
+                  bgcolor: "rgba(14,165,233,0.12)",
+                  color: "#0369a1",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {order.orderType}
+              </Box>
             </Typography>
             <Typography fontSize={14} mb={1}>
               <b>Status:</b> {order.orderStatus}

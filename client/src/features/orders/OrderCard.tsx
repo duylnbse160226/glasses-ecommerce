@@ -51,12 +51,21 @@ export function OrderCard({ orderSummary }: OrderCardProps) {
           <Typography component="code" sx={{ fontSize: 13, fontWeight: 600 }}>
             {orderId.slice(0, 8)}…
           </Typography>
-          <Chip
-            label={orderSummary.orderType}
-            size="small"
-            sx={{ fontWeight: 600, textTransform: "none" }}
-            variant="outlined"
-          />
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              border: "1px solid #0ea5e9",
+              bgcolor: "rgba(14,165,233,0.12)",
+              color: "#0369a1",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {orderSummary.orderType}
+          </Box>
           <Chip
             label={orderSummary.orderStatus}
             size="small"

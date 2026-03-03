@@ -1,16 +1,9 @@
 import { useState } from "react";
-import {
-  Box,
-  Chip,
-  LinearProgress,
-  Pagination,
-  Paper,
-  Typography,
-  Button,
-} from "@mui/material";
+import { Box, Chip, LinearProgress, Pagination, Paper, Typography, Button } from "@mui/material";
 import { useOperationsOrders, useUpdateOrderStatus } from "../../../lib/hooks/useOperationsOrders";
 import type { StaffOrderDto } from "../../../lib/types/staffOrders";
 import type { OrderStatus } from "../../../lib/types/operations";
+import { OperationsPageHeader } from "../components/OperationsPageHeader";
 
 export function PackScreen() {
   const [pageNumber, setPageNumber] = useState(1);
@@ -60,29 +53,10 @@ export function PackScreen() {
 
   return (
     <>
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          sx={{
-            fontSize: 12,
-            letterSpacing: 5,
-            textTransform: "uppercase",
-            color: "text.secondary",
-          }}
-        >
-          Operations Center
-        </Typography>
-        <Typography
-          sx={{ mt: 1, fontSize: 26, fontWeight: 900 }}
-          color="text.primary"
-        >
-          Confirmed orders
-        </Typography>
-        <Typography
-          sx={{ mt: 0.5, color: "text.secondary", fontSize: 14 }}
-        >
-          Orders to pick and prepare before creating shipments.
-        </Typography>
-      </Box>
+      <OperationsPageHeader
+        title="Confirmed orders"
+        subtitle="Orders to pick and prepare before creating shipments."
+      />
 
       <Box
         sx={{
@@ -216,11 +190,41 @@ export function PackScreen() {
                           color: "text.secondary",
                         }}
                       >
-                        <Typography>
-                          <b>Source:</b> {o.orderSource}
+                        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          <b>Source:</b>
+                          <Box
+                            component="span"
+                            sx={{
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: 1,
+                              border: "1px solid #22c55e",
+                              bgcolor: "rgba(34,197,94,0.12)",
+                              color: "#15803d",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {o.orderSource}
+                          </Box>
                         </Typography>
-                        <Typography>
-                          <b>Type:</b> {o.orderType}
+                        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          <b>Type:</b>
+                          <Box
+                            component="span"
+                            sx={{
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: 1,
+                              border: "1px solid #0ea5e9",
+                              bgcolor: "rgba(14,165,233,0.12)",
+                              color: "#0369a1",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {o.orderType}
+                          </Box>
                         </Typography>
                         <Typography>
                           <b>Items:</b> {o.itemCount}

@@ -59,7 +59,21 @@ export function CreateShipmentDialog({
                 <Typography fontWeight={800} fontSize={15}>
                   {order.orderNumber}
                 </Typography>
-                <Chip label={ORDER_TYPE_LABEL[order.orderType]} size="small" sx={{ fontWeight: 600 }} />
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    border: "1px solid #0ea5e9",
+                    bgcolor: "rgba(14,165,233,0.12)",
+                    color: "#0369a1",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {ORDER_TYPE_LABEL[order.orderType]}
+                </Box>
                 <Chip
                   label={ORDER_STATUS_LABEL[order.status]}
                   size="small"
