@@ -149,7 +149,17 @@ public sealed class MappingProfiles : Profile
             .ForMember(d => d.ProductName, o => o.MapFrom(s =>
                 s.ProductVariant != null && s.ProductVariant.Product != null
                     ? s.ProductVariant.Product.ProductName : null))
-            .ForMember(d => d.TotalPrice, o => o.MapFrom(s => s.Quantity * s.UnitPrice));
+            .ForMember(d => d.TotalPrice, o => o.MapFrom(s => s.Quantity * s.UnitPrice))
+            .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
+                s.ProductVariant != null && s.ProductVariant.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault() != null
+                    ? s.ProductVariant.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl
+                    : s.ProductVariant != null && s.ProductVariant.Product != null
+                        ? s.ProductVariant.Product.Images
+                            .Where(i => !i.IsDeleted && i.ProductId != null)
+                            .OrderBy(i => i.DisplayOrder)
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault()
+                        : null));
 
         CreateMap<Payment, OrderPaymentDto>()
             .ForMember(d => d.PaymentMethod, o => o.MapFrom(s => s.PaymentMethod.ToString()))
@@ -193,7 +203,15 @@ public sealed class MappingProfiles : Profile
                 s.TotalAmount + s.ShippingFee - s.PromoUsageLogs.Sum(p => p.DiscountApplied)))
             .ForMember(d => d.CustomerName, o => o.MapFrom(s => s.Address != null ? s.Address.RecipientName : s.WalkInCustomerName))
             .ForMember(d => d.CustomerPhone, o => o.MapFrom(s => s.Address != null ? s.Address.RecipientPhone : s.WalkInCustomerPhone))
-            .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count));
+            .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count))
+            .ForMember(d => d.FirstItemImageUrl, o => o.MapFrom(s =>
+                s.OrderItems.OrderBy(i => i.Id).Select(i =>
+                    i.ProductVariant != null && i.ProductVariant.Images.Count != 0
+                        ? i.ProductVariant.Images.OrderBy(img => img.DisplayOrder).FirstOrDefault()!.ImageUrl
+                        : (i.ProductVariant != null && i.ProductVariant.Product != null && i.ProductVariant.Product.Images.Any(img => !img.IsDeleted && img.ProductId != null)
+                            ? i.ProductVariant.Product.Images.Where(img => !img.IsDeleted && img.ProductId != null).OrderBy(img => img.DisplayOrder).FirstOrDefault()!.ImageUrl
+                            : null)
+                ).FirstOrDefault()));
 
         // Inventory transaction mappings
         CreateMap<InventoryTransaction, Application.Inventory.DTOs.InventoryTransactionDto>()

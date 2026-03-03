@@ -14,6 +14,7 @@ public sealed class CustomerOrderListDto
     public string? CustomerPhone { get; set; }
 
     public int ItemCount { get; set; }
+    public string? FirstItemImageUrl { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }
