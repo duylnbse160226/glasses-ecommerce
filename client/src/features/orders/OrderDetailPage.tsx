@@ -14,6 +14,7 @@ import {
   FormControlLabel,
   Radio,
   TextField,
+  Grid,
 } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import { useCancelOrder } from "../../lib/hooks/useOrders";
@@ -23,6 +24,53 @@ import { formatMoney } from "./utils";
 import { CANCEL_ORDER_REASONS, type CancelReasonValue } from "./cancelReasons";
 
 const CANCELABLE_STATUSES = ["Pending", "pending"];
+
+const PALETTE = {
+  pageBg: "#FFFFFF",
+  cardBg: "#FFFFFF",
+  cardBorder: "#ECECEC",
+  divider: "#F1F1F1",
+  textMain: "#171717",
+  textSecondary: "#6B6B6B",
+  textMuted: "#8A8A8A",
+  accent: "#B68C5A",
+  accentHover: "#9E7748",
+  status: {
+    Shipped: {
+      bg: "#F3EBDD",
+      text: "#7A5A33",
+      border: "#E7D6BA",
+    },
+    ReadyStock: {
+      bg: "#EEF5EE",
+      text: "#466A4A",
+      border: "#D4E5D5",
+    },
+    Online: {
+      bg: "#F3F1FB",
+      text: "#5E4FA8",
+      border: "#DFD8F6",
+    },
+  },
+};
+
+function getStatusChipStyle(status: string | undefined) {
+  if (!status) return {};
+  const key = status as keyof typeof PALETTE.status;
+  const config = PALETTE.status[key];
+  if (!config) {
+    return {
+      bgcolor: "#F5F5F5",
+      borderColor: "#E4E4E4",
+      color: PALETTE.textSecondary,
+    };
+  }
+  return {
+    bgcolor: config.bg,
+    borderColor: config.border,
+    color: config.text,
+  };
+}
 
 export default function OrderDetailPage() {
   const {
@@ -54,9 +102,10 @@ export default function OrderDetailPage() {
 
   const handleConfirmCancel = async () => {
     if (!orderId) return;
-    const reasonText = isOtherReason
-      ? cancelOtherText.trim() || null
-      : CANCEL_ORDER_REASONS.find((r) => r.value === cancelReason)?.label ?? null;
+    const reasonText =
+      isOtherReason
+        ? cancelOtherText.trim() || null
+        : CANCEL_ORDER_REASONS.find((r) => r.value === cancelReason)?.label ?? null;
     try {
       await cancelOrder.mutateAsync({ orderId, reason: reasonText });
       handleCloseCancelDialog();
@@ -87,253 +136,597 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: "auto", mt: 10, px: { xs: 2, md: 3 }, pb: 8 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <Button component={NavLink} to="/orders" size="small" sx={{ textTransform: "none" }}>
-          ← My orders
-        </Button>
-        <Chip label={orderLabel} sx={{ fontWeight: 700 }} />
+    <Box
+      sx={{
+        maxWidth: 1120,
+        mx: "auto",
+        mt: 10,
+        px: { xs: 2, md: 3 },
+        pb: 8,
+        bgcolor: PALETTE.pageBg,
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 2,
+          mb: 3,
+          flexWrap: "wrap",
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <Button
+            component={NavLink}
+            to="/orders"
+            size="small"
+            sx={{
+              textTransform: "none",
+              alignSelf: "flex-start",
+              color: PALETTE.accent,
+              fontWeight: 600,
+              px: 0,
+              "&:hover": {
+                color: PALETTE.accentHover,
+                backgroundColor: "transparent",
+              },
+            }}
+          >
+            ← My orders
+          </Button>
+          <Typography
+            fontWeight={900}
+            fontSize={{ xs: 24, md: 28 }}
+            sx={{ color: PALETTE.textMain, letterSpacing: 0.2 }}
+          >
+            Order {orderLabel}
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1.5,
+              alignItems: "center",
+              fontSize: 13,
+              color: PALETTE.textMuted,
+            }}
+          >
+            <Typography component="span">
+              Placed on{" "}
+              {new Date(order.createdAt).toLocaleDateString("en-US", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+            </Typography>
+            <Box
+              component="span"
+              sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "#D4D4D4" }}
+            />
+            <Typography component="span">
+              {items.length} item{items.length !== 1 ? "s" : ""}
+            </Typography>
+            {order.payment?.paymentMethod && (
+              <>
+                <Box
+                  component="span"
+                  sx={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: "50%",
+                    bgcolor: "#D4D4D4",
+                  }}
+                />
+                <Typography component="span">
+                  Payment: {order.payment.paymentMethod}
+                </Typography>
+              </>
+            )}
+          </Box>
+        </Box>
+
         <Box
-          component="span"
           sx={{
-            px: 1,
-            py: 0.25,
-            borderRadius: 1,
-            border: "1px solid #0ea5e9",
-            bgcolor: "rgba(14,165,233,0.12)",
-            color: "#0369a1",
-            fontSize: 12,
-            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
           }}
         >
-          {order.orderType}
-        </Box>
-        <Chip size="small" label={orderStatus} sx={{ textTransform: "capitalize" }} color="primary" />
-        {order.orderSource && (
+          <Chip
+            size="small"
+            label={orderStatus}
+            sx={{
+              textTransform: "capitalize",
+              fontWeight: 600,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderStyle: "solid",
+              fontSize: 12,
+              px: 1.25,
+              ...getStatusChipStyle(orderStatus),
+            }}
+          />
           <Box
             component="span"
             sx={{
               px: 1,
               py: 0.25,
-              borderRadius: 1,
-              border: "1px solid #22c55e",
-              bgcolor: "rgba(34,197,94,0.12)",
-              color: "#15803d",
+              borderRadius: 999,
+              border: `1px solid ${PALETTE.cardBorder}`,
+              bgcolor: "#FAFAFA",
+              color: PALETTE.textSecondary,
               fontSize: 12,
               fontWeight: 600,
+              letterSpacing: 0.2,
             }}
           >
-            {order.orderSource}
+            {order.orderType}
           </Box>
-        )}
-      </Box>
-
-      <Typography fontWeight={900} fontSize={20} mb={2}>
-        Order details
-      </Typography>
-
-      <Paper
-        elevation={0}
-        sx={{
-          border: "1px solid rgba(17,24,39,0.12)",
-          borderRadius: 3,
-          overflow: "hidden",
-          mb: 3,
-        }}
-      >
-        {/* 1. General info */}
-        <Box sx={{ p: 3 }}>
-          <Typography fontWeight={700} fontSize={16} mb={2}>
-            General info
-          </Typography>
-          <Box sx={{ display: "grid", gap: 1.5 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
-              <Typography fontSize={14}><b>Order ID:</b></Typography>
-              <Typography fontSize={14} component="span" sx={{ wordBreak: "break-all" }}>{order.id}</Typography>
-            </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
-              <Typography fontSize={14} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <b>Type:</b>
-                <Box
-                  component="span"
-                  sx={{
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: 1,
-                    border: "1px solid #0ea5e9",
-                    bgcolor: "rgba(14,165,233,0.12)",
-                    color: "#0369a1",
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
-                  {order.orderType ?? "—"}
-                </Box>
-              </Typography>
-              <Box sx={{ px: 1.5, py: 0.5, borderRadius: 1, border: "1px solid #8b5cf6", bgcolor: "rgba(139,92,246,0.12)", color: "#5b21b6" }}>
-                <Typography fontSize={13} fontWeight={600}>Status: {orderStatus}</Typography>
-              </Box>
-              {order.orderSource && (
-                <Typography fontSize={14} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <b>Source:</b>
-                  <Box
-                    component="span"
-                    sx={{
-                      px: 1,
-                      py: 0.25,
-                      borderRadius: 1,
-                      border: "1px solid #22c55e",
-                      bgcolor: "rgba(34,197,94,0.12)",
-                      color: "#15803d",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {order.orderSource}
-                  </Box>
-                </Typography>
-              )}
-            </Box>
-            <Typography fontSize={14}>
-              <b>Created:</b> {new Date(order.createdAt).toLocaleString()}
-            </Typography>
-            {order.updatedAt != null && (
-              <Typography fontSize={14}>
-                <b>Updated:</b> {new Date(order.updatedAt).toLocaleString()}
-              </Typography>
-            )}
-            {order.customerNote != null && order.customerNote !== "" && (
-              <Typography fontSize={14}>
-                <b>Note:</b> {order.customerNote}
-              </Typography>
-            )}
-
-            {order.payment && (
-              <>
-                <Divider sx={{ my: 1.5 }} />
-                <Typography fontSize={14} fontWeight={600} color="text.secondary">Payment</Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                  <Typography fontSize={14}><b>Method:</b> {order.payment.paymentMethod}</Typography>
-                  <Typography fontSize={14}><b>Status:</b> {order.payment.paymentStatus}</Typography>
-                  {order.payment.paymentAt != null && (
-                    <Typography fontSize={14}><b>Paid at:</b> {new Date(order.payment.paymentAt).toLocaleString()}</Typography>
-                  )}
-                </Box>
-              </>
-            )}
-
-            {order.trackingNumber && (
-              <Typography fontSize={14}>
-                <b>Tracking:</b> {order.trackingNumber}
-                {order.carrier ? ` (${order.carrier})` : ""}
-              </Typography>
-            )}
-
-            {addressStr && (
-              <>
-                <Divider sx={{ my: 1.5 }} />
-                <Typography fontSize={14} fontWeight={600} color="text.secondary">Shipping address</Typography>
-                <Typography fontSize={14} sx={{ whiteSpace: "pre-line" }}>{addressStr}</Typography>
-              </>
-            )}
-
-            {order.statusHistories && order.statusHistories.length > 0 && (
-              <>
-                <Divider sx={{ my: 1.5 }} />
-                <Typography fontSize={14} fontWeight={600} color="text.secondary">Status history</Typography>
-                {order.statusHistories.map((h, i) => (
-                  <Box key={i}>
-                    <Typography fontSize={14}>
-                      {h.fromStatus ?? "—"} → <b>{h.toStatus}</b>
-                      {h.notes ? ` · ${h.notes}` : ""}
-                    </Typography>
-                    <Typography fontSize={12} color="text.secondary">
-                      {h.createdAt ? new Date(h.createdAt).toLocaleString() : ""}
-                    </Typography>
-                  </Box>
-                ))}
-              </>
-            )}
-          </Box>
-        </Box>
-
-        {/* 2. Items */}
-        <Divider />
-        <Typography fontWeight={700} fontSize={16} sx={{ px: 3, pt: 2, pb: 1 }}>
-          Items
-        </Typography>
-        <Box sx={{ borderTop: "1px solid rgba(17,24,39,0.08)" }}>
-          {items.map((item, idx) => (
+          {order.orderSource && (
             <Box
-              key={item.id}
+              component="span"
               sx={{
-                borderBottom: idx < items.length - 1 ? "1px solid rgba(17,24,39,0.06)" : "none",
+                px: 1,
+                py: 0.25,
+                borderRadius: 999,
+                  border: `1px solid ${PALETTE.cardBorder}`,
+                  bgcolor: "#FAFAFA",
+                  color: PALETTE.textMuted,
+                fontSize: 12,
+                fontWeight: 600,
               }}
             >
-              <OrderItemRow
-                item={item as OrderItemRowProps["item"]}
-                orderId={orderId}
-                showPrescriptionDetails
-              />
-            </Box>
-          ))}
-        </Box>
-
-        {/* 3. Total */}
-        <Box sx={{ px: 3, py: 2, bgcolor: "rgba(17,24,39,0.04)", borderTop: "1px solid rgba(17,24,39,0.1)" }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-            <Typography fontSize={14}>Subtotal</Typography>
-            <Typography fontSize={14}>{formatMoney(order.totalAmount)}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-            <Typography fontSize={14}>Shipping</Typography>
-            <Typography fontSize={14}>{formatMoney(order.shippingFee)}</Typography>
-          </Box>
-          {order.discountApplied != null && order.discountApplied !== 0 && (
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-              <Typography fontSize={14}>Discount</Typography>
-              <Typography fontSize={14}>- {formatMoney(order.discountApplied)}</Typography>
+              {order.orderSource}
             </Box>
           )}
-          <Divider sx={{ my: 1.5 }} />
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography fontWeight={700} fontSize={16}>Total</Typography>
-            <Typography fontWeight={800} fontSize={18}>{formatMoney(order.finalAmount)}</Typography>
-          </Box>
         </Box>
-      </Paper>
+      </Box>
 
-      {canCancel && (
-        <Paper
-          elevation={0}
-          sx={{
-            border: "1px solid rgba(17,24,39,0.12)",
-            borderRadius: 3,
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          <Button
-            fullWidth
-            variant="outlined"
-            color="error"
-            size="large"
+      <Grid container spacing={3} alignItems="flex-start">
+        {/* LEFT: items + shipping / timeline */}
+        <Grid item xs={12} md={8}>
+          <Paper
+            elevation={0}
             sx={{
-              py: 1.5,
-              textTransform: "none",
-              fontWeight: 700,
-              fontSize: 16,
-              borderWidth: 2,
-              "&:hover": { borderWidth: 2 },
+              border: `1px solid ${PALETTE.cardBorder}`,
+              borderRadius: 2.5,
+              overflow: "hidden",
+              bgcolor: PALETTE.cardBg,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
             }}
-            onClick={handleOpenCancelDialog}
-            disabled={cancelOrder.isPending}
           >
-            Cancel order
-          </Button>
-        </Paper>
-      )}
+            {/* Items header */}
+            <Box
+              sx={{
+                px: 3,
+                pt: 2,
+                pb: 1.5,
+                borderBottom: `1px solid ${PALETTE.divider}`,
+                bgcolor: "#FAFAFA",
+              }}
+            >
+              <Typography
+                fontWeight={700}
+                fontSize={15}
+                sx={{ color: PALETTE.textMain, letterSpacing: 0.2 }}
+              >
+                Items in this order
+              </Typography>
+              <Typography fontSize={12} sx={{ color: PALETTE.textMuted, mt: 0.5 }}>
+                {items.length} item{items.length !== 1 ? "s" : ""} · ID{" "}
+                <Typography
+                  component="span"
+                  fontFamily="monospace"
+                  fontSize={12}
+                  sx={{ wordBreak: "break-all" }}
+                >
+                  {order.id}
+                </Typography>
+              </Typography>
+            </Box>
 
+            {/* Items list */}
+            <Box sx={{ borderTop: `1px solid ${PALETTE.divider}` }}>
+              {items.map((item, idx) => (
+                <Box
+                  key={item.id}
+                  sx={{
+                    borderBottom:
+                      idx < items.length - 1
+                        ? `1px solid ${PALETTE.divider}`
+                        : "none",
+                    "&:hover": {
+                      bgcolor: "#FAFAFA",
+                      transition: "background-color 180ms ease",
+                    },
+                  }}
+                >
+                  <OrderItemRow
+                    item={item as OrderItemRowProps["item"]}
+                    orderId={orderId}
+                    showPrescriptionDetails
+                  />
+                </Box>
+              ))}
+            </Box>
+
+            {/* Shipping / tracking / timeline / note */}
+            <Box sx={{ px: 3, py: 2 }}>
+              {(addressStr || order.trackingNumber) && (
+                <>
+                  <Divider sx={{ mb: 2, borderColor: PALETTE.divider }} />
+                  <Grid container spacing={2}>
+                    {addressStr && (
+                      <Grid item xs={12} md={6}>
+                        <Typography
+                          fontSize={14}
+                          fontWeight={600}
+                          sx={{ mb: 0.5, color: PALETTE.textSecondary }}
+                        >
+                          Shipping address
+                        </Typography>
+                        <Typography
+                          fontSize={14}
+                          sx={{ whiteSpace: "pre-line", color: PALETTE.textMain, lineHeight: 1.6 }}
+                        >
+                          {addressStr}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {order.trackingNumber && (
+                      <Grid item xs={12} md={6}>
+                        <Typography
+                          fontSize={14}
+                          fontWeight={600}
+                          sx={{ mb: 0.5, color: PALETTE.textSecondary }}
+                        >
+                          Shipping & tracking
+                        </Typography>
+                        <Typography fontSize={14} sx={{ color: PALETTE.textMain }}>
+                          <b>Tracking:</b> {order.trackingNumber}
+                          {order.carrier ? ` (${order.carrier})` : ""}
+                        </Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </>
+              )}
+
+              {order.statusHistories && order.statusHistories.length > 0 && (
+                <>
+                  <Divider sx={{ my: 2, borderColor: PALETTE.divider }} />
+                  <Typography
+                    fontSize={14}
+                    fontWeight={600}
+                    sx={{ mb: 1.5, color: PALETTE.textSecondary }}
+                  >
+                    Status timeline
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
+                    {order.statusHistories.slice(1).map((h, i, arr) => {
+                      const isLast = i === arr.length - 1;
+                      return (
+                        <Box
+                          key={i}
+                          sx={{
+                            display: "flex",
+                            gap: 1.5,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              mt: 0.5,
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              border: isLast ? "none" : "1px solid #D4D4D4",
+                              bgcolor: isLast ? PALETTE.accent : "#D4D4D4",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Box sx={{ flex: 1 }}>
+                            <Typography
+                              fontSize={14}
+                              sx={{
+                                color: PALETTE.textMain,
+                                fontWeight: isLast ? 600 : 500,
+                              }}
+                            >
+                              {h.fromStatus ?? "—"} → <b>{h.toStatus}</b>
+                              {h.notes ? ` · ${h.notes}` : ""}
+                            </Typography>
+                            <Typography
+                              fontSize={12}
+                              sx={{ color: PALETTE.textMuted, mt: 0.25 }}
+                            >
+                              {h.createdAt ? new Date(h.createdAt).toLocaleString() : ""}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </>
+              )}
+
+              {order.customerNote != null && order.customerNote !== "" && (
+                <>
+                  <Divider sx={{ my: 2, borderColor: PALETTE.divider }} />
+                  <Typography
+                    fontSize={14}
+                    fontWeight={600}
+                    sx={{ mb: 0.5, color: PALETTE.textSecondary }}
+                  >
+                    Your note
+                  </Typography>
+                  <Typography fontSize={14} sx={{ color: PALETTE.textMain, lineHeight: 1.6 }}>
+                    {order.customerNote}
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Paper>
+
+          {canCancel && (
+          <Paper
+            elevation={0}
+            sx={{
+              border: "1px solid rgba(248,113,113,0.35)",
+              borderRadius: 2.5,
+              overflow: "hidden",
+              mt: 3,
+              bgcolor: "#FFF8F4",
+              boxShadow: "0 8px 22px rgba(248,113,113,0.08)",
+            }}
+          >
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                }}
+              >
+                <Typography
+                  fontWeight={700}
+                  fontSize={15}
+                  sx={{ color: PALETTE.textMain }}
+                >
+                  Need to cancel this order?
+                </Typography>
+                <Typography fontSize={13} sx={{ color: PALETTE.textSecondary }}>
+                  You can cancel while the order is still pending. Once it moves
+                  into processing or shipped, cancellation may not be available.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="large"
+                  sx={{
+                    mt: 0.5,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderWidth: 2,
+                    borderColor: "rgba(248,113,113,0.7)",
+                    color: "#b91c1c",
+                    "&:hover": {
+                      borderWidth: 2,
+                      borderColor: "rgba(248,113,113,0.9)",
+                      backgroundColor: "rgba(248,113,113,0.06)",
+                    },
+                  }}
+                  onClick={handleOpenCancelDialog}
+                  disabled={cancelOrder.isPending}
+                >
+                  {cancelOrder.isPending ? "Cancelling..." : "Cancel order"}
+                </Button>
+              </Box>
+            </Paper>
+          )}
+        </Grid>
+
+        {/* RIGHT: sticky summary card */}
+        <Grid item xs={12} md={4}>
+          <Box
+            sx={{
+              position: { md: "sticky" },
+              top: { md: 88 },
+            }}
+          >
+          <Paper
+            elevation={0}
+            sx={{
+              border: `1px solid ${PALETTE.cardBorder}`,
+              borderRadius: 2.5,
+              mb: 2,
+              overflow: "hidden",
+              bgcolor: PALETTE.cardBg,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+            }}
+          >
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  bgcolor: "rgba(17,24,39,0.03)",
+                }}
+              >
+                <Typography
+                  fontWeight={800}
+                  fontSize={16}
+                  sx={{ color: PALETTE.textMain, letterSpacing: 0.3 }}
+                >
+                  Order summary
+                </Typography>
+              </Box>
+              <Box sx={{ px: 3, py: 2 }}>
+                <Box
+                  sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}
+                >
+                  <Typography fontSize={14} sx={{ color: PALETTE.textSecondary }}>
+                    Subtotal
+                  </Typography>
+                  <Typography fontSize={14} sx={{ color: PALETTE.textMain }}>
+                    {formatMoney(order.totalAmount)}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}
+                >
+                  <Typography fontSize={14} sx={{ color: PALETTE.textSecondary }}>
+                    Shipping
+                  </Typography>
+                  <Typography fontSize={14} sx={{ color: PALETTE.textMain }}>
+                    {formatMoney(order.shippingFee)}
+                  </Typography>
+                </Box>
+                {order.discountApplied != null && order.discountApplied !== 0 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 0.75,
+                    }}
+                  >
+                    <Typography
+                      fontSize={14}
+                      sx={{ color: PALETTE.textSecondary }}
+                    >
+                      Discount
+                    </Typography>
+                    <Typography fontSize={14} sx={{ color: PALETTE.textMain }}>
+                      - {formatMoney(order.discountApplied)}
+                    </Typography>
+                  </Box>
+                )}
+                <Divider sx={{ my: 1.5, borderColor: PALETTE.divider }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography
+                    fontWeight={700}
+                    fontSize={16}
+                    sx={{ color: PALETTE.textMain }}
+                  >
+                    Total
+                  </Typography>
+                  <Typography
+                    fontWeight={800}
+                    fontSize={18}
+                    sx={{
+                      color: PALETTE.textMain,
+                      borderBottom: `2px solid ${PALETTE.accent}`,
+                      pb: 0.25,
+                    }}
+                  >
+                    {formatMoney(order.finalAmount)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+
+            {order.payment && (
+              <Paper
+                elevation={0}
+                sx={{
+                  border: `1px solid ${PALETTE.cardBorder}`,
+                  borderRadius: 2.5,
+                  overflow: "hidden",
+                  bgcolor: PALETTE.cardBg,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.03)",
+                }}
+              >
+                <Box sx={{ px: 3, py: 2 }}>
+                  <Typography
+                    fontSize={14}
+                    fontWeight={600}
+                    sx={{ mb: 1, color: PALETTE.textSecondary }}
+                  >
+                    Payment
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 0.5,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography
+                        fontSize={13}
+                        sx={{ color: PALETTE.textMuted, mr: 1 }}
+                      >
+                        Method
+                      </Typography>
+                      <Typography
+                        fontSize={14}
+                        sx={{ color: PALETTE.textMain, fontWeight: 500 }}
+                      >
+                        {order.payment.paymentMethod}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography
+                        fontSize={13}
+                        sx={{ color: PALETTE.textMuted, mr: 1 }}
+                      >
+                        Status
+                      </Typography>
+                      <Box
+                        sx={{
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: 999,
+                          border: "1px solid #E5E5E5",
+                          fontSize: 12,
+                          fontWeight: 500,
+                          bgcolor:
+                            order.payment.paymentStatus?.toLowerCase() === "pending"
+                              ? "#FFF7ED"
+                              : "#F4F4F5",
+                          color:
+                            order.payment.paymentStatus?.toLowerCase() === "pending"
+                              ? "#92400E"
+                              : PALETTE.textSecondary,
+                        }}
+                      >
+                        {order.payment.paymentStatus}
+                      </Box>
+                    </Box>
+                    {order.payment.paymentAt != null && (
+                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                        <Typography
+                          fontSize={13}
+                          sx={{ color: PALETTE.textMuted, mr: 1 }}
+                        >
+                          Paid at
+                        </Typography>
+                        <Typography
+                          fontSize={13}
+                          sx={{ color: PALETTE.textMain }}
+                        >
+                          {new Date(order.payment.paymentAt).toLocaleString()}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              </Paper>
+            )}
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Cancel dialog */}
       <Dialog open={cancelDialogOpen} onClose={handleCloseCancelDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Cancel order</DialogTitle>
         <DialogContent>
