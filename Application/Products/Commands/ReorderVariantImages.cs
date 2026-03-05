@@ -7,11 +7,12 @@ using Persistence;
 
 namespace Application.Products.Commands;
 
-public sealed class ReorderProductImages
+public sealed class ReorderVariantImages
 {
     public sealed class Command : IRequest<Result<Unit>>
     {
         public required Guid ProductId { get; set; }
+        public required Guid VariantId { get; set; }
         public required ReorderImagesDto Dto { get; set; }
     }
 
@@ -22,18 +23,21 @@ public sealed class ReorderProductImages
         {
             ReorderImagesDto dto = request.Dto;
 
-            bool productExists = await context.Products
-                .AnyAsync(p => p.Id == request.ProductId, ct);
+            ProductVariant? variant = await context.ProductVariants
+                .FirstOrDefaultAsync(v => v.Id == request.VariantId, ct);
 
-            if (!productExists)
-                return Result<Unit>.Failure("Product not found.", 404);
+            if (variant == null)
+                return Result<Unit>.Failure("Variant not found.", 404);
 
-            // Load all non-deleted product-level images (exclude variant-level images)
+            // Ownership check
+            if (variant.ProductId != request.ProductId)
+                return Result<Unit>.Failure("Variant not found.", 404);
+
+            // Load all non-deleted variant-level images for this specific variant
             List<ProductImage> images = await context.ProductImages
                 .Where(i =>
                     !i.IsDeleted &&
-                    i.ProductId == request.ProductId &&
-                    i.ProductVariantId == null)
+                    i.ProductVariantId == request.VariantId)
                 .ToListAsync(ct);
 
             // Validate: the submitted list must contain exactly the same IDs as existing images
@@ -45,7 +49,7 @@ public sealed class ReorderProductImages
 
             if (!existingIds.SetEquals(submittedIds))
                 return Result<Unit>.Failure(
-                    "Image IDs do not match the product's images. Ensure all image IDs are included.", 400);
+                    "Image IDs do not match the variant's images. Ensure all image IDs are included.", 400);
 
             Dictionary<Guid, ProductImage> imageById = images.ToDictionary(i => i.Id);
 
@@ -57,7 +61,7 @@ public sealed class ReorderProductImages
             bool success = await context.SaveChangesAsync(ct) > 0;
 
             if (!success)
-                return Result<Unit>.Failure("Failed to reorder images.", 500);
+                return Result<Unit>.Failure("Failed to reorder variant images.", 500);
 
             return Result<Unit>.Success(Unit.Value);
         }
