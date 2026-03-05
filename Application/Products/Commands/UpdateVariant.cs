@@ -1,0 +1,92 @@
+using Application.Core;
+using Application.Products.DTOs;
+using Domain;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Persistence;
+
+namespace Application.Products.Commands;
+
+public sealed class UpdateVariant
+{
+    public sealed class Command : IRequest<Result<Unit>>
+    {
+        public required Guid ProductId { get; set; }
+        public required Guid VariantId { get; set; }
+        public required UpdateVariantDto Dto { get; set; }
+    }
+
+    internal sealed class Handler(AppDbContext context)
+        : IRequestHandler<Command, Result<Unit>>
+    {
+        public async Task<Result<Unit>> Handle(Command request, CancellationToken ct)
+        {
+            UpdateVariantDto dto = request.Dto;
+
+            ProductVariant? variant = await context.ProductVariants
+                .FirstOrDefaultAsync(v => v.Id == request.VariantId, ct);
+
+            if (variant == null)
+                return Result<Unit>.Failure("Variant not found.", 404);
+
+            // Ownership check: variant must belong to the product in the route
+            if (variant.ProductId != request.ProductId)
+                return Result<Unit>.Failure("Variant not found.", 404);
+
+            // SKU uniqueness check if changing SKU
+            if (!string.IsNullOrWhiteSpace(dto.SKU) && dto.SKU != variant.SKU)
+            {
+                bool skuExists = await context.ProductVariants
+                    .AnyAsync(v => v.SKU == dto.SKU && v.Id != request.VariantId, ct);
+
+                if (skuExists)
+                    return Result<Unit>.Failure($"SKU '{dto.SKU}' already exists.", 409);
+
+                variant.SKU = dto.SKU;
+            }
+
+            if (dto.VariantName != null)
+                variant.VariantName = string.IsNullOrWhiteSpace(dto.VariantName) ? null : dto.VariantName;
+
+            if (dto.Color != null)
+                variant.Color = string.IsNullOrWhiteSpace(dto.Color) ? null : dto.Color;
+
+            if (dto.Size != null)
+                variant.Size = string.IsNullOrWhiteSpace(dto.Size) ? null : dto.Size;
+
+            if (dto.Material != null)
+                variant.Material = string.IsNullOrWhiteSpace(dto.Material) ? null : dto.Material;
+
+            if (dto.FrameWidth.HasValue)
+                variant.FrameWidth = dto.FrameWidth;
+
+            if (dto.LensWidth.HasValue)
+                variant.LensWidth = dto.LensWidth;
+
+            if (dto.BridgeWidth.HasValue)
+                variant.BridgeWidth = dto.BridgeWidth;
+
+            if (dto.TempleLength.HasValue)
+                variant.TempleLength = dto.TempleLength;
+
+            if (dto.Price.HasValue)
+                variant.Price = dto.Price.Value;
+
+            if (dto.CompareAtPrice.HasValue)
+                variant.CompareAtPrice = dto.CompareAtPrice;
+
+            if (dto.IsActive.HasValue)
+                variant.IsActive = dto.IsActive.Value;
+
+            bool success = await context.SaveChangesAsync(ct) > 0;
+
+            if (!success && context.Entry(variant).State == EntityState.Unchanged)
+                return Result<Unit>.Success(Unit.Value);
+
+            if (!success)
+                return Result<Unit>.Failure("Failed to update variant.", 500);
+
+            return Result<Unit>.Success(Unit.Value);
+        }
+    }
+}
