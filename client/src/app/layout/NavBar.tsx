@@ -30,22 +30,53 @@ import UserMenu from "./UserMenu";
 import CartDropdown from "../components/cart/CartDropdown";
 
 // ===== Styles =====
+const ACCENT = "#B68C5A";
+
 const NAV_BTN_SX = {
   textTransform: "none",
   fontWeight: 600,
   fontSize: 13.5,
-  color: "rgba(17,24,39,0.85)",
-  px: 1.2,
-  "&:hover": { backgroundColor: "transparent", color: "#111827" },
-  "&.active": { color: "#111827" },
+  color: "#171717",
+  px: 1.4,
+  position: "relative",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    left: "20%",
+    right: "20%",
+    bottom: 0,
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: ACCENT,
+    opacity: 0,
+    transform: "scaleX(0.6)",
+    transition: "opacity 160ms ease, transform 160ms ease",
+  },
+  "&:hover": {
+    backgroundColor: "transparent",
+    color: "#171717",
+    "&::after": {
+      opacity: 0.4,
+      transform: "scaleX(1)",
+    },
+  },
+  "&.active": {
+    color: "#171717",
+    fontWeight: 700,
+    "&::after": {
+      opacity: 1,
+      transform: "scaleX(1)",
+    },
+  },
 } as const;
 
 const APP_BAR_SX = {
   top: 0,
-  backgroundColor: "#fff",
+  backgroundColor: "rgba(255,255,255,0.92)",
   color: "#111827",
-  borderBottom: "1px solid rgba(17,24,39,0.10)",
+  borderBottom: "1px solid rgba(0,0,0,0.08)",
   zIndex: 3000,
+  backdropFilter: "blur(8px)",
 } as const;
 
 const SEARCH_BOX_SX = {
@@ -55,13 +86,31 @@ const SEARCH_BOX_SX = {
   alignItems: "center",
   gap: 1,
   px: 1.5,
-  height: 36,
+  height: 40,
   borderRadius: 999,
-  border: "1px solid rgba(17,24,39,0.12)",
-  backgroundColor: alpha("#fff", 1),
+  border: "1px solid rgba(0,0,0,0.08)",
+  backgroundColor: "#FAFAF8",
+  transition: "border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease",
+  "&:focus-within": {
+    borderColor: ACCENT,
+    boxShadow: `0 0 0 1px ${alpha(ACCENT, 0.16)}`,
+    backgroundColor: "#FFFFFF",
+  },
 } as const;
 
-const ICON_SX = { color: "rgba(17,24,39,0.75)" } as const;
+const ICON_BUTTON_SX = {
+  color: "rgba(23,23,23,0.8)",
+  width: 40,
+  height: 40,
+  borderRadius: "999px",
+  border: "1px solid transparent",
+  transition: "background-color 160ms ease, border-color 160ms ease, transform 160ms ease, color 160ms ease",
+  "&:hover": {
+    backgroundColor: "#FAFAFA",
+    borderColor: "rgba(0,0,0,0.08)",
+    transform: "translateY(-1px)",
+  },
+} as const;
 
 const FALLBACK_MENU_ITEMS = [
   { label: "Eyeglasses", to: "/collections/eyeglasses" },
@@ -136,15 +185,14 @@ const NavBar = observer(function NavBar() {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="fixed" elevation={0} sx={APP_BAR_SX}>
-        <Container maxWidth="xl">
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 } }}>
           <Toolbar
             disableGutters
             sx={{
-              minHeight: 56,
-              px: { xs: 1, md: 0 },
+              minHeight: 72,
               display: "flex",
               alignItems: "center",
-              gap: 2,
+              gap: { xs: 1.5, md: 3 },
             }}
           >
             {/* Logo */}
@@ -155,10 +203,10 @@ const NavBar = observer(function NavBar() {
             >
               <Typography
                 sx={{
-                  fontWeight: 900,
-                  letterSpacing: 1.2,
+                  fontWeight: 800,
+                  letterSpacing: "0.18em",
                   fontSize: 18,
-                  color: "#111827",
+                  color: "#171717",
                 }}
               >
                 EYEWEAR
@@ -177,10 +225,16 @@ const NavBar = observer(function NavBar() {
                 onSubmit={handleSubmitSearch}
                 sx={SEARCH_BOX_SX}
               >
-                <Search sx={{ fontSize: 18, color: "rgba(17,24,39,0.55)" }} />
+                <Search sx={{ fontSize: 18, color: "#8A8A8A" }} />
                 <InputBase
                   placeholder="Search by brand or product name..."
-                  sx={{ flex: 1, fontSize: 13.5 }}
+                  sx={{
+                    flex: 1,
+                    fontSize: 13.5,
+                    "& input::placeholder": {
+                      color: "#8A8A8A",
+                    },
+                  }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -189,16 +243,20 @@ const NavBar = observer(function NavBar() {
 
             {/* Right icons */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton sx={ICON_SX}>
+              <IconButton sx={ICON_BUTTON_SX}>
                 <FavoriteBorder />
               </IconButton>
 
-              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ mx: 0.75, borderColor: "rgba(0,0,0,0.08)" }}
+              />
 
               {currentUser ? (
                 <UserMenu />
               ) : (
-                <IconButton component={NavLink} to="/login" sx={ICON_SX}>
+                <IconButton component={NavLink} to="/login" sx={ICON_BUTTON_SX}>
                   <PersonOutline />
                 </IconButton>
               )}
@@ -206,7 +264,7 @@ const NavBar = observer(function NavBar() {
               {/* CART */}
               <Box sx={{ position: "relative" }}>
                 <IconButton
-                  sx={ICON_SX}
+                  sx={ICON_BUTTON_SX}
                   onClick={() => {
                     uiStore.closeUserMenu();
                     uiStore.toggleCart();
@@ -214,7 +272,16 @@ const NavBar = observer(function NavBar() {
                 >
                   <Badge
                     badgeContent={cart?.totalQuantity ?? 0}
-                    color="primary"
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        bgcolor: "#111827",
+                        color: "#FFFFFF",
+                        fontSize: 11,
+                        minWidth: 18,
+                        height: 18,
+                        px: 0.5,
+                      },
+                    }}
                   >
                     <LocalMallOutlined />
                   </Badge>

@@ -46,13 +46,13 @@ const CARD_SX = {
     overflow: "hidden",
     position: "relative",
     textDecoration: "none",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
-    transition: "transform .4s ease, box-shadow .4s ease",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+    transition: "transform .3s ease, box-shadow .3s ease",
     outline: "none",
 
     "&:hover": {
-        transform: "translateY(-8px)",
-        boxShadow: "0 30px 80px rgba(0,0,0,0.18)",
+        transform: "translateY(-4px)",
+        boxShadow: "0 14px 32px rgba(0,0,0,0.08)",
     },
 
     // keyboard accessibility
@@ -65,22 +65,23 @@ const CARD_SX = {
         content: '""',
         position: "absolute",
         inset: 0,
-        bgcolor: "rgba(255,255,255,0.55)",
-        transition: "background-color .35s ease",
+        bgcolor: "rgba(0,0,0,0.12)",
+        mixBlendMode: "multiply",
+        transition: "background-color .3s ease",
     },
 
     "&:hover::after": {
-        bgcolor: "rgba(255,255,255,0.42)",
+        bgcolor: "rgba(0,0,0,0.18)",
     },
 
     // hover ảnh đúng cách
     "& img": {
         transform: "scale(1.02)",
-        transition: "transform .6s ease",
+        transition: "transform .5s ease",
     },
 
     "&:hover img": {
-        transform: "scale(1.08)",
+        transform: "scale(1.04)",
     },
 } as const;
 
@@ -99,24 +100,25 @@ export default function CategoryCards() {
                     <Typography
                         sx={{
                             fontSize: "0.75rem",
-                            letterSpacing: "0.35em",
+                            letterSpacing: "0.32em",
                             fontWeight: 600,
-                            color: "#6B7280",
+                            color: "#8A8A8A",
                             textTransform: "uppercase",
                             mb: 2,
                         }}
                     >
-                        Shop by Category
+                        Shop by category
                     </Typography>
 
                     <Typography
                         sx={{
                             fontSize: { xs: "1.6rem", md: "2.1rem" },
                             fontWeight: 800,
-                            color: "#111827",
+                            color: "#171717",
+                            letterSpacing: -0.5,
                         }}
                     >
-                        Find Your Perfect Eyewear
+                        Find your perfect eyewear
                     </Typography>
                 </Box>
 

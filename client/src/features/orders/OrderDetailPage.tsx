@@ -137,15 +137,26 @@ export default function OrderDetailPage() {
 
   return (
     <Box
+      component="main"
       sx={{
-        maxWidth: 1120,
-        mx: "auto",
-        mt: 10,
+        position: "relative",
+        left: "50%",
+        right: "50%",
+        ml: "-50vw",
+        mr: "-50vw",
+        width: "100vw",
+        background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
         px: { xs: 2, md: 3 },
         pb: 8,
-        bgcolor: PALETTE.pageBg,
       }}
     >
+      <Box
+        sx={{
+          maxWidth: 1120,
+          mx: "auto",
+          mt: 10,
+        }}
+      >
       {/* Header */}
       <Box
         sx={{
@@ -774,6 +785,7 @@ export default function OrderDetailPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      </Box>
     </Box>
   );
 }

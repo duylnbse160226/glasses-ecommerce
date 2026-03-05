@@ -49,12 +49,19 @@ const COLS = [
     },
 ];
 
+const ACCENT = "#B68C5A";
+
 const linkSx = {
-    color: "#9CA3AF",
+    color: "#6B6B6B",
     textDecoration: "none",
     fontSize: "0.86rem",
     lineHeight: 2,
-    "&:hover": { color: "#111827" },
+    transition: "color 160ms ease, border-color 160ms ease",
+    borderBottom: "1px solid transparent",
+    "&:hover": {
+        color: "#171717",
+        borderBottomColor: "rgba(0,0,0,0.14)",
+    },
 };
 
 export default function Footer() {
@@ -64,28 +71,112 @@ export default function Footer() {
         <Box
             component="footer"
             sx={{
-                bgcolor: "#fff",
-                borderTop: "1px solid #E5E7EB",
-                pt: { xs: 6, md: 9 },
+                bgcolor: "#FAFAF8",
+                borderTop: "1px solid rgba(0,0,0,0.08)",
+                pt: { xs: 6, md: 8 },
                 pb: { xs: 5, md: 7 },
                 position: "relative",
             }}
         >
             <Container maxWidth="xl">
                 {/* ===== TOP AREA ===== */}
-                <Grid container spacing={4}>
-                    {/* Left columns */}
+                <Grid container spacing={6}>
+                    {/* Left: brand + tagline + socials */}
+                    <Grid item xs={12} md={4}>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 18,
+                                        fontWeight: 800,
+                                        letterSpacing: "0.24em",
+                                        textTransform: "uppercase",
+                                        color: "#171717",
+                                    }}
+                                >
+                                    EYEWEAR
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        mt: 1,
+                                        fontSize: 13,
+                                        color: "#6B6B6B",
+                                        maxWidth: 260,
+                                    }}
+                                >
+                                    Curated frames and lenses for everyday luxury vision.
+                                </Typography>
+                            </Box>
+
+                            {/* Social icons */}
+                            <Stack direction="row" spacing={1.5}>
+                                <MuiLink
+                                    href="#"
+                                    aria-label="Facebook"
+                                    sx={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: 38,
+                                        height: 38,
+                                        borderRadius: "999px",
+                                        border: "1px solid rgba(0,0,0,0.08)",
+                                        color: "#171717",
+                                        transition: "all 160ms ease",
+                                        bgcolor: "#FFFFFF",
+                                        "&:hover": {
+                                            borderColor: ACCENT,
+                                            bgcolor: "#FFFFFF",
+                                            color: ACCENT,
+                                        },
+                                    }}
+                                >
+                                    <FacebookIcon fontSize="small" />
+                                </MuiLink>
+                                <MuiLink
+                                    href="#"
+                                    aria-label="Instagram"
+                                    sx={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: 38,
+                                        height: 38,
+                                        borderRadius: "999px",
+                                        border: "1px solid rgba(0,0,0,0.08)",
+                                        color: "#171717",
+                                        transition: "all 160ms ease",
+                                        bgcolor: "#FFFFFF",
+                                        "&:hover": {
+                                            borderColor: ACCENT,
+                                            bgcolor: "#FFFFFF",
+                                            color: ACCENT,
+                                        },
+                                    }}
+                                >
+                                    <InstagramIcon fontSize="small" />
+                                </MuiLink>
+                            </Stack>
+                        </Box>
+                    </Grid>
+
+                    {/* Right: link columns + contact */}
                     <Grid item xs={12} md={8}>
-                        <Grid container spacing={{ xs: 3, md: 4 }}>
+                        <Grid
+                            container
+                            spacing={{ xs: 3, md: 4 }}
+                            sx={{ justifyContent: { md: "flex-end" } }}
+                        >
                             {COLS.map((col) => (
                                 <Grid key={col.title} item xs={6} sm={3}>
                                     <Typography
                                         sx={{
-                                            fontWeight: 800,
-                                            letterSpacing: "0.08em",
-                                            fontSize: "0.9rem",
-                                            color: "#111827",
-                                            mb: 2,
+                                            fontWeight: 700,
+                                            letterSpacing: "0.14em",
+                                            fontSize: "0.8rem",
+                                            color: "#171717",
+                                            mb: 1.75,
+                                            textTransform: "uppercase",
                                         }}
                                     >
                                         {col.title}
@@ -105,52 +196,42 @@ export default function Footer() {
                                     </Stack>
                                 </Grid>
                             ))}
+
+                            {/* Contact block */}
+                            <Grid item xs={12} sm={4}>
+                                <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+                                    <Typography
+                                        sx={{
+                                            fontWeight: 700,
+                                            letterSpacing: "0.14em",
+                                            fontSize: "0.8rem",
+                                            color: "#171717",
+                                            mb: 1.75,
+                                            textTransform: "uppercase",
+                                        }}
+                                    >
+                                        Contact
+                                    </Typography>
+                                    <MuiLink
+                                        href="mailto:info@yourbrand.com"
+                                        sx={{
+                                            fontSize: { xs: "1rem", md: "1.1rem" },
+                                            fontWeight: 600,
+                                            color: "#171717",
+                                            textDecoration: "none",
+                                            borderBottom: "1px solid transparent",
+                                            transition: "color 160ms ease, border-color 160ms ease",
+                                            "&:hover": {
+                                                color: ACCENT,
+                                                borderBottomColor: ACCENT,
+                                            },
+                                        }}
+                                    >
+                                        info@yourbrand.com
+                                    </MuiLink>
+                                </Box>
+                            </Grid>
                         </Grid>
-
-                        {/* Social icons (gần giống ảnh: nằm dưới phần cột) */}
-                        <Stack direction="row" spacing={2} sx={{ mt: { xs: 4, md: 5 } }}>
-                            <MuiLink
-                                href="#"
-                                aria-label="Facebook"
-                                sx={{ color: "#111827", display: "inline-flex" }}
-                            >
-                                <FacebookIcon />
-                            </MuiLink>
-                            <MuiLink
-                                href="#"
-                                aria-label="Instagram"
-                                sx={{ color: "#111827", display: "inline-flex" }}
-                            >
-                                <InstagramIcon />
-                            </MuiLink>
-                        </Stack>
-                    </Grid>
-
-                    {/* Right contact */}
-                    <Grid item xs={12} md={4}>
-                        <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
-                            <Typography
-                                sx={{
-                                    fontWeight: 800,
-                                    letterSpacing: "0.08em",
-                                    fontSize: "0.9rem",
-                                    color: "#111827",
-                                    mb: 2,
-                                }}
-                            >
-                                CONTACT US
-                            </Typography>
-
-                            <Typography
-                                sx={{
-                                    fontSize: { xs: "1.1rem", md: "1.35rem" },
-                                    fontWeight: 800,
-                                    color: "#111827",
-                                }}
-                            >
-                                info@yourbrand.com
-                            </Typography>
-                        </Box>
                     </Grid>
                 </Grid>
 
@@ -159,45 +240,89 @@ export default function Footer() {
                     sx={{
                         mt: { xs: 5, md: 6 },
                         pt: { xs: 3, md: 4 },
-                        borderTop: "1px solid #F3F4F6",
+                        borderTop: "1px solid rgba(0,0,0,0.06)",
                     }}
                 >
-                    <Typography sx={{ color: "#9CA3AF", fontSize: "0.82rem", mb: 1.2 }}>
-                        COPYRIGHT (C) YOURBRAND co., ltd. ALL RIGHTS RESERVED.
-                    </Typography>
-
                     <Stack
                         direction={{ xs: "column", md: "row" }}
-                        spacing={{ xs: 1, md: 2 }}
+                        spacing={{ xs: 2, md: 2 }}
                         sx={{
-                            alignItems: { md: "center" },
+                            alignItems: { xs: "flex-start", md: "center" },
                             justifyContent: "space-between",
                         }}
                     >
-                        {/* Left: policy links */}
-                        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
+                        {/* Left: copyright */}
+                        <Typography sx={{ color: "#8A8A8A", fontSize: "0.82rem" }}>
+                            COPYRIGHT (C) YOURBRAND co., ltd. ALL RIGHTS RESERVED.
+                        </Typography>
+
+                        {/* Middle: policy links */}
+                        <Stack
+                            direction="row"
+                            spacing={1.5}
+                            sx={{ flexWrap: "wrap", alignItems: "center" }}
+                        >
                             <MuiLink component={NavLink} to="/privacy" sx={linkSx}>
-                                PRIVACY POLICY
+                                Privacy Policy
                             </MuiLink>
-                            <Typography sx={{ color: "#D1D5DB" }}>|</Typography>
+                            <Typography sx={{ color: "#D1D5DB", fontSize: "0.82rem" }}>
+                                |
+                            </Typography>
                             <MuiLink component={NavLink} to="/payment" sx={linkSx}>
                                 Payment
                             </MuiLink>
                         </Stack>
 
-                        {/* Right: locale/language (mock) */}
-                        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
-                            <Typography sx={{ color: "#9CA3AF", fontSize: "0.86rem" }}>
+                        {/* Right: locale/language */}
+                        <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{ flexWrap: "wrap", alignItems: "center" }}
+                        >
+                            <Typography sx={{ color: "#8A8A8A", fontSize: "0.82rem" }}>
                                 Vietnam
                             </Typography>
-                            <Typography sx={{ color: "#D1D5DB" }}>|</Typography>
-                            <MuiLink href="#" sx={linkSx}>
-                                Vietnamese
-                            </MuiLink>
-                            <Typography sx={{ color: "#D1D5DB" }}>|</Typography>
-                            <MuiLink href="#" sx={linkSx}>
-                                English
-                            </MuiLink>
+                            <Typography sx={{ color: "#D1D5DB", fontSize: "0.82rem" }}>
+                                |
+                            </Typography>
+                            <Stack direction="row" spacing={0.75}>
+                                <MuiLink
+                                    href="#"
+                                    sx={{
+                                        fontSize: "0.82rem",
+                                        color: "#6B6B6B",
+                                        textDecoration: "none",
+                                        px: 1,
+                                        py: 0.25,
+                                        borderRadius: 999,
+                                        border: "1px solid transparent",
+                                        "&:hover": {
+                                            borderColor: "rgba(0,0,0,0.12)",
+                                            color: "#171717",
+                                        },
+                                    }}
+                                >
+                                    Vietnamese
+                                </MuiLink>
+                                <MuiLink
+                                    href="#"
+                                    sx={{
+                                        fontSize: "0.82rem",
+                                        color: "#6B6B6B",
+                                        textDecoration: "none",
+                                        px: 1,
+                                        py: 0.25,
+                                        borderRadius: 999,
+                                        border: "1px solid transparent",
+                                        "&:hover": {
+                                            borderColor: "rgba(0,0,0,0.12)",
+                                            color: "#171717",
+                                        },
+                                    }}
+                                >
+                                    English
+                                </MuiLink>
+                            </Stack>
                         </Stack>
                     </Stack>
                 </Box>

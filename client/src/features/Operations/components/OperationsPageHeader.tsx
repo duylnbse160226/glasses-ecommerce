@@ -6,13 +6,18 @@ interface OperationsPageHeaderProps {
   subtitle?: string;
   eyebrow?: string;
   rightSlot?: ReactNode;
+  /** Optional count for badge e.g. "10 orders" */
+  count?: number;
+  countLabel?: string;
 }
 
 export function OperationsPageHeader({
   title,
   subtitle,
-  eyebrow = "Operations center",
+  eyebrow = "OPERATIONS CENTER",
   rightSlot,
+  count,
+  countLabel = "orders",
 }: OperationsPageHeaderProps) {
   return (
     <Box
@@ -31,26 +36,43 @@ export function OperationsPageHeader({
             fontSize: 11,
             letterSpacing: 4,
             textTransform: "uppercase",
-            color: "text.secondary",
+            color: "#8A8A8A",
           }}
         >
           {eyebrow}
         </Typography>
-        <Typography
-          sx={{
-            mt: 0.75,
-            fontSize: { xs: 22, md: 26 },
-            fontWeight: 900,
-            color: "text.primary",
-          }}
-        >
-          {title}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, mt: 0.75, flexWrap: "wrap" }}>
+          <Typography
+            sx={{
+              fontSize: { xs: 24, md: 28 },
+              fontWeight: 800,
+              color: "#171717",
+            }}
+          >
+            {title}
+          </Typography>
+          {count !== undefined && (
+            <Typography
+              component="span"
+              sx={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#6B6B6B",
+                bgcolor: "rgba(0,0,0,0.06)",
+                px: 1.25,
+                py: 0.25,
+                borderRadius: 10,
+              }}
+            >
+              {count} {countLabel}
+            </Typography>
+          )}
+        </Box>
         {subtitle && (
           <Typography
             sx={{
               mt: 0.5,
-              color: "text.secondary",
+              color: "#6B6B6B",
               fontSize: 14,
               maxWidth: 560,
             }}

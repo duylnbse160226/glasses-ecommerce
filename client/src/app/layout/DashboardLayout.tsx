@@ -26,7 +26,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useAccount } from "../../lib/hooks/useAccount";
 
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 272;
 
 const DASHBOARD_LINKS: { path: string; label: string; role: string; icon: React.ReactNode }[] = [
   { path: "/sales", label: "Sales", role: "Sales", icon: <PointOfSaleIcon /> },
@@ -312,34 +312,45 @@ export default function DashboardLayout() {
 
                   <Collapse in={operationsOpen} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding sx={{ pl: 4 }}>
-                      {OPERATIONS_SUB_LINKS.map((sub) => (
-                        <ListItemButton
-                          key={sub.path}
-                          component={NavLink}
-                          to={sub.path}
-                          sx={{
-                            borderRadius: 2,
-                            mb: 0.25,
-                            color: "rgba(0,0,0,0.7)",
-                            "&.active": {
-                              bgcolor: "rgba(25,118,210,0.12)",
-                              color: "primary.main",
-                            },
-                            "&:hover": {
-                              bgcolor: "rgba(0,0,0,0.04)",
-                              color: "rgba(0,0,0,0.9)",
-                            },
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
-                            {sub.icon}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={sub.label}
-                            primaryTypographyProps={{ fontWeight: 500 }}
-                          />
-                        </ListItemButton>
-                      ))}
+                      {OPERATIONS_SUB_LINKS.map((sub) => {
+                        const isActive = location.pathname === sub.path;
+                        return (
+                          <ListItemButton
+                            key={sub.path}
+                            component={NavLink}
+                            to={sub.path}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 0.25,
+                              color: isActive ? "#171717" : "#8A8A8A",
+                              borderLeft: "3px solid transparent",
+                              pl: 1.5,
+                              "&.active": {
+                                bgcolor: "rgba(182,140,90,0.12)",
+                                color: "#171717",
+                                borderLeftColor: "#B68C5A",
+                              },
+                              "&:hover": {
+                                bgcolor: "rgba(0,0,0,0.04)",
+                                color: "#171717",
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 32,
+                                color: isActive ? "#B68C5A" : "inherit",
+                              }}
+                            >
+                              {sub.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={sub.label}
+                              primaryTypographyProps={{ fontWeight: 600 }}
+                            />
+                          </ListItemButton>
+                        );
+                      })}
                     </List>
                   </Collapse>
                 </Fragment>
@@ -374,15 +385,16 @@ export default function DashboardLayout() {
 
         <Box sx={{ flex: 1 }} />
 
-        <List sx={{ px: 1, pb: 2 }}>
+        <List sx={{ px: 1, pb: 2, borderTop: "1px solid rgba(0,0,0,0.06)", pt: 1.5, mt: 1 }}>
           <ListItemButton
             onClick={handleLogout}
             disabled={logoutUser.isPending}
             sx={{
               borderRadius: 2,
-              color: "#d32f2f",
+              color: "#6B6B6B",
               "&:hover": {
-                bgcolor: "rgba(211,47,47,0.08)",
+                bgcolor: "rgba(0,0,0,0.04)",
+                color: "#171717",
               },
             }}
           >
