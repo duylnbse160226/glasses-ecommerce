@@ -18,12 +18,7 @@ public sealed class ManagerProductsController : BaseApiController
     [HttpPost]
     public async Task<ActionResult<Guid>> CreateProduct(CreateProductDto dto, CancellationToken ct)
     {
-        Result<Guid> result = await Mediator.Send(new CreateProduct.Command { Dto = dto }, ct);
-
-        if (!result.IsSuccess)
-            return HandleResult(result);
-
-        return CreatedAtAction(nameof(CreateProduct), new { id = result.Value }, result.Value);
+        return HandleResult(await Mediator.Send(new CreateProduct.Command { Dto = dto }, ct));
     }
 
     /// <summary>
@@ -54,13 +49,8 @@ public sealed class ManagerProductsController : BaseApiController
     [HttpPost("{id:guid}/variants")]
     public async Task<ActionResult<Guid>> AddVariant(Guid id, CreateVariantDto dto, CancellationToken ct)
     {
-        Result<Guid> result = await Mediator.Send(
-            new AddVariant.Command { ProductId = id, Dto = dto }, ct);
-
-        if (!result.IsSuccess)
-            return HandleResult(result);
-
-        return CreatedAtAction(nameof(AddVariant), new { id, variantId = result.Value }, result.Value);
+        return HandleResult(await Mediator.Send(
+            new AddVariant.Command { ProductId = id, Dto = dto }, ct));
     }
 
     /// <summary>
@@ -92,13 +82,8 @@ public sealed class ManagerProductsController : BaseApiController
     [HttpPost("{id:guid}/images")]
     public async Task<ActionResult<Guid>> AddProductImage(Guid id, AddProductImageDto dto, CancellationToken ct)
     {
-        Result<Guid> result = await Mediator.Send(
-            new AddProductImage.Command { ProductId = id, Dto = dto }, ct);
-
-        if (!result.IsSuccess)
-            return HandleResult(result);
-
-        return CreatedAtAction(nameof(AddProductImage), new { id, imageId = result.Value }, result.Value);
+        return HandleResult(await Mediator.Send(
+            new AddProductImage.Command { ProductId = id, Dto = dto }, ct));
     }
 
     /// <summary>
@@ -130,13 +115,8 @@ public sealed class ManagerProductsController : BaseApiController
     [HttpPost("{id:guid}/variants/{variantId:guid}/images")]
     public async Task<ActionResult<Guid>> AddVariantImage(Guid id, Guid variantId, AddVariantImageDto dto, CancellationToken ct)
     {
-        Result<Guid> result = await Mediator.Send(
-            new AddVariantImage.Command { ProductId = id, VariantId = variantId, Dto = dto }, ct);
-
-        if (!result.IsSuccess)
-            return HandleResult(result);
-
-        return CreatedAtAction(nameof(AddVariantImage), new { id, variantId, imageId = result.Value }, result.Value);
+        return HandleResult(await Mediator.Send(
+            new AddVariantImage.Command { ProductId = id, VariantId = variantId, Dto = dto }, ct));
     }
 }
 
