@@ -21,8 +21,12 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProduct.Com
                 .MaximumLength(200).WithMessage("Product name must not exceed 200 characters.");
 
             RuleFor(x => x.Dto.Type)
+                .IsInEnum().WithMessage("Product type is invalid.")
                 .Must(t => t != ProductType.Unknown)
                 .WithMessage("Product type must be specified (Frame, Lens, Combo, Accessory, or Service).");
+
+            RuleFor(x => x.Dto.Status)
+                .IsInEnum().WithMessage("Product status is invalid.");
         });
     }
 }

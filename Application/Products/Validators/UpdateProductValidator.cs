@@ -17,8 +17,8 @@ public sealed class UpdateProductValidator : AbstractValidator<UpdateProduct.Com
                 .Must(dto =>
                     dto.CategoryId.HasValue ||
                     !string.IsNullOrWhiteSpace(dto.ProductName) ||
-                    dto.Description != null ||
-                    dto.Brand != null ||
+                    !string.IsNullOrWhiteSpace(dto.Description) ||
+                    !string.IsNullOrWhiteSpace(dto.Brand) ||
                     dto.Status.HasValue)
                 .WithMessage("At least one field must be provided for update.");
 

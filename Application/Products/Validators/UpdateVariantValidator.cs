@@ -16,10 +16,10 @@ public sealed class UpdateVariantValidator : AbstractValidator<UpdateVariant.Com
             RuleFor(x => x.Dto)
                 .Must(dto =>
                     !string.IsNullOrWhiteSpace(dto.SKU) ||
-                    dto.VariantName != null ||
-                    dto.Color != null ||
-                    dto.Size != null ||
-                    dto.Material != null ||
+                    !string.IsNullOrWhiteSpace(dto.VariantName) ||
+                    !string.IsNullOrWhiteSpace(dto.Color) ||
+                    !string.IsNullOrWhiteSpace(dto.Size) ||
+                    !string.IsNullOrWhiteSpace(dto.Material) ||
                     dto.FrameWidth.HasValue ||
                     dto.LensWidth.HasValue ||
                     dto.BridgeWidth.HasValue ||
@@ -36,6 +36,22 @@ public sealed class UpdateVariantValidator : AbstractValidator<UpdateVariant.Com
             RuleFor(x => x.Dto.Price)
                 .GreaterThanOrEqualTo(0).WithMessage("Price must be greater than or equal to 0.")
                 .When(x => x.Dto.Price.HasValue);
+
+            RuleFor(x => x.Dto.FrameWidth)
+                .GreaterThan(0).WithMessage("Frame width must be greater than 0.")
+                .When(x => x.Dto.FrameWidth.HasValue);
+
+            RuleFor(x => x.Dto.LensWidth)
+                .GreaterThan(0).WithMessage("Lens width must be greater than 0.")
+                .When(x => x.Dto.LensWidth.HasValue);
+
+            RuleFor(x => x.Dto.BridgeWidth)
+                .GreaterThan(0).WithMessage("Bridge width must be greater than 0.")
+                .When(x => x.Dto.BridgeWidth.HasValue);
+
+            RuleFor(x => x.Dto.TempleLength)
+                .GreaterThan(0).WithMessage("Temple length must be greater than 0.")
+                .When(x => x.Dto.TempleLength.HasValue);
 
             // Cross-field: CompareAtPrice must be >= Price when both are provided
             RuleFor(x => x.Dto.CompareAtPrice)
