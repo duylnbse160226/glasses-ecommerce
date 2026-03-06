@@ -16,5 +16,6 @@ public sealed class PromotionDetailDto
     public DateTime ValidFrom { get; set; }
     public DateTime ValidTo { get; set; }
     public bool IsActive { get; set; }
+    public bool IsPublic { get; set; }
     public int UsedCount { get; set; }
 }

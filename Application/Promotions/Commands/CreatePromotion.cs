@@ -43,6 +43,7 @@ public sealed class CreatePromotion
                 ValidFrom = dto.ValidFrom,
                 ValidTo = dto.ValidTo,
                 IsActive = true,
+                IsPublic = dto.IsPublic,
             };
 
             context.Promotions.Add(promotion);

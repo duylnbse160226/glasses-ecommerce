@@ -282,7 +282,7 @@ public sealed class MappingProfiles : Profile
             .ForMember(d => d.Attachments, o => o.MapFrom(s =>
                 s.Attachments.Where(a => a.DeletedAt == null).OrderBy(a => a.CreatedAt)));
 
-        // Promotion mappings
+        //=== PROMOTIONS ===
         CreateMap<Promotion, PromotionListDto>()
             .ForMember(d => d.PromotionType, o => o.MapFrom(s => s.PromotionType.ToString()))
             .ForMember(d => d.UsedCount, o => o.MapFrom(s => s.UsageLogs.Count));
@@ -290,5 +290,8 @@ public sealed class MappingProfiles : Profile
         CreateMap<Promotion, PromotionDetailDto>()
             .ForMember(d => d.PromotionType, o => o.MapFrom(s => s.PromotionType.ToString()))
             .ForMember(d => d.UsedCount, o => o.MapFrom(s => s.UsageLogs.Count));
+
+        CreateMap<Promotion, ActivePromotionDto>()
+            .ForMember(d => d.PromotionType, o => o.MapFrom(s => s.PromotionType.ToString()));
     }
 }

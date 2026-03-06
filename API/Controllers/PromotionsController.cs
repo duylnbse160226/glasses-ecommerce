@@ -12,6 +12,17 @@ namespace API.Controllers;
 public sealed class PromotionsController : BaseApiController
 {
     /// <summary>
+    /// Gets a list of all currently active and valid promotions for the frontend to display.
+    /// Only returns promotions with IsPublic = true.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("active")]
+    public async Task<IActionResult> GetActivePromotions()
+    {
+        Result<List<ActivePromotionDto>> result = await Mediator.Send(new GetActivePromotions.Query());
+        return HandleResult(result);
+    }
+    /// <summary>
     /// Validates a promo code and returns a discount preview for the given order total.
     /// Requires authentication so per-customer usage limits can be checked.
     /// Always returns 200 OK — use IsValid + Error for inline frontend display.

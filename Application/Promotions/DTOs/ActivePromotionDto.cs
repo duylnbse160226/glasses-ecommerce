@@ -1,18 +1,18 @@
+using Domain;
+
 namespace Application.Promotions.DTOs;
-///summary
-///Summary DTO returned in paged promotion list
-///summary
-public sealed class PromotionListDto
+///<summary>
+///Public DTO returned in GET /api/promotions/active
+///Excludes sensible internal fields like UsageLimit, UsageLimitPerCustomer, UsedCount, IsActive, IsPublic
+///</summary>
+public sealed class ActivePromotionDto
 {
     public Guid Id { get; set; }
     public string PromoCode { get; set; } = string.Empty;
     public string PromoName { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public string PromotionType { get; set; } = string.Empty;
     public decimal DiscountValue { get; set; }
     public decimal? MaxDiscountValue { get; set; }
-    public DateTime ValidFrom { get; set; }
     public DateTime ValidTo { get; set; }
-    public bool IsActive { get; set; }
-    public bool IsPublic { get; set; }
-    public int UsedCount { get; set; }
 }

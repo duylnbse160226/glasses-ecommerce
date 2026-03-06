@@ -12,4 +12,5 @@ public sealed class UpdatePromotionDto
     public DateTime ValidFrom { get; set; }
     public DateTime ValidTo { get; set; }
     public bool IsActive { get; set; }
+    public bool IsPublic { get; set; }
 }

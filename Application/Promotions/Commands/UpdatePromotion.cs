@@ -42,6 +42,7 @@ public sealed class UpdatePromotion
             promotion.ValidFrom = dto.ValidFrom;
             promotion.ValidTo = dto.ValidTo;
             promotion.IsActive = dto.IsActive;
+            promotion.IsPublic = dto.IsPublic;
 
             await context.SaveChangesAsync(ct);
 

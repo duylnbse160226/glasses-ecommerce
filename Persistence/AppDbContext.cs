@@ -680,6 +680,9 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Id
             entity.HasIndex(e => new { e.IsActive, e.ValidFrom, e.ValidTo })
                 .HasDatabaseName("IX_Promotion_Active_ValidPeriod");
 
+            entity.HasIndex(e => new { e.IsActive, e.IsPublic, e.ValidFrom, e.ValidTo })
+                .HasDatabaseName("IX_Promotion_Active_Public_ValidPeriod");
+
             entity.HasIndex(e => e.PromotionType)
                 .HasDatabaseName("IX_Promotion_PromotionType");
 
