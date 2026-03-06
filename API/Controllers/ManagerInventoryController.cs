@@ -1,6 +1,8 @@
 using Application.Inventory.Commands;
 using Application.Inventory.DTOs;
 using Application.Inventory.Queries;
+using Application.Products.Commands;
+using Application.Products.DTOs;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +44,9 @@ public sealed class ManagerInventoryController : BaseApiController
     // Duyệt phiếu nhập kho → cập nhật stock thực tế
     // Flow: RepeatableRead transaction + UPDLOCK trên Stocks → tránh race condition
     // Cho mỗi item: Stock.QuantityOnHand += Quantity, tạo InventoryTransaction audit
+    // Auto-fulfill PreOrder demand: nếu variant có QuantityPreOrdered > 0,
+    //   chuyển Min(nhập về, demand) từ QuantityPreOrdered → QuantityReserved
+    //   → Operations thấy QuantityReserved tăng, biết có đơn PreOrder cần đóng gói và ship
     // Manager KHÔNG được approve record mình tạo (separation of duties — tránh gian lận)
     // ReferenceType tự động map từ SourceType (Supplier/Return/Adjustment)
     [HttpPut("inbound/{id}/approve")]
@@ -60,4 +65,5 @@ public sealed class ManagerInventoryController : BaseApiController
         return HandleResult(await Mediator.Send(
             new RejectInbound.Command { InboundRecordId = id, Dto = dto }, ct));
     }
+
 }

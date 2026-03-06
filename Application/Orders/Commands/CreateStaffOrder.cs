@@ -164,10 +164,11 @@ public sealed class CreateStaffOrder
                 {
                     DateTime now = DateTime.UtcNow;
                     promotion = await context.Promotions
-                        .FirstOrDefaultAsync(p => p.PromoCode == dto.PromoCode
-                            && p.IsActive
-                            && p.ValidFrom <= now
-                            && p.ValidTo >= now, ct);
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(p => p.PromoCode == dto.PromoCode.ToUpper()
+                                               && p.IsActive
+                                               && p.ValidFrom <= now
+                                               && p.ValidTo >= now, ct);
 
                     if (promotion == null)
                         return Result<Guid>.Failure("Invalid or expired promo code.", 400);
@@ -181,6 +182,16 @@ public sealed class CreateStaffOrder
                             return Result<Guid>.Failure("Promo code usage limit reached.", 400);
                     }
 
+                    // Per-customer limit (skip for walk-in where no userId is linked)
+                    if (promotion.UsageLimitPerCustomer.HasValue && dto.UserId.HasValue)
+                    {
+                        int customerUsed = await context.PromoUsageLogs
+                            .CountAsync(l => l.PromotionId == promotion.Id && l.UsedBy == dto.UserId.Value, ct);
+                        if (customerUsed >= promotion.UsageLimitPerCustomer.Value)
+                            return Result<Guid>.Failure(
+                                "This customer has already used this promo code the maximum number of times.", 400);
+                    }
+
                     // Check min order amount
                     // Note: Add MinOrderAmount check here if field is added to Promotion entity
 
@@ -189,6 +200,7 @@ public sealed class CreateStaffOrder
                     {
                         PromotionType.Percentage => Math.Round(totalAmount * promotion.DiscountValue / 100, 2),
                         PromotionType.FixedAmount => promotion.DiscountValue,
+                        PromotionType.FreeShipping => shippingFee,
                         _ => 0
                     };
 
@@ -230,7 +242,7 @@ public sealed class CreateStaffOrder
                 }
                 context.OrderItems.AddRange(orderItems);
 
-                // 8. Reserve stock for ReadyStock and Prescription orders
+                // 8. Reserve stock for ReadyStock and Prescription orders; track demand for PreOrder
                 if (dto.OrderType == OrderType.ReadyStock || dto.OrderType == OrderType.Prescription)
                 {
                     foreach (OrderItemInputDto item in mergedItems)
@@ -239,6 +251,29 @@ public sealed class CreateStaffOrder
                         stock.QuantityReserved += item.Quantity;
                         stock.UpdatedAt = DateTime.UtcNow;
                         stock.UpdatedBy = staffUserId;
+                    }
+                }
+                else if (dto.OrderType == OrderType.PreOrder)
+                {
+                    foreach (OrderItemInputDto item in mergedItems)
+                    {
+                        ProductVariant variant = variants.First(v => v.Id == item.ProductVariantId);
+                        if (variant.Stock == null)
+                            return Result<Guid>.Failure(
+                                $"Stock record not found for product variant '{variant.VariantName}'.", 409);
+                        if (variant.IsPreOrder && variant.Stock != null)
+                        {
+                            variant.Stock.QuantityPreOrdered += item.Quantity;
+                            variant.Stock.UpdatedAt = DateTime.UtcNow;
+                            variant.Stock.UpdatedBy = staffUserId;
+                        }
+                        else if (!variant.IsPreOrder)
+                        {
+                            Stock stock = variant.Stock!;
+                            stock.QuantityReserved += item.Quantity;
+                            stock.UpdatedAt = DateTime.UtcNow;
+                            stock.UpdatedBy = staffUserId;
+                        }
                     }
                 }
 
@@ -259,7 +294,7 @@ public sealed class CreateStaffOrder
                 context.Payments.Add(payment);
 
                 // 10. Create Promo Usage Log
-                if (promotion != null && discountApplied > 0)
+                if (promotion != null)
                 {
                     order.ApplyPromotion(new PromoUsageLog
                     {
@@ -267,6 +302,8 @@ public sealed class CreateStaffOrder
                         PromotionId = promotion.Id,
                         DiscountApplied = discountApplied,
                         UsedAt = DateTime.UtcNow,
+                        //Walk-in thì UsedBy = null (không track, vì không có registered customer)
+                        UsedBy = dto.UserId,
                     });
                 }
 

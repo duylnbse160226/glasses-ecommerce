@@ -120,7 +120,19 @@ public sealed class Checkout
                             $"Product '{variant.VariantName}' is no longer available.", 400);
                 }
 
-                if (dto.OrderType == OrderType.ReadyStock || dto.OrderType == OrderType.Prescription)
+                // Phân loại items: PreOrder vs Regular
+                bool hasPreOrderItems = mergedItems
+                    .Any(m => variants.First(v => v.Id == m.ProductVariantId).IsPreOrder);
+                bool hasRegularItems = mergedItems
+                    .Any(m => !variants.First(v => v.Id == m.ProductVariantId).IsPreOrder);
+
+                // Nếu toàn bộ hoặc có bất kỳ PreOrder item nào → order type bị ép thành PreOrder.
+                // Mixed cart (Regular + PreOrder) cũng gộp chung 1 đơn, chờ đủ hàng rồi ship 1 lần.
+                OrderType resolvedOrderType = hasPreOrderItems ? OrderType.PreOrder : dto.OrderType;
+
+                // Kiểm tra stock chỉ cho những Regular items trong đơn
+                // (PreOrder items bỏ qua bước này vì hàng chưa có)
+                if (resolvedOrderType == OrderType.ReadyStock || resolvedOrderType == OrderType.Prescription)
                 {
                     foreach (var mergedItem in mergedItems)
                     {
@@ -128,6 +140,20 @@ public sealed class Checkout
                         if (variant.Stock == null || variant.Stock.QuantityAvailable < mergedItem.Quantity)
                             return Result<Guid>.Failure(
                                 $"Insufficient stock for '{variant.VariantName}'. Available: {variant.Stock?.QuantityAvailable ?? 0}.", 400);
+                    }
+                }
+                else if (resolvedOrderType == OrderType.PreOrder && hasRegularItems)
+                {
+                    // Mixed cart: chỉ kiểm tra stock cho Regular items (PreOrder items bỏ qua)
+                    foreach (var mergedItem in mergedItems)
+                    {
+                        ProductVariant variant = variants.First(v => v.Id == mergedItem.ProductVariantId);
+                        if (!variant.IsPreOrder)
+                        {
+                            if (variant.Stock == null || variant.Stock.QuantityAvailable < mergedItem.Quantity)
+                                return Result<Guid>.Failure(
+                                    $"Insufficient stock for '{variant.VariantName}'. Available: {variant.Stock?.QuantityAvailable ?? 0}.", 400);
+                        }
                     }
                 }
 
@@ -160,10 +186,11 @@ public sealed class Checkout
                 {
                     DateTime now = DateTime.UtcNow;
                     promotion = await context.Promotions
-                        .FirstOrDefaultAsync(p => p.PromoCode == dto.PromoCode
-                            && p.IsActive
-                            && p.ValidFrom <= now
-                            && p.ValidTo >= now, ct);
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(p => p.PromoCode == dto.PromoCode.ToUpper()
+                                               && p.IsActive
+                                               && p.ValidFrom <= now
+                                               && p.ValidTo >= now, ct);
 
                     if (promotion == null)
                         return Result<Guid>.Failure("Invalid or expired promo code.", 400);
@@ -176,10 +203,20 @@ public sealed class Checkout
                             return Result<Guid>.Failure("Promo code usage limit reached.", 400);
                     }
 
+                    if (promotion.UsageLimitPerCustomer.HasValue)
+                    {
+                        int customerUsed = await context.PromoUsageLogs
+                            .CountAsync(l => l.PromotionId == promotion.Id && l.UsedBy == userId, ct);
+                        if (customerUsed >= promotion.UsageLimitPerCustomer.Value)
+                            return Result<Guid>.Failure(
+                                "You have already used this promo code the maximum number of times.", 400);
+                    }
+
                     discountApplied = promotion.PromotionType switch
                     {
                         PromotionType.Percentage => Math.Round(totalAmount * promotion.DiscountValue / 100, 2),
                         PromotionType.FixedAmount => promotion.DiscountValue,
+                        PromotionType.FreeShipping => shippingFee,
                         _ => 0
                     };
 
@@ -195,14 +232,14 @@ public sealed class Checkout
                 {
                     Id = orderId, // explicitly assigned from outside retry scope
                     OrderSource = OrderSource.Online,
-                    OrderType = dto.OrderType,
+                    OrderType = resolvedOrderType,
                     OrderStatus = OrderStatus.Pending,
                     UserId = userId,
                     AddressId = dto.AddressId,
                     TotalAmount = totalAmount,
                     ShippingFee = shippingFee,
                     CustomerNote = dto.CustomerNote,
-                    CancellationDeadline = dto.OrderType == OrderType.Prescription
+                    CancellationDeadline = resolvedOrderType == OrderType.Prescription
                         ? DateTime.UtcNow.AddHours(24) : null,
                 };
 
@@ -215,8 +252,8 @@ public sealed class Checkout
                 }
                 context.OrderItems.AddRange(orderItems);
 
-                // 8. Reserve stock for ReadyStock and Prescription orders
-                if (dto.OrderType == OrderType.ReadyStock || dto.OrderType == OrderType.Prescription)
+                // 8. Reserve stock cho ReadyStock/Prescription; track demand cho PreOrder
+                if (resolvedOrderType == OrderType.ReadyStock || resolvedOrderType == OrderType.Prescription)
                 {
                     foreach (var mergedItem in mergedItems)
                     {
@@ -224,6 +261,35 @@ public sealed class Checkout
                         stock.QuantityReserved += mergedItem.Quantity;
                         stock.UpdatedAt = DateTime.UtcNow;
                         stock.UpdatedBy = userId;
+                    }
+                }
+                else if (resolvedOrderType == OrderType.PreOrder)
+                {
+                    // PreOrder items (IsPreOrder = true): hàng chưa có trong kho → ghi nhận demand vào QuantityPreOrdered.
+                    // Regular items trong mixed cart (IsPreOrder = false): hàng có sẵn → reserve bình thường vào QuantityReserved.
+                    foreach (var mergedItem in mergedItems)
+                    {
+                        ProductVariant variant = variants.First(v => v.Id == mergedItem.ProductVariantId);
+                        if (variant.IsPreOrder && variant.Stock != null)
+                        {
+                            variant.Stock.QuantityPreOrdered += mergedItem.Quantity;
+                            variant.Stock.UpdatedAt = DateTime.UtcNow;
+                            variant.Stock.UpdatedBy = userId;
+                        }
+                        else if (variant.IsPreOrder && variant.Stock == null)
+                        {
+                            return Result<Guid>.Failure(
+                                $"PreOrder variant '{variant.VariantName}' has no stock record configured.", 400);
+                        }
+                        else if (!variant.IsPreOrder)
+                        {
+                            // Regular item trong mixed PreOrder cart: reserve bình thường
+                            // (hàng có sẵn, chỉ cần giữ chỗ khi đợi PreOrder về)
+                            Stock stock = variant.Stock!;
+                            stock.QuantityReserved += mergedItem.Quantity;
+                            stock.UpdatedAt = DateTime.UtcNow;
+                            stock.UpdatedBy = userId;
+                        }
                     }
                 }
 
@@ -239,7 +305,7 @@ public sealed class Checkout
                 context.Payments.Add(payment);
 
                 // 10. Promo usage
-                if (promotion != null && discountApplied > 0)
+                if (promotion != null)
                 {
                     order.ApplyPromotion(new PromoUsageLog
                     {
@@ -247,11 +313,12 @@ public sealed class Checkout
                         PromotionId = promotion.Id,
                         DiscountApplied = discountApplied,
                         UsedAt = DateTime.UtcNow,
+                        UsedBy = userId,
                     });
                 }
 
                 // 11. Prescription
-                if (dto.OrderType == OrderType.Prescription && dto.Prescription != null)
+                if (resolvedOrderType == OrderType.Prescription && dto.Prescription != null)
                 {
                     Prescription prescription = new Prescription
                     {
