@@ -35,8 +35,17 @@ public sealed class GetPromotions
             if (request.IsActive.HasValue)
                 query = query.Where(p => p.IsActive == request.IsActive.Value);
 
+            if (request.PromotionType.HasValue &&
+                !Enum.IsDefined(typeof(PromotionType), request.PromotionType.Value))
+            {
+                return Result<PagedResult<PromotionListDto>>.Failure("Invalid promotion type.", 400);
+            }
+
             if (request.PromotionType.HasValue)
-                query = query.Where(p => (int)p.PromotionType == request.PromotionType.Value);
+            {
+                PromotionType promotionType = (PromotionType)request.PromotionType.Value;
+                query = query.Where(p => p.PromotionType == promotionType);
+            }
 
             if (request.ValidFrom.HasValue)
                 query = query.Where(p => p.ValidTo >= request.ValidFrom.Value);
