@@ -33,6 +33,25 @@ public sealed class UpdatePolicy
 
             UpdatePolicyDto dto = request.Dto;
 
+            // Cross-field Validation
+            if (policy.PolicyType == PolicyType.Return && !dto.ReturnWindowDays.HasValue)
+            {
+                return Result<PolicyConfigurationDto>.Failure("ReturnWindowDays is required for Return policies.", 400);
+            }
+            if (policy.PolicyType != PolicyType.Return && dto.ReturnWindowDays.HasValue)
+            {
+                return Result<PolicyConfigurationDto>.Failure("ReturnWindowDays must be null for non-Return policies.", 400);
+            }
+
+            if (policy.PolicyType == PolicyType.Warranty && !dto.WarrantyMonths.HasValue)
+            {
+                return Result<PolicyConfigurationDto>.Failure("WarrantyMonths is required for Warranty policies.", 400);
+            }
+            if (policy.PolicyType != PolicyType.Warranty && dto.WarrantyMonths.HasValue)
+            {
+                return Result<PolicyConfigurationDto>.Failure("WarrantyMonths must be null for non-Warranty policies.", 400);
+            }
+
             // Basic Date Validation
             if (dto.EffectiveTo.HasValue && dto.EffectiveTo <= dto.EffectiveFrom)
             {
