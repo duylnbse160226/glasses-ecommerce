@@ -74,7 +74,7 @@ export function OrderCard({
             {order.shippingAddress}
           </Typography>
           <Typography fontSize={12} color="text.secondary" sx={{ mt: 0.5 }}>
-            {formatDate(order.createdAt)} · {order.items.length} items · {order.totalAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+            {formatDate(order.createdAt)} · {order.items?.length || 0} items · {order.totalAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}
           </Typography>
           {order.orderType === "PreOrder" && order.expectedStockDate && (
             <Typography fontSize={12} color="text.secondary" sx={{ mt: 0.5 }}>

@@ -116,6 +116,7 @@ public sealed class MappingProfiles : Profile
 
         // Order mappings
         CreateMap<Order, StaffOrderListDto>()
+            .ForMember(d => d.OrderNumber, o => o.MapFrom(s => "ORD-" + s.Id.ToString().Substring(0, 8).ToUpper()))
             .ForMember(d => d.OrderSource, o => o.MapFrom(s => s.OrderSource.ToString()))
             .ForMember(d => d.OrderType, o => o.MapFrom(s => s.OrderType.ToString()))
             .ForMember(d => d.OrderStatus, o => o.MapFrom(s => s.OrderStatus.ToString()))
@@ -123,9 +124,18 @@ public sealed class MappingProfiles : Profile
                 s.TotalAmount + s.ShippingFee - s.PromoUsageLogs.Sum(p => p.DiscountApplied)))
             .ForMember(d => d.CustomerName, o => o.MapFrom(s => s.Address != null ? s.Address.RecipientName : s.WalkInCustomerName))
             .ForMember(d => d.CustomerPhone, o => o.MapFrom(s => s.Address != null ? s.Address.RecipientPhone : s.WalkInCustomerPhone))
+            .ForMember(d => d.CustomerEmail, o => o.MapFrom(s => s.User != null ? s.User.Email : null))
+            .ForMember(d => d.ShippingAddress, o => o.MapFrom(s =>
+                s.Address != null ? $"{s.Address.Venue}, {s.Address.Ward}, {s.Address.District}, {s.Address.City}" : null))
             .ForMember(d => d.SalesStaffName, o => o.MapFrom(s =>
                 s.SalesStaff != null ? s.SalesStaff.DisplayName : null))
-            .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count));
+            .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count))
+            .ForMember(d => d.ExpectedStockDate, o => o.Ignore())
+            .ForMember(d => d.PrescriptionStatus, o => o.Ignore())
+            .ForMember(d => d.ShipmentId, o => o.Ignore())
+            .ForMember(d => d.TrackingNumber, o => o.Ignore())
+            .ForMember(d => d.Carrier, o => o.Ignore())
+            .ForMember(d => d.Items, o => o.Ignore());
 
         CreateMap<Order, StaffOrderDto>()
             .ForMember(d => d.OrderSource, o => o.MapFrom(s => s.OrderSource.ToString()))

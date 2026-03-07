@@ -91,9 +91,9 @@ export function CreateShipmentDialog({
               )}
               <Divider sx={{ my: 1.5 }} />
               <Typography fontSize={12} fontWeight={700} color="text.secondary" sx={{ mb: 0.5 }}>
-                Items ({order.items.length})
+                Items ({order.items?.length || 0})
               </Typography>
-              {order.items.map((item) => (
+              {(order.items || []).map((item) => (
                 <Box
                   key={item.id}
                   sx={{
