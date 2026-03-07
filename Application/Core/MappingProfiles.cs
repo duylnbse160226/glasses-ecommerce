@@ -84,6 +84,7 @@ public sealed class MappingProfiles : Profile
                 s.ProductVariant != null && s.ProductVariant.Stock != null ? s.ProductVariant.Stock.QuantityAvailable : 0))
             .ForMember(d => d.IsInStock, o => o.MapFrom(s =>
                 s.ProductVariant != null && s.ProductVariant.Stock != null && s.ProductVariant.Stock.QuantityAvailable > 0))
+            .ForMember(d => d.IsPreOrder, o => o.MapFrom(s => s.ProductVariant != null && s.ProductVariant.IsPreOrder))
             .ForMember(d => d.ProductId, o => o.MapFrom(s => s.ProductVariant != null ? s.ProductVariant.ProductId : Guid.Empty))
             .ForMember(d => d.ProductName, o => o.MapFrom(s => s.ProductVariant != null && s.ProductVariant.Product != null ? s.ProductVariant.Product.ProductName : null))
             .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
