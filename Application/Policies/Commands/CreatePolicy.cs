@@ -26,7 +26,10 @@ public sealed class CreatePolicy
         {
             CreatePolicyDto dto = request.Dto;
 
-            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ct);
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ct);
 
             // Basic Date Validation
             if (dto.EffectiveTo.HasValue && dto.EffectiveTo <= dto.EffectiveFrom)
@@ -86,7 +89,8 @@ public sealed class CreatePolicy
                 .ProjectTo<PolicyConfigurationDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);
 
-            return Result<PolicyConfigurationDto>.Success(createdDto!);
+                return Result<PolicyConfigurationDto>.Success(createdDto!);
+            });
         }
     }
 }

@@ -25,7 +25,10 @@ public sealed class UpdatePolicy
     {
         public async Task<Result<PolicyConfigurationDto>> Handle(Command request, CancellationToken ct)
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ct);
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ct);
 
             PolicyConfiguration? policy = await context.PolicyConfigurations
                 .FirstOrDefaultAsync(p => p.Id == request.Id, ct);
@@ -109,7 +112,8 @@ public sealed class UpdatePolicy
                 .ProjectTo<PolicyConfigurationDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);
 
-            return Result<PolicyConfigurationDto>.Success(updatedDto!);
+                return Result<PolicyConfigurationDto>.Success(updatedDto!);
+            });
         }
     }
 }
