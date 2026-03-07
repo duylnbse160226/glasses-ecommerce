@@ -10,17 +10,17 @@ namespace Application.Policies.Queries;
 
 public sealed class GetActivePolicies
 {
-    public sealed class Query : IRequest<Result<List<PolicyConfigurationDto>>>
+    public sealed class Query : IRequest<Result<List<ActivePolicyDto>>>
     {
     }
 
-    internal sealed class Handler(AppDbContext context, IMapper mapper) : IRequestHandler<Query, Result<List<PolicyConfigurationDto>>>
+    internal sealed class Handler(AppDbContext context, IMapper mapper) : IRequestHandler<Query, Result<List<ActivePolicyDto>>>
     {
-        public async Task<Result<List<PolicyConfigurationDto>>> Handle(Query request, CancellationToken ct)
+        public async Task<Result<List<ActivePolicyDto>>> Handle(Query request, CancellationToken ct)
         {
             DateTime now = DateTime.UtcNow;
 
-            List<PolicyConfigurationDto> policies = await context.PolicyConfigurations
+            List<ActivePolicyDto> policies = await context.PolicyConfigurations
                 .Where(p => 
                     p.IsActive && 
                     !p.IsDeleted && 
@@ -28,10 +28,10 @@ public sealed class GetActivePolicies
                     (p.EffectiveTo == null || p.EffectiveTo >= now))
                 .AsNoTracking()
                 .OrderBy(p => p.PolicyType)
-                .ProjectTo<PolicyConfigurationDto>(mapper.ConfigurationProvider)
+                .ProjectTo<ActivePolicyDto>(mapper.ConfigurationProvider)
                 .ToListAsync(ct);
 
-            return Result<List<PolicyConfigurationDto>>.Success(policies);
+            return Result<List<ActivePolicyDto>>.Success(policies);
         }
     }
 }

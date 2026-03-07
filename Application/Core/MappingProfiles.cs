@@ -294,5 +294,6 @@ public sealed class MappingProfiles : Profile
 
         //=== POLICIES ===
         CreateMap<PolicyConfiguration, PolicyConfigurationDto>();
+        CreateMap<PolicyConfiguration, ActivePolicyDto>();
     }
 }

@@ -17,7 +17,7 @@ public sealed class PoliciesController : BaseApiController
     [HttpGet("active")]
     public async Task<IActionResult> GetActivePolicies()
     {
-        Result<List<PolicyConfigurationDto>> result = await Mediator.Send(new GetActivePolicies.Query());
+        Result<List<ActivePolicyDto>> result = await Mediator.Send(new GetActivePolicies.Query());
         return HandleResult(result);
     }
 }
