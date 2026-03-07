@@ -1,0 +1,36 @@
+using Application.Core;
+using Application.Policies.DTOs;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Persistence;
+
+namespace Application.Policies.Queries;
+
+public sealed class GetActivePolicies
+{
+    public sealed class Query : IRequest<Result<List<PolicyConfigurationDto>>>
+    {
+    }
+
+    internal sealed class Handler(AppDbContext context, IMapper mapper) : IRequestHandler<Query, Result<List<PolicyConfigurationDto>>>
+    {
+        public async Task<Result<List<PolicyConfigurationDto>>> Handle(Query request, CancellationToken ct)
+        {
+            var now = DateTime.UtcNow;
+
+            var policies = await context.PolicyConfigurations
+                .Where(p => 
+                    p.IsActive && 
+                    !p.IsDeleted && 
+                    p.EffectiveFrom <= now && 
+                    (p.EffectiveTo == null || p.EffectiveTo >= now))
+                .AsNoTracking()
+                .ProjectTo<PolicyConfigurationDto>(mapper.ConfigurationProvider)
+                .ToListAsync(ct);
+
+            return Result<List<PolicyConfigurationDto>>.Success(policies);
+        }
+    }
+}
