@@ -8,6 +8,7 @@ using Application.Orders.DTOs;
 using Application.Products.DTOs;
 using Application.Profiles.DTOs;
 using Application.Promotions.DTOs;
+using Application.Policies.DTOs;
 using AutoMapper;
 using Domain;
 
@@ -291,5 +292,9 @@ public sealed class MappingProfiles : Profile
             .ForMember(d => d.UsedCount, o => o.MapFrom(s => s.UsageLogs.Count));
 
         CreateMap<Promotion, ActivePromotionDto>();
+
+        //=== POLICIES ===
+        CreateMap<PolicyConfiguration, PolicyConfigurationDto>();
+        CreateMap<PolicyConfiguration, ActivePolicyDto>();
     }
 }
