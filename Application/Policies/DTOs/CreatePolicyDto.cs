@@ -6,7 +6,7 @@ namespace Application.Policies.DTOs;
 /// <summary>
 /// DTO used for creating a new policy configuration
 /// </summary>
-public class CreatePolicyDto
+public sealed class CreatePolicyDto
 {
     public PolicyType PolicyType { get; set; }
 

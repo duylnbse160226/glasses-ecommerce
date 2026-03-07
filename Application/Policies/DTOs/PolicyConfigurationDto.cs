@@ -6,7 +6,7 @@ namespace Application.Policies.DTOs;
 /// <summary>
 /// Summary DTO returned in paged policy list and details
 /// </summary>
-public class PolicyConfigurationDto
+public sealed class PolicyConfigurationDto
 {
     public Guid Id { get; set; }
     public PolicyType PolicyType { get; set; }
@@ -21,4 +21,6 @@ public class PolicyConfigurationDto
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
 }

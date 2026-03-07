@@ -29,8 +29,7 @@ public sealed class GetPolicyList
 
             IQueryable<PolicyConfiguration> query = context.PolicyConfigurations
                 .Where(p => !p.IsDeleted)
-                .AsNoTracking()
-                .AsQueryable();
+                .AsNoTracking();
 
             if (request.PolicyType.HasValue)
             {
@@ -44,8 +43,7 @@ public sealed class GetPolicyList
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
-                string lowerSearch = request.Search.ToLower();
-                query = query.Where(p => p.PolicyName.ToLower().Contains(lowerSearch));
+                query = query.Where(p => p.PolicyName.Contains(request.Search));
             }
 
             int totalCount = await query.CountAsync(ct);

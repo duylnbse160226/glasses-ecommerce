@@ -20,7 +20,7 @@ public sealed class UpdatePolicyValidator : AbstractValidator<UpdatePolicy.Comma
         {
             RuleFor(x => x.Dto.PolicyName)
                 .NotEmpty().WithMessage("Policy name is required.")
-                .MaximumLength(255).WithMessage("Policy name must not exceed 255 characters.");
+                .MaximumLength(200).WithMessage("Policy name must not exceed 200 characters.");
 
             RuleFor(x => x.Dto.ReturnWindowDays)
                 .InclusiveBetween(0, 365).WithMessage("Return window must be between 0 and 365 days.")

@@ -5,7 +5,7 @@ namespace Application.Policies.DTOs;
 /// <summary>
 /// DTO used for updating an existing policy configuration
 /// </summary>
-public class UpdatePolicyDto
+public sealed class UpdatePolicyDto
 {
     public string PolicyName { get; set; } = null!;
 

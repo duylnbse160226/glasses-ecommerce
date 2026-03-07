@@ -27,6 +27,7 @@ public sealed class GetActivePolicies
                     p.EffectiveFrom <= now && 
                     (p.EffectiveTo == null || p.EffectiveTo >= now))
                 .AsNoTracking()
+                .OrderBy(p => p.PolicyType)
                 .ProjectTo<PolicyConfigurationDto>(mapper.ConfigurationProvider)
                 .ToListAsync(ct);
 
