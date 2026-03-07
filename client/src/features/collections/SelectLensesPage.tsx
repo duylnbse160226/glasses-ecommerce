@@ -8,7 +8,6 @@ export default function SelectLensesPage() {
     const location = useLocation();
     const state = location.state as { variantId?: string | null; isPreOrder?: boolean } | null;
     const initialVariantId = state?.variantId ?? null;
-    const isPreOrder = state?.isPreOrder ?? false;
     const { product, isLoading, currentVariant, images, handleAddWithPrescription } =
         useProductDetailPage(initialVariantId);
 

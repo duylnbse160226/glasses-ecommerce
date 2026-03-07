@@ -79,12 +79,12 @@ export function CreateShipmentDialog({
               <Typography fontSize={13} color="text.secondary" sx={{ mt: 0.5 }}>
                 {formatDate(order.createdAt)}
               </Typography>
-              {order.orderType === "pre-order" && order.expectedStockDate && (
+              {order.orderType === "PreOrder" && order.expectedStockDate && (
                 <Typography fontSize={13} color="text.secondary" sx={{ mt: 0.5 }}>
                   Expected stock: {order.expectedStockDate}
                 </Typography>
               )}
-              {order.orderType === "prescription" && order.prescriptionStatus && (
+              {order.orderType === "Prescription" && order.prescriptionStatus && (
                 <Typography fontSize={13} color="text.secondary" sx={{ mt: 0.5 }}>
                   Prescription: {order.prescriptionStatus}
                 </Typography>
