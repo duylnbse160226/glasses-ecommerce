@@ -493,3 +493,4 @@ API/wwwroot
 
 
 Persistence/Migrations/
+API/ManualPolicyTests.http
