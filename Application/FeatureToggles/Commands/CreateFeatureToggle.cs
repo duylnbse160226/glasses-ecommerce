@@ -30,11 +30,23 @@ public sealed class CreateFeatureToggle
                 && dto.EffectiveTo <= dto.EffectiveFrom)
                 return Result<FeatureToggleDto>.Failure("EffectiveTo must be after EffectiveFrom.", 400);
 
-            bool nameExists = await context.FeatureToggles
-                .AnyAsync(ft => ft.FeatureName == dto.FeatureName, ct);
+            // Uniqueness is scoped: (FeatureName, Scope, ScopeValue) must be unique
+            string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope;
+            string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue;
 
-            if (nameExists)
-                return Result<FeatureToggleDto>.Failure($"A feature toggle with name '{dto.FeatureName}' already exists.", 409);
+            bool duplicateExists = await context.FeatureToggles
+                .AnyAsync(ft => ft.FeatureName == dto.FeatureName
+                    && ft.Scope == normalizedScope
+                    && ft.ScopeValue == normalizedScopeValue, ct);
+
+            if (duplicateExists)
+            {
+                string scopeLabel = normalizedScope == null
+                    ? "global scope"
+                    : $"scope '{normalizedScope}:{normalizedScopeValue}'";
+                return Result<FeatureToggleDto>.Failure(
+                    $"A feature toggle '{dto.FeatureName}' already exists for {scopeLabel}.", 409);
+            }
 
             Guid userId = userAccessor.GetUserId();
 
@@ -45,8 +57,8 @@ public sealed class CreateFeatureToggle
                 Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description,
                 EffectiveFrom = dto.EffectiveFrom,
                 EffectiveTo = dto.EffectiveTo,
-                Scope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope,
-                ScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue,
+                Scope = normalizedScope,
+                ScopeValue = normalizedScopeValue,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 UpdatedBy = userId
