@@ -7,20 +7,24 @@ export interface ValidatePromotionRequest {
 
 /** Response from POST /api/promotions/validate (200) */
 export interface ValidatePromotionResponse {
-  valid?: boolean;
-  discountAmount?: number;
-  message?: string;
-  promoCode?: string;
+  /** Backend returns this as isValid */
+  isValid?: boolean;
+  /** Final discount actually applied to this order */
+  discountApplied?: number;
+  /** Optional: type + name for UI */
+  promotionType?: "FixedAmount" | "Percentage" | string;
+  promoName?: string;
+  message?: string | null;
 }
 
 /** Item from GET /api/promotions/active */
 export interface ActivePromotionDto {
-  id?: string;
-  code: string;
-  name?: string;
-  description?: string;
-  discountAmount?: number;
-  discountPercent?: number;
-  validFrom?: string;
-  validTo?: string;
+  id: string;
+  promoCode: string;
+  promoName: string;
+  description: string | null;
+  promotionType: "FixedAmount" | "Percentage" | string;
+  discountValue: number;
+  maxDiscountValue: number | null;
+  validTo: string;
 }

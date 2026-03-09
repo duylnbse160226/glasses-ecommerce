@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Box,
   Button,
+  Chip,
   Collapse,
   Divider,
   IconButton,
@@ -9,7 +10,6 @@ import {
   Pagination,
   Paper,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -36,11 +36,6 @@ function getStatusColors(status: string) {
   }
 }
 
-function shortenId(id: string) {
-  if (!id || id.length <= 14) return id;
-  return `${id.slice(0, 8)}...${id.slice(-4)}`;
-}
-
 function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
   const [expanded, setExpanded] = useState(false);
   const updateStatus = useUpdateStaffOrderStatus();
@@ -48,6 +43,7 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
   const detail = data as StaffOrderDetailDto | undefined;
   const { border, bg, color } = getStatusColors(summary.orderStatus);
   const isPending = summary.orderStatus === "Pending";
+
   const copyOrderId = () => {
     navigator.clipboard.writeText(summary.id);
   };
@@ -56,21 +52,23 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
     <Paper
       elevation={0}
       sx={{
-        borderRadius: "18px",
+        borderRadius: 3,
         border: "1px solid rgba(0,0,0,0.08)",
+        bgcolor: "#FFFFFF",
         boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
         px: 2.75,
         py: 2.25,
         display: "flex",
         flexDirection: "column",
         gap: 1.5,
-        transition: "transform 0.18s ease, box-shadow 0.18s ease",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
         "&:hover": {
           transform: "translateY(-1px)",
           boxShadow: "0 16px 36px rgba(0,0,0,0.08)",
         },
       }}
     >
+      {/* Row 1: Order ID pill + status + actions (same visual as shipped card) */}
       <Box
         sx={{
           display: "flex",
@@ -81,35 +79,35 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography sx={{ fontSize: 12, color: "#8A8A8A", fontWeight: 600 }}>Order</Typography>
-          <Tooltip title={summary.id} arrow>
-            <Box
-              component="button"
-              type="button"
-              onClick={copyOrderId}
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.5,
-                px: 1.3,
-                py: 0.45,
-                borderRadius: 999,
-                border: "1px solid rgba(0,0,0,0.08)",
-                bgcolor: "#F7F7F7",
-                color: "#171717",
-                fontFamily: "monospace",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                "&:hover": { bgcolor: "#EFEFEF" },
-              }}
-            >
-              {shortenId(summary.id)}
-              <ContentCopyIcon sx={{ fontSize: 13, color: "#8A8A8A" }} />
-            </Box>
-          </Tooltip>
+          <Typography component="span" sx={{ fontSize: 12, color: "#8A8A8A", fontWeight: 600 }}>
+            Order
+          </Typography>
+          <Box
+            component="button"
+            type="button"
+            onClick={copyOrderId}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.5,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.08)",
+              bgcolor: "#F7F7F7",
+              fontFamily: "monospace",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#171717",
+              cursor: "pointer",
+              "&:hover": { bgcolor: "#EFEFEF" },
+            }}
+          >
+            {summary.id}
+            <ContentCopyIcon sx={{ fontSize: 14, color: "#8A8A8A" }} />
+          </Box>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
           {isPending && (
             <Stack direction="row" spacing={1}>
               <Button
@@ -120,7 +118,7 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: 12,
-                  height: 34,
+                  height: 32,
                   borderRadius: 999,
                   borderColor: "#D4E5D5",
                   bgcolor: "#EEF5EE",
@@ -144,7 +142,7 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: 12,
-                  height: 34,
+                  height: 32,
                   borderRadius: 999,
                   borderColor: "#E8CFCF",
                   bgcolor: "#F6EAEA",
@@ -162,39 +160,31 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
               </Button>
             </Stack>
           )}
-          <Box
-            component="span"
+          <Chip
+            label={summary.orderStatus}
+            size="small"
             sx={{
-              px: 1.2,
-              py: 0.3,
-              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: 12,
+              textTransform: "capitalize",
               border: `1px solid ${border}`,
               bgcolor: bg,
               color,
-              fontSize: 12.5,
-              fontWeight: 600,
-              textTransform: "capitalize",
+              borderRadius: 10,
             }}
-          >
-            {summary.orderStatus}
-          </Box>
+          />
           <IconButton
             size="small"
             onClick={() => setExpanded((e) => !e)}
+            sx={{ color: "#6B6B6B" }}
             aria-label={expanded ? "Collapse" : "Expand"}
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 999,
-              color: expanded ? "#B68C5A" : "#6B6B6B",
-              "&:hover": { bgcolor: "#FAFAFA", color: "#171717" },
-            }}
           >
             {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
           </IconButton>
         </Box>
       </Box>
 
+      {/* Row 2: meta – items count + created */}
       <Box
         sx={{
           display: "flex",
@@ -205,15 +195,16 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
           color: "#6B6B6B",
         }}
       >
-        <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+        <Typography component="span" sx={{ fontSize: 13, color: "#6B6B6B" }}>
           {summary.itemCount} item{summary.itemCount !== 1 ? "s" : ""}
         </Typography>
         <Typography component="span" sx={{ color: "rgba(0,0,0,0.3)", mx: 0.25 }}>•</Typography>
-        <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+        <Typography component="span" sx={{ fontSize: 13, color: "#6B6B6B" }}>
           {new Date(summary.createdAt).toLocaleString()}
         </Typography>
       </Box>
 
+      {/* Row 3: Total amount */}
       <Box
         sx={{
           display: "flex",
@@ -221,7 +212,9 @@ function SalesOrderRow({ summary }: { summary: StaffOrderDto }) {
           alignItems: "center",
         }}
       >
-        <Typography sx={{ fontSize: 13, color: "#8A8A8A", fontWeight: 500 }}>Total amount</Typography>
+        <Typography sx={{ fontSize: 13, color: "#8A8A8A", fontWeight: 500 }}>
+          Total amount
+        </Typography>
         <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#171717" }}>
           {summary.finalAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}
         </Typography>

@@ -1,33 +1,20 @@
 import { useState, useMemo } from "react";
 import {
   Box,
-  Chip,
   LinearProgress,
   Pagination,
   Paper,
   Typography,
-  Collapse,
-  Divider,
-  IconButton,
   InputAdornment,
   TextField,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import SearchIcon from "@mui/icons-material/Search";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
-import { useOperationsOrders, useOperationsOrderDetail } from "../../../lib/hooks/useOperationsOrders";
-import type { StaffOrderDto, StaffOrderDetailDto } from "../../../lib/types/staffOrders";
+import { useOperationsOrders } from "../../../lib/hooks/useOperationsOrders";
+import type { StaffOrderDto } from "../../../lib/types/staffOrders";
 import { OperationsPageHeader } from "../components/OperationsPageHeader";
 import { OrdersTabs } from "../components/OrdersTabs";
-import { OrderDetailExpanded } from "../../../app/shared/components/OrderDetailExpanded";
-
-const SHIPPED_PILL = {
-  bg: "#EEF5EE",
-  color: "#466A4A",
-  border: "#D4E5D5",
-};
+import { OrderListCard } from "../components/OrderListCard";
 
 export function TrackingScreen() {
   const [pageNumber, setPageNumber] = useState(1);
@@ -51,46 +38,6 @@ export function TrackingScreen() {
     const q = orderIdFilter.trim().toLowerCase();
     return safeOrders.filter((o) => o.id.toLowerCase().includes(q));
   }, [safeOrders, orderIdFilter]);
-
-  const getStatusColors = (status: string) => {
-    switch (status) {
-      case "Shipped":
-      case "Delivered":
-      case "Completed":
-        return SHIPPED_PILL;
-      case "Pending":
-        return {
-          border: "#0ea5e9",
-          bg: "rgba(14,165,233,0.12)",
-          color: "#0369a1",
-        };
-      case "Confirmed":
-        return {
-          border: "#8b5cf6",
-          bg: "rgba(139,92,246,0.12)",
-          color: "#5b21b6",
-        };
-      case "Processing":
-        return {
-          border: "#f97316",
-          bg: "rgba(249,115,22,0.12)",
-          color: "#c2410c",
-        };
-      case "Cancelled":
-      case "Refunded":
-        return {
-          border: "#ef4444",
-          bg: "rgba(239,68,68,0.12)",
-          color: "#b91c1c",
-        };
-      default:
-        return {
-          border: "rgba(148,163,184,0.8)",
-          bg: "rgba(148,163,184,0.18)",
-          color: "#475569",
-        };
-    }
-  };
 
   return (
     <>
@@ -186,7 +133,7 @@ export function TrackingScreen() {
                 }}
               >
                 {filteredOrders.map((o) => (
-                  <ShippedOrderRow key={o.id} summary={o} getStatusColors={getStatusColors} />
+                  <OrderListCard key={o.id} mode="shipped" summary={o} />
                 ))}
                 {filteredOrders.length === 0 && orderIdFilter.trim() && (
                   <Typography sx={{ color: "#6B6B6B", py: 2 }}>
@@ -217,157 +164,5 @@ export function TrackingScreen() {
         </Paper>
       </Box>
     </>
-  );
-}
-
-function ShippedOrderRow({
-  summary,
-  getStatusColors,
-}: {
-  summary: StaffOrderDto;
-  getStatusColors: (status: string) => { border: string; bg: string; color: string };
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const { data, isLoading } = useOperationsOrderDetail(summary.id);
-  const detail = data as StaffOrderDetailDto | undefined;
-
-  const { border, bg, color } = getStatusColors(summary.orderStatus);
-
-  const copyOrderId = () => {
-    navigator.clipboard.writeText(summary.id);
-  };
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 3,
-        border: "1px solid rgba(0,0,0,0.08)",
-        bgcolor: "#FFFFFF",
-        boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
-        px: 2.75,
-        py: 2.25,
-        display: "flex",
-        flexDirection: "column",
-        gap: 1.5,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          transform: "translateY(-1px)",
-          boxShadow: "0 16px 36px rgba(0,0,0,0.08)",
-        },
-      }}
-    >
-      {/* Row 1: Order ID pill + status + menu */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 1,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography component="span" sx={{ fontSize: 12, color: "#8A8A8A", fontWeight: 600 }}>
-            Order
-          </Typography>
-          <Box
-            component="button"
-            type="button"
-            onClick={copyOrderId}
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.5,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.08)",
-              bgcolor: "#F7F7F7",
-              fontFamily: "monospace",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#171717",
-              cursor: "pointer",
-              "&:hover": { bgcolor: "#EFEFEF" },
-            }}
-          >
-            {summary.id}
-            <ContentCopyIcon sx={{ fontSize: 14, color: "#8A8A8A" }} />
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <Chip
-            label={summary.orderStatus}
-            size="small"
-            sx={{
-              fontWeight: 600,
-              fontSize: 12,
-              textTransform: "capitalize",
-              border: `1px solid ${border}`,
-              bgcolor: bg,
-              color,
-              borderRadius: 10,
-            }}
-          />
-          <IconButton
-            size="small"
-            onClick={() => setExpanded((e) => !e)}
-            sx={{ color: "#6B6B6B" }}
-            aria-label={expanded ? "Collapse" : "Expand"}
-          >
-            {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-          </IconButton>
-        </Box>
-      </Box>
-
-      {/* Row 2: meta – items count + created only (no Source/Type) */}
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 1,
-          fontSize: 13,
-          color: "#6B6B6B",
-        }}
-      >
-        <Typography component="span" sx={{ fontSize: 13, color: "#6B6B6B" }}>
-          {summary.itemCount} item{summary.itemCount !== 1 ? "s" : ""}
-        </Typography>
-        <Typography component="span" sx={{ color: "rgba(0,0,0,0.3)", mx: 0.25 }}>•</Typography>
-        <Typography component="span" sx={{ fontSize: 13, color: "#6B6B6B" }}>
-          {new Date(summary.createdAt).toLocaleString()}
-        </Typography>
-      </Box>
-
-      {/* Row 3: Total amount */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography sx={{ fontSize: 13, color: "#8A8A8A", fontWeight: 500 }}>
-          Total amount
-        </Typography>
-        <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#171717" }}>
-          {summary.finalAmount.toLocaleString("en-US", {
-            style: "currency",
-            currency: "USD",
-          })}
-        </Typography>
-      </Box>
-
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <Divider sx={{ borderColor: "rgba(0,0,0,0.06)", my: 1.5 }} />
-        {isLoading || !detail ? (
-          <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>Loading detail…</Typography>
-        ) : (
-          <OrderDetailExpanded detail={detail} />
-        )}
-      </Collapse>
-    </Paper>
   );
 }

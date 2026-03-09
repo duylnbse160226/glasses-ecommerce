@@ -17,6 +17,7 @@ import AddressAutocomplete from "../../app/shared/components/AddressAutocomplete
 import { formatMoney } from "../../lib/utils/format";
 import { useCheckoutPage } from "./hooks/useCheckoutPage";
 import { isValidVietnamPhone } from "./utils";
+import { SavedAddressPicker } from "./components/SavedAddressPicker";
 
 export default function CheckoutPage() {
     const navigate = useNavigate();
@@ -36,13 +37,20 @@ export default function CheckoutPage() {
         paymentMethod,
         setPaymentMethod,
         activePromotions,
-        handleApplyPromo,
+        privatePromoInput,
+        setPrivatePromoInput,
+        handleApplyActivePromo,
+        handleApplyPrivatePromo,
         handleRemovePromo,
         isApplyingPromo,
         submitting,
         snackbar,
         setSnackbar,
         handlePlaceOrder,
+        savedAddresses,
+        defaultAddress,
+        setAsDefault,
+        setSetAsDefault,
     } = useCheckoutPage();
 
     return (
@@ -145,13 +153,44 @@ export default function CheckoutPage() {
                                     sx={{
                                         fontSize: 13,
                                         color: "#8A8A8A",
-                                        mb: 2.5,
+                                        mb: 2,
                                     }}
                                 >
-                                    Where should we send your eyewear?
+                                    Where should we send your eyewear?{defaultAddress && " We've prefilled your default address — you can switch to another saved one below."}
                                 </Typography>
 
-                                <Grid container spacing={2}>
+                                {savedAddresses.length > 0 && (
+                                    <SavedAddressPicker
+                                        addresses={savedAddresses}
+                                        selectedId={
+                                            savedAddresses.find(
+                                                (a) =>
+                                                    a.recipientName === address.recipientName &&
+                                                    a.recipientPhone === address.recipientPhone &&
+                                                    a.venue === address.venue,
+                                            )?.id ?? null
+                                        }
+                                        onSelect={(addr) =>
+                                            setAddress((prev) => ({
+                                                ...prev,
+                                                recipientName: addr.recipientName,
+                                                recipientPhone: addr.recipientPhone,
+                                                venue: addr.venue,
+                                                ward: addr.ward,
+                                                district: addr.district,
+                                                city: addr.city,
+                                                postalCode: addr.postalCode ?? "",
+                                            }))
+                                        }
+                                    />
+                                )}
+
+                                <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
+                                <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#6B6B6B", mb: 1.5 }}>
+                                    Address details
+                                </Typography>
+
+                                <Grid container spacing={1.5}>
                                     <Grid item xs={12}>
                                         <AddressAutocomplete
                                             value={addressSearch}
@@ -699,58 +738,108 @@ export default function CheckoutPage() {
 
                                             <Divider sx={{ my: 2, borderColor: "#F1F1F1" }} />
 
-                                            {/* Promo code — from GET /promotions/active */}
+                                            {/* Promo code — click to preview discount immediately */}
                                             <Box sx={{ mb: 2 }}>
                                                 <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#171717", mb: 1 }}>
                                                     Promo code
                                                 </Typography>
-                                                {appliedPromo ? (
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                        <Typography sx={{ fontSize: 13, color: "#466A4A", fontWeight: 500 }}>
-                                                            {appliedPromo.promoCode}
-                                                            {appliedPromo.discountAmount > 0 && ` — Discount ${formatMoney(appliedPromo.discountAmount)}`}
-                                                        </Typography>
-                                                        <Button
-                                                            size="small"
-                                                            onClick={handleRemovePromo}
-                                                            sx={{
-                                                                textTransform: "none",
-                                                                fontSize: 12,
-                                                                color: "#6B6B6B",
-                                                                "&:hover": { color: "#171717", bgcolor: "transparent" },
-                                                            }}
-                                                        >
-                                                            Remove
-                                                        </Button>
-                                                    </Box>
-                                                ) : activePromotions.length > 0 ? (
+                                                {activePromotions.length > 0 ? (
                                                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                                        {activePromotions.map((promo) => (
-                                                            <Button
-                                                                key={promo.code}
-                                                                variant="outlined"
-                                                                size="small"
-                                                                onClick={() => handleApplyPromo(promo.code)}
-                                                                disabled={isApplyingPromo || totalAmount <= 0}
-                                                                sx={{
-                                                                    borderRadius: 1.5,
-                                                                    textTransform: "none",
-                                                                    fontWeight: 600,
-                                                                    fontSize: 13,
-                                                                    borderColor: "#B68C5A",
-                                                                    color: "#B68C5A",
-                                                                    "&:hover": { borderColor: "#9E7748", bgcolor: "rgba(182,140,90,0.08)" },
-                                                                }}
-                                                            >
-                                                                {promo.name || promo.code}
-                                                            </Button>
-                                                        ))}
+                                                        {activePromotions.map((promo) => {
+                                                            const selected = appliedPromo?.promoCode === promo.promoCode;
+
+                                                            let estimatedDiscount = 0;
+                                                            if (totalAmount > 0) {
+                                                                if (promo.promotionType === "FixedAmount") {
+                                                                    estimatedDiscount = Math.min(totalAmount, promo.discountValue);
+                                                                } else if (promo.promotionType === "Percentage") {
+                                                                    const raw = (totalAmount * promo.discountValue) / 100;
+                                                                    const cap =
+                                                                        promo.maxDiscountValue != null
+                                                                            ? promo.maxDiscountValue
+                                                                            : raw;
+                                                                    estimatedDiscount = Math.min(raw, cap);
+                                                                }
+                                                            }
+                                                            const estimatedTotal = Math.max(0, totalAmount - estimatedDiscount);
+
+                                                            return (
+                                                                <Button
+                                                                    key={promo.id ?? promo.promoCode}
+                                                                    variant={selected ? "contained" : "outlined"}
+                                                                    size="small"
+                                                                    onClick={() => handleApplyActivePromo(promo)}
+                                                                    disabled={totalAmount <= 0}
+                                                                    sx={{
+                                                                        borderRadius: 1.5,
+                                                                        textTransform: "none",
+                                                                        fontWeight: 600,
+                                                                        fontSize: 13,
+                                                                        borderColor: "#B68C5A",
+                                                                        bgcolor: selected ? "rgba(182,140,90,0.12)" : "transparent",
+                                                                        color: selected ? "#171717" : "#B68C5A",
+                                                                        "&:hover": {
+                                                                            borderColor: "#9E7748",
+                                                                            bgcolor: selected ? "rgba(182,140,90,0.18)" : "rgba(182,140,90,0.08)",
+                                                                        },
+                                                                    }}
+                                                                >
+                                                                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                                                                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                                                                            {promo.promoName || promo.promoCode}
+                                                                        </Typography>
+                                                                        <Typography sx={{ fontSize: 11, color: "#6B6B6B" }}>
+                                                                            {estimatedDiscount > 0
+                                                                                ? `Save ${formatMoney(estimatedDiscount)} · New total ${formatMoney(
+                                                                                      estimatedTotal,
+                                                                                  )}`
+                                                                                : `New total ${formatMoney(estimatedTotal)}`}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </Button>
+                                                            );
+                                                        })}
                                                     </Box>
                                                 ) : (
                                                     <Typography sx={{ fontSize: 12, color: "#9E9E9E" }}>
                                                         No promo codes available.
                                                     </Typography>
                                                 )}
+                                                <Box sx={{ mt: 1.5, display: "flex", gap: 1 }}>
+                                                    <TextField
+                                                        size="small"
+                                                        placeholder="Have a private code? Enter here"
+                                                        value={privatePromoInput}
+                                                        onChange={(e) => setPrivatePromoInput(e.target.value)}
+                                                        sx={{
+                                                            flex: 1,
+                                                            "& .MuiOutlinedInput-root": {
+                                                                borderRadius: 1.5,
+                                                                fontSize: 13,
+                                                                "& fieldset": { borderColor: "#E6E6E6" },
+                                                                "&:hover fieldset": { borderColor: "#B68C5A" },
+                                                                "&.Mui-focused fieldset": { borderColor: "#B68C5A" },
+                                                            },
+                                                        }}
+                                                    />
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={() => handleApplyPrivatePromo(privatePromoInput)}
+                                                        disabled={isApplyingPromo || !privatePromoInput.trim() || totalAmount <= 0}
+                                                        sx={{
+                                                            borderRadius: 1.5,
+                                                            textTransform: "none",
+                                                            fontWeight: 600,
+                                                            fontSize: 13,
+                                                            borderColor: "#B68C5A",
+                                                            color: "#B68C5A",
+                                                            "&:hover": { borderColor: "#9E7748", bgcolor: "rgba(182,140,90,0.08)" },
+                                                        }}
+                                                    >
+                                                        Apply
+                                                    </Button>
+                                                </Box>
                                                 {appliedPromo && discountAmount > 0 && (
                                                     <Typography sx={{ fontSize: 12, color: "#466A4A", mt: 0.75 }}>
                                                         Discount {formatMoney(discountAmount)}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCart } from "../../../lib/hooks/useCart";
-import { useCreateAddress } from "../../../lib/hooks/useAddresses";
+import { useAddresses, useCreateAddress, useDefaultAddress } from "../../../lib/hooks/useAddresses";
 import { useCreateOrder } from "../../../lib/hooks/useOrders";
 import { useValidatePromotion, useActivePromotions } from "../../../lib/hooks/usePromotions";
 import { setOrderItemImages } from "../../orders/orderImageCache";
@@ -10,6 +10,7 @@ import { setOrderShippingAddress } from "../../orders/orderShippingAddressCache"
 import { setOrderPrescriptions } from "../../orders/orderPrescriptionCache";
 import { getCartItemPrescriptions } from "../../cart/prescriptionCache";
 import type { PrescriptionData } from "../../../lib/types/prescription";
+import type { ActivePromotionDto } from "../../../lib/types/promotion";
 import type { CheckoutShippingForm, CheckoutSnackbarState, PaymentMethodUI } from "../types";
 import { toApiPaymentMethod, isValidVietnamPhone } from "../utils";
 
@@ -35,6 +36,8 @@ export function useCheckoutPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { cart, isLoading: cartLoading } = useCart();
+  const { data: savedAddresses = [] } = useAddresses();
+  const { data: defaultAddress } = useDefaultAddress();
   const createAddress = useCreateAddress();
   const createOrder = useCreateOrder();
   const validatePromotion = useValidatePromotion();
@@ -44,6 +47,8 @@ export function useCheckoutPage() {
   const [addressSearch, setAddressSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodUI>("COD");
   const [appliedPromo, setAppliedPromo] = useState<{ promoCode: string; discountAmount: number } | null>(null);
+  const [privatePromoInput, setPrivatePromoInput] = useState("");
+  const [setAsDefault, setSetAsDefault] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState<CheckoutSnackbarState>(initialSnackbar);
 
@@ -64,7 +69,46 @@ export function useCheckoutPage() {
   const finalAmount = Math.max(0, totalAmount - discountAmount);
   const isEmptyCart = items.length === 0;
 
-  const handleApplyPromo = async (code: string) => {
+  // Prefill form with default address when it loads (only first time)
+  useEffect(() => {
+    if (!defaultAddress) return;
+    setAddress((prev) => {
+      // avoid overriding if user already typed something meaningful
+      if (prev.recipientName || prev.recipientPhone || prev.venue) return prev;
+      return {
+        recipientName: defaultAddress.recipientName,
+        recipientPhone: defaultAddress.recipientPhone,
+        venue: defaultAddress.venue,
+        ward: defaultAddress.ward,
+        district: defaultAddress.district,
+        city: defaultAddress.city,
+        postalCode: defaultAddress.postalCode ?? "",
+        orderNote: prev.orderNote ?? "",
+      };
+    });
+  }, [defaultAddress]);
+
+  // Public promotion (from /promotions/active) — client-side calculation only
+  const handleApplyActivePromo = (promo: ActivePromotionDto) => {
+    if (totalAmount <= 0) {
+      setSnackbar({ open: true, message: "Your cart is empty.", severity: "info" });
+      return;
+    }
+
+    let discount = 0;
+    if (promo.promotionType === "FixedAmount") {
+      discount = Math.min(totalAmount, promo.discountValue);
+    } else if (promo.promotionType === "Percentage") {
+      const raw = (totalAmount * promo.discountValue) / 100;
+      const cap = promo.maxDiscountValue != null ? promo.maxDiscountValue : raw;
+      discount = Math.min(raw, cap);
+    }
+
+    setAppliedPromo({ promoCode: promo.promoCode, discountAmount: discount });
+  };
+
+  // Private promotion (user-entered code) — validate via API
+  const handleApplyPrivatePromo = async (code: string) => {
     if (!code.trim() || totalAmount <= 0) {
       setSnackbar({ open: true, message: "Your cart is empty.", severity: "info" });
       return;
@@ -75,11 +119,14 @@ export function useCheckoutPage() {
         orderTotal: totalAmount,
         shippingFee: 0,
       });
-      const discount = typeof data?.discountAmount === "number" ? data.discountAmount : 0;
+      const discount = typeof data?.discountApplied === "number" ? data.discountApplied : 0;
       setAppliedPromo({ promoCode: code.trim(), discountAmount: discount });
       setSnackbar({
         open: true,
-        message: discount > 0 ? `Promo applied. Discount ${discount.toLocaleString("en-US", { style: "currency", currency: "USD" })}` : "Applied.",
+        message:
+          discount > 0
+            ? `Promo applied. Discount ${discount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
+            : "Applied.",
         severity: "success",
       });
     } catch {
@@ -90,6 +137,7 @@ export function useCheckoutPage() {
 
   const handleRemovePromo = () => {
     setAppliedPromo(null);
+    setPrivatePromoInput("");
   };
 
   useEffect(() => {
@@ -134,7 +182,7 @@ export function useCheckoutPage() {
         district: address.district,
         city: address.city,
         postalCode: address.postalCode || null,
-        isDefault: false,
+        isDefault: setAsDefault,
       });
 
       const createdOrder = await createOrder.mutateAsync({
@@ -237,6 +285,8 @@ export function useCheckoutPage() {
     isEmptyCart,
     itemPrescriptions,
     cartLoading,
+    savedAddresses,
+    defaultAddress,
     address,
     setAddress,
     addressSearch,
@@ -244,7 +294,12 @@ export function useCheckoutPage() {
     paymentMethod,
     setPaymentMethod,
     activePromotions,
-    handleApplyPromo,
+    privatePromoInput,
+    setPrivatePromoInput,
+    setAsDefault,
+    setSetAsDefault,
+    handleApplyActivePromo,
+    handleApplyPrivatePromo,
     handleRemovePromo,
     isApplyingPromo: validatePromotion.isPending,
     submitting,
