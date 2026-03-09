@@ -13,7 +13,7 @@ public sealed class DeleteFeatureToggle
         public required Guid Id { get; set; }
     }
 
-    internal sealed class Handler(AppDbContext context)
+    internal sealed class Handler(AppDbContext context, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
         : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken ct)
@@ -24,11 +24,15 @@ public sealed class DeleteFeatureToggle
             if (toggle == null)
                 return Result<Unit>.Failure("Feature toggle not found.", 404);
 
+            string cacheKey = $"FeatureToggle_{toggle.FeatureName}_{toggle.Scope ?? "null"}_{toggle.ScopeValue ?? "null"}";
+
             context.FeatureToggles.Remove(toggle);
             bool success = await context.SaveChangesAsync(ct) > 0;
 
             if (!success)
                 return Result<Unit>.Failure("Failed to delete feature toggle.", 500);
+
+            cache.Remove(cacheKey);
 
             return Result<Unit>.Success(Unit.Value);
         }

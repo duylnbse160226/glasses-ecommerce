@@ -20,7 +20,8 @@ public sealed class UpdateFeatureToggle
     internal sealed class Handler(
         AppDbContext context,
         IMapper mapper,
-        IUserAccessor userAccessor) : IRequestHandler<Command, Result<FeatureToggleDto>>
+        IUserAccessor userAccessor,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache cache) : IRequestHandler<Command, Result<FeatureToggleDto>>
     {
         public async Task<Result<FeatureToggleDto>> Handle(Command request, CancellationToken ct)
         {
@@ -36,7 +37,8 @@ public sealed class UpdateFeatureToggle
             if (toggle == null)
                 return Result<FeatureToggleDto>.Failure("Feature toggle not found.", 404);
 
-            // Uniqueness is scoped: (FeatureName, Scope, ScopeValue) must be unique (excluding self)
+            string oldCacheKey = $"FeatureToggle_{toggle.FeatureName}_{toggle.Scope ?? "null"}_{toggle.ScopeValue ?? "null"}";
+
             string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope;
             string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue;
 
@@ -81,6 +83,10 @@ public sealed class UpdateFeatureToggle
                 return Result<FeatureToggleDto>.Failure(
                     $"A feature toggle '{dto.FeatureName}' already exists for {scopeLabel}.", 409);
             }
+
+            cache.Remove(oldCacheKey);
+            string newCacheKey = $"FeatureToggle_{toggle.FeatureName}_{toggle.Scope ?? "null"}_{toggle.ScopeValue ?? "null"}";
+            cache.Remove(newCacheKey);
 
             return Result<FeatureToggleDto>.Success(mapper.Map<FeatureToggleDto>(toggle));
         }

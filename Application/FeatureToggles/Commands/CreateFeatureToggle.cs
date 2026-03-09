@@ -19,7 +19,8 @@ public sealed class CreateFeatureToggle
     internal sealed class Handler(
         AppDbContext context,
         IMapper mapper,
-        IUserAccessor userAccessor) : IRequestHandler<Command, Result<FeatureToggleDto>>
+        IUserAccessor userAccessor,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache cache) : IRequestHandler<Command, Result<FeatureToggleDto>>
     {
         public async Task<Result<FeatureToggleDto>> Handle(Command request, CancellationToken ct)
         {
@@ -29,7 +30,6 @@ public sealed class CreateFeatureToggle
                 && dto.EffectiveTo <= dto.EffectiveFrom)
                 return Result<FeatureToggleDto>.Failure("EffectiveTo must be after EffectiveFrom.", 400);
 
-            // Uniqueness is scoped: (FeatureName, Scope, ScopeValue) must be unique
             string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope;
             string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue;
 
@@ -79,6 +79,9 @@ public sealed class CreateFeatureToggle
                 return Result<FeatureToggleDto>.Failure(
                     $"A feature toggle '{dto.FeatureName}' already exists for {scopeLabel}.", 409);
             }
+
+            string cacheKey = $"FeatureToggle_{toggle.FeatureName}_{toggle.Scope ?? "null"}_{toggle.ScopeValue ?? "null"}";
+            cache.Remove(cacheKey);
 
             return Result<FeatureToggleDto>.Success(mapper.Map<FeatureToggleDto>(toggle));
         }

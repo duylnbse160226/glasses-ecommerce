@@ -2,6 +2,7 @@ using Application.Core;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Persistence;
 
 namespace Application.FeatureToggles.Queries;
@@ -15,11 +16,18 @@ public sealed class CheckFeatureEnabled
         public string? ScopeValue { get; set; }
     }
 
-    internal sealed class Handler(AppDbContext context)
+    internal sealed class Handler(AppDbContext context, IMemoryCache cache)
         : IRequestHandler<Query, Result<bool>>
     {
         public async Task<Result<bool>> Handle(Query request, CancellationToken ct)
         {
+            string cacheKey = $"FeatureToggle_{request.FeatureName}_{request.Scope ?? "null"}_{request.ScopeValue ?? "null"}";
+
+            if (cache.TryGetValue(cacheKey, out object? cachedResult) && cachedResult is bool cachedBool)
+            {
+                return Result<bool>.Success(cachedBool);
+            }
+
             bool hasScope = !string.IsNullOrWhiteSpace(request.Scope);
 
             // Fetch both the scoped toggle (if requested) and the global toggle (Scope=null) in one round-trip.
@@ -37,14 +45,21 @@ public sealed class CheckFeatureEnabled
                     ?? candidates.FirstOrDefault(ft => ft.Scope == null)
                 : candidates.FirstOrDefault(ft => ft.Scope == null);
 
-            // Fail-safe default: feature is off when no toggle is configured
-            if (toggle == null)
-                return Result<bool>.Success(false);
+            bool isEffective = false;
 
-            DateTime utcNow = DateTime.UtcNow;
-            bool isEffective = toggle.IsEnabled
-                && (toggle.EffectiveFrom == null || toggle.EffectiveFrom <= utcNow)
-                && (toggle.EffectiveTo == null || toggle.EffectiveTo > utcNow);
+            if (toggle != null)
+            {
+                DateTime utcNow = DateTime.UtcNow;
+                isEffective = toggle.IsEnabled
+                    && (toggle.EffectiveFrom == null || toggle.EffectiveFrom <= utcNow)
+                    && (toggle.EffectiveTo == null || toggle.EffectiveTo > utcNow);
+            }
+
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            };
+            cache.Set(cacheKey, isEffective, cacheOptions);
 
             return Result<bool>.Success(isEffective);
         }

@@ -20,7 +20,8 @@ public sealed class SetFeatureToggleEnabled
     internal sealed class Handler(
         AppDbContext context,
         IMapper mapper,
-        IUserAccessor userAccessor) : IRequestHandler<Command, Result<FeatureToggleDto>>
+        IUserAccessor userAccessor,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache cache) : IRequestHandler<Command, Result<FeatureToggleDto>>
     {
         public async Task<Result<FeatureToggleDto>> Handle(Command request, CancellationToken ct)
         {
@@ -38,6 +39,9 @@ public sealed class SetFeatureToggleEnabled
 
             if (!success)
                 return Result<FeatureToggleDto>.Failure("Failed to update feature toggle.", 500);
+
+            string cacheKey = $"FeatureToggle_{toggle.FeatureName}_{toggle.Scope ?? "null"}_{toggle.ScopeValue ?? "null"}";
+            cache.Remove(cacheKey);
 
             return Result<FeatureToggleDto>.Success(mapper.Map<FeatureToggleDto>(toggle));
         }
