@@ -2,7 +2,6 @@ using Application.Core;
 using Application.FeatureToggles.DTOs;
 using Application.Interfaces;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -70,13 +69,7 @@ public sealed class CreateFeatureToggle
             if (!success)
                 return Result<FeatureToggleDto>.Failure("Failed to create feature toggle.", 500);
 
-            FeatureToggleDto result = await context.FeatureToggles
-                .AsNoTracking()
-                .Where(ft => ft.Id == toggle.Id)
-                .ProjectTo<FeatureToggleDto>(mapper.ConfigurationProvider)
-                .FirstAsync(ct);
-
-            return Result<FeatureToggleDto>.Success(result);
+            return Result<FeatureToggleDto>.Success(mapper.Map<FeatureToggleDto>(toggle));
         }
     }
 }
