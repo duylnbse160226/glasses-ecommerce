@@ -86,7 +86,7 @@ export interface GetPromotionsParams {
   pageNumber?: number;
   pageSize?: number;
   isActive?: boolean | null;
-  promotionType?: string | null;
+  promotionType?: number | null;
 }
 
 // ── Hook ──

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -57,9 +57,9 @@ const toLocalDatetimeInput = (iso: string) => {
 // ── Constants ──
 const TYPE_OPTIONS = [
   { value: "", label: "All" },
-  { value: "Percentage", label: "Percentage" },
-  { value: "FixedAmount", label: "Fixed Amount" },
-  { value: "FreeShipping", label: "Free Shipping" },
+  { value: "0", label: "Percentage" },
+  { value: "1", label: "Fixed Amount" },
+  { value: "2", label: "Free Shipping" },
 ];
 
 const ACTIVE_OPTIONS = [
@@ -110,7 +110,7 @@ export default function PromotionsScreen() {
 
   const params = useMemo(() => {
     const p: Record<string, unknown> = { pageNumber, pageSize };
-    if (typeFilter !== "") p.promotionType = typeFilter;
+    if (typeFilter !== "") p.promotionType = Number(typeFilter);
     if (activeFilter !== "") p.isActive = activeFilter === "true";
     return p;
   }, [pageNumber, pageSize, typeFilter, activeFilter]);
@@ -232,11 +232,26 @@ export default function PromotionsScreen() {
   const openEdit = useCallback((item: PromotionListItem) => {
     setEditId(item.id);
     setTouchedEdit({});
+    // Pre-populate from list data immediately so form is never empty
+    setEditForm({
+      promoCode: item.promoCode,
+      promoName: item.promoName,
+      description: "",
+      promotionType: item.promotionType,
+      discountValue: String(item.discountValue),
+      maxDiscountValue: item.maxDiscountValue != null ? String(item.maxDiscountValue) : "",
+      usageLimit: "",
+      usageLimitPerCustomer: "",
+      validFrom: toLocalDatetimeInput(item.validFrom),
+      validTo: toLocalDatetimeInput(item.validTo),
+      isPublic: item.isPublic,
+      isActive: item.isActive,
+    });
     setEditOpen(true);
   }, []);
 
-  // Sync editForm when detail loads
-  useMemo(() => {
+  // Sync editForm when detail loads (detail has extra fields like description, usageLimit)
+  useEffect(() => {
     if (editDetail && editOpen) {
       setEditForm({
         promoCode: editDetail.promoCode,
