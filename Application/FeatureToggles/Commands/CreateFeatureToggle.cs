@@ -64,10 +64,21 @@ public sealed class CreateFeatureToggle
             };
 
             context.FeatureToggles.Add(toggle);
-            bool success = await context.SaveChangesAsync(ct) > 0;
-
-            if (!success)
-                return Result<FeatureToggleDto>.Failure("Failed to create feature toggle.", 500);
+            
+            try
+            {
+                bool success = await context.SaveChangesAsync(ct) > 0;
+                if (!success)
+                    return Result<FeatureToggleDto>.Failure("Failed to create feature toggle.", 500);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UX_") == true || ex.InnerException?.Message.Contains("unique index") == true || ex.InnerException?.Message.Contains("Violation of UNIQUE KEY constraint") == true)
+            {
+                string scopeLabel = normalizedScope == null
+                    ? "global scope"
+                    : $"scope '{normalizedScope}:{normalizedScopeValue}'";
+                return Result<FeatureToggleDto>.Failure(
+                    $"A feature toggle '{dto.FeatureName}' already exists for {scopeLabel}.", 409);
+            }
 
             return Result<FeatureToggleDto>.Success(mapper.Map<FeatureToggleDto>(toggle));
         }
