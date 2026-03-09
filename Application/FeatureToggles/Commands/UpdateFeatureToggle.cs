@@ -44,11 +44,12 @@ public sealed class UpdateFeatureToggle
 
             string oldCacheKey = $"FeatureToggle_{toggle.FeatureName}_{toggle.Scope ?? "null"}_{toggle.ScopeValue ?? "null"}";
 
-            string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope;
-            string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue;
+            string normFeatureName = request.Dto.FeatureName.Trim();
+            string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope.Trim();
+            string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue.Trim();
 
             bool duplicateExists = await context.FeatureToggles
-                .AnyAsync(ft => ft.FeatureName == dto.FeatureName
+                .AnyAsync(ft => ft.FeatureName == normFeatureName
                     && ft.Scope == normalizedScope
                     && ft.ScopeValue == normalizedScopeValue
                     && ft.Id != request.Id, ct);
@@ -64,9 +65,9 @@ public sealed class UpdateFeatureToggle
 
             Guid userId = userAccessor.GetUserId();
 
-            toggle.FeatureName = dto.FeatureName;
+            toggle.FeatureName = normFeatureName;
             toggle.IsEnabled = dto.IsEnabled;
-            toggle.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description;
+            toggle.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim();
             toggle.EffectiveFrom = dto.EffectiveFrom;
             toggle.EffectiveTo = dto.EffectiveTo;
             toggle.Scope = normalizedScope;

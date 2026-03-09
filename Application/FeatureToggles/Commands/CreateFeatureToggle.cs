@@ -35,11 +35,12 @@ public sealed class CreateFeatureToggle
                     return Result<FeatureToggleDto>.Failure("EffectiveTo must be after EffectiveFrom.", 400);
             }
 
-            string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope;
-            string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue;
+            string normFeatureName = request.Dto.FeatureName.Trim();
+            string? normalizedScope = string.IsNullOrWhiteSpace(dto.Scope) ? null : dto.Scope.Trim();
+            string? normalizedScopeValue = string.IsNullOrWhiteSpace(dto.ScopeValue) ? null : dto.ScopeValue.Trim();
 
             bool duplicateExists = await context.FeatureToggles
-                .AnyAsync(ft => ft.FeatureName == dto.FeatureName
+                .AnyAsync(ft => ft.FeatureName == normFeatureName
                     && ft.Scope == normalizedScope
                     && ft.ScopeValue == normalizedScopeValue, ct);
 
@@ -56,9 +57,9 @@ public sealed class CreateFeatureToggle
 
             FeatureToggle toggle = new()
             {
-                FeatureName = dto.FeatureName,
+                FeatureName = normFeatureName,
                 IsEnabled = dto.IsEnabled,
-                Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description,
+                Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim(),
                 EffectiveFrom = dto.EffectiveFrom,
                 EffectiveTo = dto.EffectiveTo,
                 Scope = normalizedScope,

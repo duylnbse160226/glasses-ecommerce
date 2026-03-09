@@ -36,6 +36,10 @@ public sealed class CreateFeatureToggleValidator : AbstractValidator<CreateFeatu
                 .NotEmpty().WithMessage("Scope is required when ScopeValue is specified.")
                 .When(x => !string.IsNullOrWhiteSpace(x.Dto.ScopeValue));
 
+            RuleFor(x => x.Dto.EffectiveFrom)
+                .NotNull().WithMessage("EffectiveFrom must be provided if EffectiveTo is set.")
+                .When(x => x.Dto.EffectiveTo.HasValue);
+
             RuleFor(x => x.Dto.EffectiveTo)
                 .GreaterThan(x => x.Dto.EffectiveFrom)
                 .WithMessage("EffectiveTo must be after EffectiveFrom.")

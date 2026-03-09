@@ -66,9 +66,25 @@ public sealed class CheckFeatureEnabled
 
             bool isEffective = toggle != null;
 
+            // Find the nearest future date (EffectiveFrom or EffectiveTo) across all candidates to cap the cache TTL
+            DateTime? nextTransition = candidates
+                .SelectMany(ft => new[] { ft.EffectiveFrom, ft.EffectiveTo })
+                .Where(d => d.HasValue && d.Value > utcNow)
+                .Min();
+
+            TimeSpan timeToLive = TimeSpan.FromMinutes(5);
+            if (nextTransition.HasValue)
+            {
+                TimeSpan timeUntilTransition = nextTransition.Value - utcNow;
+                if (timeUntilTransition < timeToLive)
+                {
+                    timeToLive = timeUntilTransition;
+                }
+            }
+
             var cacheOptions = new MemoryCacheEntryOptions
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                AbsoluteExpirationRelativeToNow = timeToLive
             };
             cache.Set(cacheKey, isEffective, cacheOptions);
 
