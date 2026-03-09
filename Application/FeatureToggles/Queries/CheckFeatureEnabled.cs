@@ -21,27 +21,37 @@ public sealed class CheckFeatureEnabled
     {
         public async Task<Result<bool>> Handle(Query request, CancellationToken ct)
         {
-            string cacheKey = $"FeatureToggle_{request.FeatureName}_{request.Scope ?? "null"}_{request.ScopeValue ?? "null"}";
+            string normFeatureName = request.FeatureName.Trim();
+            string? normScope = string.IsNullOrWhiteSpace(request.Scope) ? null : request.Scope.Trim();
+            string? normScopeValue = string.IsNullOrWhiteSpace(request.ScopeValue) ? null : request.ScopeValue.Trim();
+
+            // Scope and ScopeValue must be paired
+            if ((normScope == null) != (normScopeValue == null))
+            {
+                return Result<bool>.Failure("Scope and ScopeValue must be both provided or both omitted.", 400);
+            }
+
+            string cacheKey = $"FeatureToggle_{normFeatureName}_{normScope ?? "null"}_{normScopeValue ?? "null"}";
 
             if (cache.TryGetValue(cacheKey, out object? cachedResult) && cachedResult is bool cachedBool)
             {
                 return Result<bool>.Success(cachedBool);
             }
 
-            bool hasScope = !string.IsNullOrWhiteSpace(request.Scope);
+            bool hasScope = normScope != null;
 
             // Fetch both the scoped toggle (if requested) and the global toggle (Scope=null) in one round-trip.
             // Resolution priority: Scoped > Global > false (fail-safe).
             List<FeatureToggle> candidates = await context.FeatureToggles
                 .AsNoTracking()
-                .Where(ft => ft.FeatureName == request.FeatureName
+                .Where(ft => ft.FeatureName == normFeatureName
                     && (ft.Scope == null
-                        || (hasScope && ft.Scope == request.Scope && ft.ScopeValue == request.ScopeValue)))
+                        || (hasScope && ft.Scope == normScope && ft.ScopeValue == normScopeValue)))
                 .ToListAsync(ct);
 
             // Prefer the scoped record; fall back to the global one
             FeatureToggle? toggle = hasScope
-                ? candidates.FirstOrDefault(ft => ft.Scope == request.Scope && ft.ScopeValue == request.ScopeValue)
+                ? candidates.FirstOrDefault(ft => ft.Scope == normScope && ft.ScopeValue == normScopeValue)
                     ?? candidates.FirstOrDefault(ft => ft.Scope == null)
                 : candidates.FirstOrDefault(ft => ft.Scope == null);
 
