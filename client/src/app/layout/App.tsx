@@ -5,6 +5,7 @@ import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import HomePage from "../../features/home/HomePage";
 import Footer from "./Footer";
 import ScrollToTopButton from "../components/ScrollToTopButton";
+import ChatbotWidget from "../../features/chatbot/ChatbotWidget";
 
 function App() {
   const location = useLocation();
@@ -31,6 +32,7 @@ function App() {
           </Container>
           <Footer />
           <ScrollToTopButton />
+          <ChatbotWidget />
         </>
       )}
     </Box>

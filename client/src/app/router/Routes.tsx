@@ -51,13 +51,14 @@ import { ManagerProductCreateWizardScreen } from "../../features/Manager/screens
 import AdminDashboard from "../../features/Admin/AdminDashboard";
 import RoleManagement from "../../features/Admin/RoleManagement";
 import AdminPolicies from "../../features/Admin/AdminPolicies";
+import ChatbotWidget from "../../features/chatbot/ChatbotWidget";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
   // ======================
   {
     path: "/",
-    element: <HomePage />,
+    element: <><HomePage /><ChatbotWidget /></>,
   },
 
   // ======================
