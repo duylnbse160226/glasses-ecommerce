@@ -8,7 +8,9 @@ namespace API.Controllers;
 [Route("api/staff/prescriptions")]
 public sealed class StaffPrescriptionsController : BaseApiController
 {
-    // Lấy danh sách đơn kính từ các orders mà staff này tạo
+    // Lấy danh sách đơn kính mà staff có quyền xem:
+    //   - Orders mình tạo (offline lẫn online), HOẶC
+    //   - Online orders có status Pending / Confirmed / Cancelled (chưa assign cho staff nào)
     // isVerified: null = tất cả, true = đã xác nhận, false = chưa xác nhận
     [HttpGet]
     public async Task<IActionResult> GetPrescriptions(
@@ -26,7 +28,7 @@ public sealed class StaffPrescriptionsController : BaseApiController
             }, ct));
     }
 
-    // Lấy chi tiết 1 đơn kính — chỉ thấy đơn từ orders mình tạo
+    // Lấy chi tiết 1 đơn kính — áp dụng cùng filter như danh sách (orders mình tạo hoặc online Pending/Confirmed/Cancelled)
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPrescriptionDetail(Guid id, CancellationToken ct)
     {
