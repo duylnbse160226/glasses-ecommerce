@@ -69,6 +69,14 @@ export function useCheckoutPage() {
   const finalAmount = Math.max(0, totalAmount - discountAmount);
   const isEmptyCart = items.length === 0;
 
+  const itemPrescriptions = useMemo(
+    () =>
+      getCartItemPrescriptions(
+        items.map((i) => ({ id: i.id, productVariantId: i.productVariantId })),
+      ),
+    [items],
+  );
+
   // Prefill form with default address when it loads (only first time)
   useEffect(() => {
     if (!defaultAddress) return;
@@ -185,11 +193,13 @@ export function useCheckoutPage() {
         isDefault: setAsDefault,
       });
 
+      const hasPrescriptionItems = Object.keys(itemPrescriptions).length > 0;
+
       const createdOrder = await createOrder.mutateAsync({
         addressId: createdAddress.id,
         paymentMethod: toApiPaymentMethod(paymentMethod),
         orderNote: address.orderNote || null,
-        orderType: "ReadyStock",
+        orderType: hasPrescriptionItems ? "Prescription" : "ReadyStock",
         selectedCartItemIds: items.map((item) => item.id),
         promoCode: appliedPromo?.promoCode ?? undefined,
       });
@@ -240,9 +250,7 @@ export function useCheckoutPage() {
       });
       setOrderItemImages(orderForState.id, variantToImage);
       setOrderShippingAddress(orderForState.id, shippingAddr);
-      const prescriptionsByCartItem = getCartItemPrescriptions(
-        items.map((i) => ({ id: i.id, productVariantId: i.productVariantId }))
-      );
+      const prescriptionsByCartItem = itemPrescriptions;
       const prescriptionsByVariant: Record<string, PrescriptionData> = {};
       items.forEach((cartItem) => {
         const prescription = prescriptionsByCartItem[cartItem.id];
@@ -267,14 +275,6 @@ export function useCheckoutPage() {
       setSubmitting(false);
     }
   };
-
-  const itemPrescriptions = useMemo(
-    () =>
-      getCartItemPrescriptions(
-        items.map((i) => ({ id: i.id, productVariantId: i.productVariantId }))
-      ),
-    [items],
-  );
 
   return {
     items,
