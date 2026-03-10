@@ -1,3 +1,4 @@
+import { Suspense, lazy, useState } from "react";
 import {
     Accordion,
     AccordionDetails,
@@ -13,11 +14,14 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { useProductDetailPage } from "./hooks/useProductDetailPage";
 import { RelatedProductsCarousel } from "./components/ProductDetailPageComponents/RelatedProductsCarousel";
 import { usePreOrderButton } from "./components/ProductDetailPageComponents/PreOrderDialog";
+
+const VirtualTryOn = lazy(() => import("../Manager/components/VirtualTryOn"));
 
 const NAV_H = 56;
 const GAP_TOP = 24;
@@ -38,6 +42,7 @@ export default function ProductDetailPage() {
         handleVariantSelect,
         isEyeglasses,
     } = useProductDetailPage();
+    const [tryOnOpen, setTryOnOpen] = useState(false);
 
     if (isLoading) {
         return (
@@ -138,6 +143,7 @@ export default function ProductDetailPage() {
                         sx={{
                             border: "1px solid rgba(17,24,39,0.10)",
                             bgcolor: "#f3f4f6",
+                            position: "relative",
                         }}
                     >
                         <Box
@@ -150,6 +156,30 @@ export default function ProductDetailPage() {
                                 objectFit: "cover",
                             }}
                         />
+
+                        {/* Virtual Try-On button */}
+                        <Button
+                            variant="contained"
+                            startIcon={<CameraAltIcon />}
+                            onClick={() => setTryOnOpen(true)}
+                            sx={{
+                                position: "absolute",
+                                bottom: 14,
+                                left: 14,
+                                borderRadius: 999,
+                                textTransform: "none",
+                                fontWeight: 800,
+                                fontSize: 13,
+                                bgcolor: "rgba(17,24,39,0.85)",
+                                backdropFilter: "blur(6px)",
+                                "&:hover": { bgcolor: "rgba(17,24,39,0.95)" },
+                                px: 2.5,
+                                py: 1,
+                                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                            }}
+                        >
+                            Virtual Try-On
+                        </Button>
                     </Box>
 
                     <Box sx={{ display: "flex", gap: 1.2, mt: 1.5 }}>
@@ -544,6 +574,27 @@ export default function ProductDetailPage() {
                 categorySlug={product.categorySlug}
                 currentProductId={product.id}
             />
+
+            {/* Virtual Try-On overlay */}
+            {tryOnOpen && product && (
+                <Suspense fallback={null}>
+                    <VirtualTryOn
+                        open={tryOnOpen}
+                        onClose={() => setTryOnOpen(false)}
+                        productName={product.name}
+                        variantImages={
+                            (product.variants || [])
+                                .filter((v) => v.images?.length > 0)
+                                .map((v) => ({
+                                    id: v.id,
+                                    variantName: v.variantName ?? undefined,
+                                    color: v.color ?? undefined,
+                                    imageUrl: v.images[0],
+                                }))
+                        }
+                    />
+                </Suspense>
+            )}
         </Box>
     );
 }

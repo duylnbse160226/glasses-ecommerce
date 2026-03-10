@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -57,9 +57,9 @@ const toLocalDatetimeInput = (iso: string) => {
 // ── Constants ──
 const TYPE_OPTIONS = [
   { value: "", label: "All" },
-  { value: "Percentage", label: "Percentage" },
-  { value: "FixedAmount", label: "Fixed Amount" },
-  { value: "FreeShipping", label: "Free Shipping" },
+  { value: "0", label: "Percentage" },
+  { value: "1", label: "Fixed Amount" },
+  { value: "2", label: "Free Shipping" },
 ];
 
 const ACTIVE_OPTIONS = [
@@ -110,7 +110,7 @@ export default function PromotionsScreen() {
 
   const params = useMemo(() => {
     const p: Record<string, unknown> = { pageNumber, pageSize };
-    if (typeFilter !== "") p.promotionType = typeFilter;
+    if (typeFilter !== "") p.promotionType = Number(typeFilter);
     if (activeFilter !== "") p.isActive = activeFilter === "true";
     return p;
   }, [pageNumber, pageSize, typeFilter, activeFilter]);
@@ -232,11 +232,26 @@ export default function PromotionsScreen() {
   const openEdit = useCallback((item: PromotionListItem) => {
     setEditId(item.id);
     setTouchedEdit({});
+    // Pre-populate from list data immediately so form is never empty
+    setEditForm({
+      promoCode: item.promoCode,
+      promoName: item.promoName,
+      description: "",
+      promotionType: item.promotionType,
+      discountValue: String(item.discountValue),
+      maxDiscountValue: item.maxDiscountValue != null ? String(item.maxDiscountValue) : "",
+      usageLimit: "",
+      usageLimitPerCustomer: "",
+      validFrom: toLocalDatetimeInput(item.validFrom),
+      validTo: toLocalDatetimeInput(item.validTo),
+      isPublic: item.isPublic,
+      isActive: item.isActive,
+    });
     setEditOpen(true);
   }, []);
 
-  // Sync editForm when detail loads
-  useMemo(() => {
+  // Sync editForm when detail loads (detail has extra fields like description, usageLimit)
+  useEffect(() => {
     if (editDetail && editOpen) {
       setEditForm({
         promoCode: editDetail.promoCode,
@@ -324,7 +339,7 @@ export default function PromotionsScreen() {
 
   // ── Render ──
   return (
-    <Box sx={{ px: { xs: 2, md: 6, lg: 10 }, py: 4 }}>
+    <Box sx={{ px: { xs: 2, md: 4, lg: 6 }, py: 4 }}>
       {/* Header */}
       <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={1.5}>
         <Box>
@@ -404,19 +419,19 @@ export default function PromotionsScreen() {
       {/* Table */}
       <Box sx={{ mt: 2 }}>
         <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)" }}>
-          <Table size="small">
+          <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 900 }}>Code</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="right">Discount</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>Valid From</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>Valid To</TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="center">Status</TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="center">Public</TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="right">Used</TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="right">Actions</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }}>Code</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }} align="right">Discount</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }}>Valid From</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }}>Valid To</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }} align="center">Status</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }} align="center">Public</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }} align="right">Used</TableCell>
+                <TableCell sx={{ fontWeight: 900, fontSize: 14 }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -435,12 +450,12 @@ export default function PromotionsScreen() {
               ) : visibleItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                    <Typography color="text.secondary" fontSize={13}>No promotions found.</Typography>
+                    <Typography color="text.secondary" fontSize={14}>No promotions found.</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
                 visibleItems.map((p) => (
-                  <TableRow key={p.id} hover sx={{ cursor: "pointer" }} onClick={() => openEdit(p)}>
+                  <TableRow key={p.id} hover sx={{ cursor: "pointer", "& td": { py: 1.8, fontSize: 14 } }} onClick={() => openEdit(p)}>
                     <TableCell sx={{ fontFamily: "monospace", fontWeight: 700 }}>{p.promoCode}</TableCell>
                     <TableCell>{p.promoName}</TableCell>
                     <TableCell>
