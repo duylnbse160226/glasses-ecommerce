@@ -26,7 +26,12 @@ public sealed class GetStaffPrescriptionDetail
 
             StaffPrescriptionDto? prescription = await context.Prescriptions
                 .AsNoTracking()
-                .Where(p => p.Id == request.Id && p.Order.CreatedBySalesStaff == staffUserId)
+                .Where(p => p.Id == request.Id &&
+                            (p.Order.CreatedBySalesStaff == staffUserId ||
+                             (p.Order.OrderSource == OrderSource.Online &&
+                              (p.Order.OrderStatus == OrderStatus.Pending ||
+                               p.Order.OrderStatus == OrderStatus.Confirmed ||
+                               p.Order.OrderStatus == OrderStatus.Cancelled))))
                 .ProjectTo<StaffPrescriptionDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);
 

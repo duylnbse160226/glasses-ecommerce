@@ -32,7 +32,11 @@ public sealed class GetStaffPrescriptions
 
             IQueryable<Prescription> query = context.Prescriptions
                 .AsNoTracking()
-                .Where(p => p.Order.CreatedBySalesStaff == staffUserId);
+                .Where(p => p.Order.CreatedBySalesStaff == staffUserId ||
+                            (p.Order.OrderSource == OrderSource.Online &&
+                             (p.Order.OrderStatus == OrderStatus.Pending ||
+                              p.Order.OrderStatus == OrderStatus.Confirmed ||
+                              p.Order.OrderStatus == OrderStatus.Cancelled)));
 
             if (request.IsVerified.HasValue)
                 query = query.Where(p => p.IsVerified == request.IsVerified.Value);

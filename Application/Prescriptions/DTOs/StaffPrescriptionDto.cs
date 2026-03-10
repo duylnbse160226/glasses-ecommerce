@@ -1,8 +1,9 @@
 using Application.Orders.DTOs;
 
 namespace Application.Prescriptions.DTOs;
-
-//Dto Response cho chi tiết đơn kính dành cho Sales và Operations (bao gồm tên người xác nhận)
+/// <summary>
+/// Dto Response cho chi tiết đơn kính dành cho Sales và Operations (bao gồm tên người xác nhận)
+/// </summary>
 public sealed class StaffPrescriptionDto
 {
     public Guid Id { get; set; }

@@ -1,8 +1,9 @@
 using Application.Orders.DTOs;
 
 namespace Application.Prescriptions.DTOs;
-
-//Dto Response cho chi tiết đơn kính của customer (bao gồm từng mắt)
+/// <summary>
+/// Dto Response cho chi tiết đơn kính của customer (bao gồm từng mắt)
+/// </summary>
 public sealed class MyPrescriptionDto
 {
     public Guid Id { get; set; }

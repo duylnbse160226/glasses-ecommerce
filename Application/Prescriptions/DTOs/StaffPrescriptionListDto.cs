@@ -1,6 +1,7 @@
 namespace Application.Prescriptions.DTOs;
-
-//Dto Response cho 1 item trong danh sách đơn kính dành cho Sales và Operations
+/// <summary>
+/// Dto Response cho 1 item trong danh sách đơn kính dành cho Sales và Operations
+/// </summary>
 public sealed class StaffPrescriptionListDto
 {
     public Guid Id { get; set; }
