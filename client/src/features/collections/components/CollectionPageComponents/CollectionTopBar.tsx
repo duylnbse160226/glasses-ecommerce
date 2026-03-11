@@ -1,4 +1,4 @@
-import { Box, MenuItem, Select } from "@mui/material";
+import { Box, MenuItem, Select, Typography } from "@mui/material";
 import type { SortKey } from "../../../../lib/types";
 
 export function CollectionTopBar({
@@ -12,12 +12,19 @@ export function CollectionTopBar({
         <Box
             sx={{
                 display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-                gap: 2,
-                flexDirection: { xs: "column", md: "row" },
+                alignItems: "center",
+                gap: 1,
             }}
         >
+            <Typography
+                sx={{
+                    fontSize: 13,
+                    color: "#8A8A8A",
+                    display: { xs: "none", sm: "block" },
+                }}
+            >
+                Sort by
+            </Typography>
             <Select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
@@ -27,12 +34,32 @@ export function CollectionTopBar({
           disableScrollLock: true,
         }}
                 sx={{
-          height: 44,
-                    borderRadius: 2,    
-          width: 210,          // cố định width để tránh layout shift
-          flexShrink: 0,
+                    height: 38,
+                    minWidth: 210,
+                    borderRadius: 999,
+                    flexShrink: 0,
+                    bgcolor: "#FFFFFF",
                     "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(17,24,39,0.18)",
+                        borderColor: "#ECECEC",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#E2E2E2",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#B68C5A",
+                    },
+                    "& .MuiSelect-select": {
+                        display: "flex",
+                        alignItems: "center",
+                        py: 0,
+                        fontSize: 14,
+                        color: "#171717",
+                    },
+                    "& .MuiSvgIcon-root": {
+                        color: "#8A8A8A",
+                    },
+                    "&.Mui-focused": {
+                        boxShadow: "0 0 0 1px rgba(182,140,90,0.16)",
                     },
                 }}
             >

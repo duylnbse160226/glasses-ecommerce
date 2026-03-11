@@ -34,7 +34,7 @@ export function PaginationBar({
             sx={{
                 mt: 4,
                 pt: 2.5,
-                borderTop: "1px solid rgba(17,24,39,0.10)",
+                borderTop: "1px solid #F1F1F1",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -42,8 +42,25 @@ export function PaginationBar({
                 flexDirection: { xs: "column", md: "row" },
             }}
         >
-            <Typography sx={{ color: "rgba(17,24,39,0.7)", fontWeight: 700, fontSize: 13.5 }}>
-                Showing <b>{from}</b>–<b>{to}</b> of <b>{totalItems}</b>
+            <Typography
+                sx={{
+                    color: "#6B6B6B",
+                    fontWeight: 500,
+                    fontSize: 13,
+                }}
+            >
+                Showing{" "}
+                <Box component="span" sx={{ fontWeight: 600, color: "#171717" }}>
+                    {from}
+                </Box>
+                –
+                <Box component="span" sx={{ fontWeight: 600, color: "#171717" }}>
+                    {to}
+                </Box>{" "}
+                of{" "}
+                <Box component="span" sx={{ fontWeight: 600, color: "#171717" }}>
+                    {totalItems}
+                </Box>
             </Typography>
 
             <Pagination
@@ -56,9 +73,26 @@ export function PaginationBar({
                 showFirstButton
                 showLastButton
                 sx={{
+                    "& .MuiPagination-ul": {
+                        gap: 0.5,
+                    },
                     "& .MuiPaginationItem-root": {
-                        fontWeight: 900,
-                        borderRadius: 2,
+                        fontWeight: 500,
+                        fontSize: 13,
+                        borderRadius: 999,
+                        minWidth: 32,
+                        height: 32,
+                        border: "1px solid transparent",
+                        color: "#6B6B6B",
+                    },
+                    "& .MuiPaginationItem-root.Mui-selected": {
+                        bgcolor: "#FAFAFA",
+                        borderColor: "#ECECEC",
+                        color: "#171717",
+                    },
+                    "& .MuiPaginationItem-previousNext, & .MuiPaginationItem-firstLast": {
+                        fontSize: 12,
+                        color: "#8A8A8A",
                     },
                 }}
             />

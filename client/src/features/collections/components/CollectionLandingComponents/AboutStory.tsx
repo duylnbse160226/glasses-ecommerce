@@ -24,59 +24,59 @@ export default function AboutStory() {
         }}
       >
         <Box>
-        <Typography
-          sx={{
-            fontSize: 12,
-            letterSpacing: 4,
-            textTransform: "uppercase",
-            color: "rgba(15,23,42,0.6)",
-          }}
-        >
-          ABOUT EYEWEAR STUDIO
-        </Typography>
+          <Typography
+            sx={{
+              fontSize: 12,
+              letterSpacing: 4,
+              textTransform: "uppercase",
+              color: "#8A8A8A",
+            }}
+          >
+            ABOUT EYEWEAR STUDIO
+          </Typography>
 
-        <Typography
-          sx={{
-            mt: 1,
-            fontSize: { xs: 30, md: 34 },
-            fontWeight: 900,
-            letterSpacing: -1,
-            color: "rgba(15,23,42,0.95)",
-          }}
-        >
-          Glasses that frame your life, not hide it.
-        </Typography>
+          <Typography
+            sx={{
+              mt: 1,
+              fontSize: { xs: 30, md: 34 },
+              fontWeight: 900,
+              letterSpacing: -1,
+              color: "#171717",
+            }}
+          >
+            Glasses that frame your life, not hide it.
+          </Typography>
 
-        <Typography
-          sx={{
-            mt: 2,
-            fontSize: 14,
-            lineHeight: 1.7,
-            color: "rgba(15,23,42,0.7)",
-            maxWidth: 520,
-          }}
-        >
-          We began as a small optical studio solving one simple problem: why do
-          frames look amazing on displays but feel wrong on real faces? Today,
-          every pair we release is wear‑tested by people who stare at screens,
-          ride scooters, read late at night and live in different light all day.
-        </Typography>
+          <Typography
+            sx={{
+              mt: 2,
+              fontSize: 14,
+              lineHeight: 1.7,
+              color: "#666666",
+              maxWidth: 520,
+            }}
+          >
+            We began as a small optical studio solving one simple problem: why do
+            frames look amazing on displays but feel wrong on real faces? Today,
+            every pair we release is wear‑tested by people who stare at screens,
+            ride scooters, read late at night and live in different light all day.
+          </Typography>
 
-        <Typography
-          sx={{
-            mt: 1.5,
-            fontSize: 14,
-            lineHeight: 1.7,
-            color: "rgba(15,23,42,0.7)",
-            maxWidth: 520,
-          }}
-        >
-          From ultra‑light stainless steel to plant‑based acetate, blue‑light
-          filters and prescription lenses, we design eyewear that is kind to
-          your eyes and sharp on your style. Slide them on, forget the weight,
-          and see your day in high‑definition.
-        </Typography>
-      </Box>
+          <Typography
+            sx={{
+              mt: 1.5,
+              fontSize: 14,
+              lineHeight: 1.7,
+              color: "#666666",
+              maxWidth: 520,
+            }}
+          >
+            From ultra‑light stainless steel to plant‑based acetate, blue‑light
+            filters and prescription lenses, we design eyewear that is kind to
+            your eyes and sharp on your style. Slide them on, forget the weight,
+            and see your day in high‑definition.
+          </Typography>
+        </Box>
 
       <Box
         sx={{

@@ -129,11 +129,41 @@ export function OrderDetailScreen() {
         }}
       >
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, fontSize: 13 }}>
-          <Typography>
-            <b>Source:</b> {order.orderSource}
+          <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <b>Source:</b>
+            <Box
+              component="span"
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                border: "1px solid #22c55e",
+                bgcolor: "rgba(34,197,94,0.12)",
+                color: "#15803d",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {order.orderSource}
+            </Box>
           </Typography>
-          <Typography>
-            <b>Type:</b> {order.orderType}
+          <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <b>Type:</b>
+            <Box
+              component="span"
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                border: "1px solid #0ea5e9",
+                bgcolor: "rgba(14,165,233,0.12)",
+                color: "#0369a1",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {order.orderType}
+            </Box>
           </Typography>
           <Typography>
             <b>Status:</b> {order.orderStatus}

@@ -79,14 +79,21 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
         gap: 2,
         py: compact ? 0.75 : 1.5,
         px: compact ? 1.5 : 2,
+        transition: "background-color 180ms ease",
+        "@media (hover: hover)": {
+          "&:hover": {
+            bgcolor: "#FAFAFA",
+          },
+        },
       }}
     >
       <Box
         sx={{
           width: thumbSize,
           height: thumbSize,
-          borderRadius: 2,
-          bgcolor: "rgba(17,24,39,0.06)",
+          borderRadius: 2.5,
+          bgcolor: "#F7F7F7",
+          border: "1px solid #ECECEC",
           overflow: "hidden",
           flexShrink: 0,
         }}
@@ -120,10 +127,15 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography fontSize={compact ? 14 : 15} fontWeight={600} noWrap>
+        <Typography
+          fontSize={compact ? 14 : 15}
+          fontWeight={compact ? 600 : 700}
+          noWrap
+          sx={{ color: "#171717" }}
+        >
           {name}
         </Typography>
-        <Typography fontSize={13} color="text.secondary">
+        <Typography fontSize={13} sx={{ color: "#8A8A8A" }}>
           {variantName ? `${variantName} · Qty ${qty}` : `Qty ${qty}`}
         </Typography>
         {prescription &&
@@ -132,8 +144,8 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
               <Typography
                 fontSize={12}
                 fontWeight={700}
-                color="primary"
                 sx={{
+                  color: "#B68C5A",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 0.5,
@@ -153,15 +165,18 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
             <Typography
               fontSize={12}
               fontWeight={700}
-              color="primary"
-              sx={{ mt: 0.25 }}
+              sx={{ mt: 0.25, color: "#B68C5A" }}
             >
               Prescription
             </Typography>
           ))}
       </Box>
 
-      <Typography fontSize={compact ? 14 : 15} fontWeight={700} sx={{ flexShrink: 0 }}>
+      <Typography
+        fontSize={compact ? 14 : 15}
+        fontWeight={700}
+        sx={{ flexShrink: 0, color: "#171717" }}
+      >
         {formatMoney(price)}
       </Typography>
     </Box>

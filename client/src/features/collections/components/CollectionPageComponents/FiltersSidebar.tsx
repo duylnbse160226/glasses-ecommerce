@@ -4,12 +4,13 @@ import {
     AccordionSummary,
     Box,
     Button,
+    Checkbox,
     Divider,
-    Slider,
     Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import type React from "react";
+import { type Dispatch, type SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import type { FiltersState, GlassesType } from "../../../../lib/types";
 
@@ -26,12 +27,21 @@ const FALLBACK_TYPES: { label: string; value: GlassesType }[] = [
     { label: "Sunglasses", value: "sunglasses" },
 ];
 
+const ACCENT = "#B68C5A";
+
+const PRICE_OPTIONS: { id: string; label: string; min: number | null; max: number | null }[] = [
+    { id: "under50", label: "Under $50", min: null, max: 50 },
+    { id: "under100", label: "Under $100", min: null, max: 100 },
+    { id: "under200", label: "Under $200", min: null, max: 200 },
+    { id: "above200", label: "Above $200", min: 200, max: null },
+];
+
 const CHIP_SX = {
     px: 1.4,
     py: 0.7,
-    borderRadius: 2,
-    border: "1px solid rgba(17,24,39,0.18)",
-    fontWeight: 900,
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.08)",
+    fontWeight: 600,
     cursor: "pointer",
     userSelect: "none" as const,
     fontSize: 13,
@@ -93,32 +103,46 @@ export function FiltersSidebar({
         }
     };
 
-    const [priceRange, setPriceRange] = useState<[number, number]>([
-        filters.minPrice ?? 0,
-        filters.maxPrice ?? 2000,
-    ]);
-
-    useEffect(() => {
-        setPriceRange([filters.minPrice ?? 0, filters.maxPrice ?? 2000]);
-    }, [filters.minPrice, filters.maxPrice]);
-
     return (
         <Box
             sx={{
                 position: stickyTop !== undefined ? { md: "sticky" } : "static",
                 top: stickyTop !== undefined ? { md: stickyTop } : undefined,
+                borderRadius: 2.5,
+                border: "1px solid rgba(0,0,0,0.06)",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
+                bgcolor: "#FFFFFF",
                 px: 2.5,
-                pt: 2,
-                pb: 3,
+                pt: 2.5,
+                pb: 2.5,
                 display: "flex",
                 flexDirection: "column",
                 gap: 2,
                 height: "100%",
             }}
         >
-            <Typography sx={{ fontWeight: 900, mb: 0.5, color: "#111827" }}>
-                Filters
-            </Typography>
+            <Box sx={{ mb: 1 }}>
+                <Typography
+                    sx={{
+                        fontWeight: 800,
+                        fontSize: 16,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "#121212",
+                    }}
+                >
+                    Filters
+                </Typography>
+                <Box
+                    sx={{
+                        mt: 0.75,
+                        width: 32,
+                        height: 2,
+                        borderRadius: 999,
+                        bgcolor: ACCENT,
+                    }}
+                />
+            </Box>
 
             {/* Phần nội dung có scroll riêng để khi mở dropdown UI không bị dịch chuyển */}
             <Box
@@ -132,7 +156,7 @@ export function FiltersSidebar({
                 {/* Search removed: now using global navbar search */}
                 <Divider sx={{ my: 1.5 }} />
 
-                {/* Price (range 0 → 2000 USD) */}
+                {/* Price presets */}
                 <Accordion
                     disableGutters
                     elevation={0}
@@ -142,39 +166,69 @@ export function FiltersSidebar({
                         <Typography sx={{ fontWeight: 900 }}>Price (USD)</Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ pt: 0 }}>
-                        <Box sx={{ px: 0.5, pb: 1 }}>
-                            <Slider
-                                value={priceRange}
-                                onChange={(_, value) => {
-                                    setPriceRange(value as [number, number]);
-                                }}
-                                onChangeCommitted={(_, value) => {
-                                    const [min, max] = value as [number, number];
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        minPrice: min === 0 ? null : min,
-                                        maxPrice: max === 2000 ? null : max,
-                                    }));
-                                }}
-                                min={0}
-                                max={2000}
-                                step={10}
-                                valueLabelDisplay="auto"
-                                getAriaLabel={() => "Price range"}
-                                getAriaValueText={(v) => `$${v}`}
-                            />
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    mt: 0.5,
-                                    fontSize: 12,
-                                    color: "rgba(17,24,39,0.7)",
-                                }}
-                            >
-                                <span>${filters.minPrice ?? 0}</span>
-                                <span>${filters.maxPrice ?? 2000}</span>
-                            </Box>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, pb: 1 }}>
+                            {PRICE_OPTIONS.map((opt) => {
+                                const isActive =
+                                    (filters.minPrice ?? null) === opt.min &&
+                                    (filters.maxPrice ?? null) === opt.max;
+                                return (
+                                    <Box
+                                        key={opt.id}
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            px: 0.5,
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 1,
+                                                cursor: "pointer",
+                                            }}
+                                            onClick={() => {
+                                                setFilters((prev) => {
+                                                    const currentlyActive =
+                                                        (prev.minPrice ?? null) === opt.min &&
+                                                        (prev.maxPrice ?? null) === opt.max;
+                                                    if (currentlyActive) {
+                                                        // toggle off → clear price filter (Any price)
+                                                        return { ...prev, minPrice: null, maxPrice: null };
+                                                    }
+                                                    return {
+                                                        ...prev,
+                                                        minPrice: opt.min,
+                                                        maxPrice: opt.max,
+                                                    };
+                                                });
+                                            }}
+                                        >
+                                            <Checkbox
+                                                size="small"
+                                                checked={isActive}
+                                                sx={{
+                                                    p: 0.4,
+                                                    color: "#B0B0B0",
+                                                    "&.Mui-checked": {
+                                                        color: ACCENT,
+                                                    },
+                                                }}
+                                            />
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 13,
+                                                    color: isActive ? ACCENT : "#121212",
+                                                    fontWeight: isActive ? 600 : 400,
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                     </AccordionDetails>
                 </Accordion>
@@ -199,8 +253,8 @@ export function FiltersSidebar({
                                 }
                                 sx={{
                                     ...CHIP_SX,
-                                    bgcolor: isAllActive ? "#111827" : "#fff",
-                                    color: isAllActive ? "#fff" : "#111827",
+                                    bgcolor: isAllActive ? ACCENT : "#FFFFFF",
+                                    color: isAllActive ? "#FFFFFF" : "#121212",
                                 }}
                             >
                                 All
@@ -215,14 +269,13 @@ export function FiltersSidebar({
                                         tabIndex={0}
                                         onClick={() => handleTypeSelect(value)}
                                         onKeyDown={(e) =>
-                                            handleChipKeyDown(e, () =>
-                                                handleTypeSelect(value),
-                                            )
+                                            handleChipKeyDown(e, () => handleTypeSelect(value))
                                         }
                                         sx={{
                                             ...CHIP_SX,
-                                            bgcolor: active ? "#111827" : "#fff",
-                                            color: active ? "#fff" : "#111827",
+                                            bgcolor: active ? "rgba(182,140,90,0.12)" : "#FFFFFF",
+                                            borderColor: active ? ACCENT : "rgba(0,0,0,0.08)",
+                                            color: active ? ACCENT : "#121212",
                                         }}
                                     >
                                         {label}
@@ -267,8 +320,14 @@ export function FiltersSidebar({
                                         }
                                         sx={{
                                             ...CHIP_SX,
-                                            bgcolor: active ? "#111827" : "#fff",
-                                            color: active ? "#fff" : "#111827",
+                                            bgcolor: active ? "rgba(182,140,90,0.12)" : "#FFFFFF",
+                                            borderColor: active ? ACCENT : "rgba(0,0,0,0.08)",
+                                            color: active ? ACCENT : "#121212",
+                                            "&:hover": {
+                                                bgcolor: active
+                                                    ? "rgba(182,140,90,0.18)"
+                                                    : "#FAFAFA",
+                                            },
                                         }}
                                     >
                                         {b}
@@ -286,12 +345,13 @@ export function FiltersSidebar({
                     variant="contained"
                     onClick={onApply}
                     sx={{
-                        bgcolor: "#111827",
-                        borderRadius: 2,
+                        bgcolor: ACCENT,
+                        borderRadius: 1.75,
                         height: 44,
-                        fontWeight: 900,
-                        boxShadow: "none",
-                        "&:hover": { bgcolor: "#0b1220", boxShadow: "none" },
+                        fontWeight: 700,
+                        textTransform: "none",
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                        "&:hover": { bgcolor: "#9E7448", boxShadow: "0 12px 34px rgba(0,0,0,0.1)" },
                     }}
                 >
                     NARROW DOWN
@@ -301,11 +361,17 @@ export function FiltersSidebar({
                     onClick={onReset}
                     variant="outlined"
                     sx={{
-                        borderRadius: 2,
+                        borderRadius: 1.75,
                         height: 44,
-                        fontWeight: 900,
-                        borderColor: "rgba(17,24,39,0.25)",
-                        color: "#111827",
+                        fontWeight: 600,
+                        textTransform: "none",
+                        borderColor: "rgba(0,0,0,0.12)",
+                        color: "#121212",
+                        bgcolor: "#FFFFFF",
+                        "&:hover": {
+                            borderColor: ACCENT,
+                            bgcolor: "#FAFAFA",
+                        },
                     }}
                 >
                     RESET
