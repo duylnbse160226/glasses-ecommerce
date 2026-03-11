@@ -22,6 +22,7 @@ import { OrderItemRow, type OrderItemRowProps } from "./OrderItemRow";
 import { useOrderDetailPage } from "./hooks/useOrderDetailPage";
 import { formatMoney } from "./utils";
 import { CANCEL_ORDER_REASONS, type CancelReasonValue } from "./cancelReasons";
+import { SubmitAfterSalesTicketDialog } from "./SubmitAfterSalesTicketDialog";
 
 const CANCELABLE_STATUSES = ["Pending", "pending"];
 
@@ -89,8 +90,10 @@ export default function OrderDetailPage() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<CancelReasonValue>("changed_mind");
   const [cancelOtherText, setCancelOtherText] = useState("");
+  const [afterSalesDialogOpen, setAfterSalesDialogOpen] = useState(false);
 
   const canCancel = order && CANCELABLE_STATUSES.includes(orderStatus);
+  const canSubmitAfterSales = order && orderStatus === "Delivered";
   const isOtherReason = cancelReason === "other";
 
   const handleOpenCancelDialog = () => setCancelDialogOpen(true);
@@ -531,10 +534,63 @@ export default function OrderDetailPage() {
                       backgroundColor: "rgba(248,113,113,0.06)",
                     },
                   }}
-                  onClick={handleOpenCancelDialog}
+                  onClick={() => setCancelDialogOpen(true)}
                   disabled={cancelOrder.isPending}
                 >
                   {cancelOrder.isPending ? "Cancelling..." : "Cancel order"}
+                </Button>
+              </Box>
+            </Paper>
+          )}
+
+          {canSubmitAfterSales && (
+            <Paper
+              elevation={0}
+              sx={{
+                border: `1px solid ${PALETTE.cardBorder}`,
+                borderRadius: 2.5,
+                overflow: "hidden",
+                mt: 3,
+                bgcolor: "#F9F7F4",
+                boxShadow: "0 8px 22px rgba(0,0,0,0.04)",
+              }}
+            >
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                }}
+              >
+                <Typography
+                  fontWeight={700}
+                  fontSize={15}
+                  sx={{ color: PALETTE.textMain }}
+                >
+                  Product issue or warranty claim?
+                </Typography>
+                <Typography fontSize={13} sx={{ color: PALETTE.textSecondary }}>
+                  Submit a return, refund, or warranty ticket. Our team will
+                  review and assist you.
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    mt: 0.5,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    backgroundColor: PALETTE.accent,
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: PALETTE.accentHover,
+                    },
+                  }}
+                  onClick={() => setAfterSalesDialogOpen(true)}
+                >
+                  Submit Ticket
                 </Button>
               </Box>
             </Paper>
@@ -785,6 +841,16 @@ export default function OrderDetailPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* After-Sales Ticket Dialog */}
+      <SubmitAfterSalesTicketDialog
+        open={afterSalesDialogOpen}
+        onClose={() => setAfterSalesDialogOpen(false)}
+        order={order}
+        onSuccess={() => {
+          // Optionally refresh order data or navigate
+        }}
+      />
       </Box>
     </Box>
   );

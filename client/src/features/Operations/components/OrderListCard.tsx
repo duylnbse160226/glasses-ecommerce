@@ -30,6 +30,7 @@ export interface OrderListCardProps {
   /** Optional primary action chip on the right (e.g. Processing / Mark shipped) */
   primaryActionLabel?: string;
   onPrimaryActionClick?: (orderId: string) => void;
+  onUpdateStatus?: (status: string) => void;
 }
 
 export function OrderListCard({
@@ -40,6 +41,7 @@ export function OrderListCard({
   onToggleSelected,
   primaryActionLabel,
   onPrimaryActionClick,
+  onUpdateStatus,
 }: OrderListCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { data, isLoading } = useOperationsOrderDetail(expanded ? summary.id : undefined);
@@ -253,7 +255,7 @@ export function OrderListCard({
           {isLoading || !detail ? (
             <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>Loading detail...</Typography>
           ) : (
-            <OrderDetailExpanded detail={detail} />
+            <OrderDetailExpanded detail={detail} onUpdateStatus={onUpdateStatus} />
           )}
         </Box>
       </Collapse>
