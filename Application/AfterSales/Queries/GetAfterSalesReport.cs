@@ -28,19 +28,14 @@ public sealed class GetAfterSalesReport
             if (request.ToDate.HasValue)
                 query = query.Where(t => t.CreatedAt <= request.ToDate.Value);
 
-            int totalTickets = await query.CountAsync(ct);
-            int openTickets = await query.CountAsync(t => 
-                t.TicketStatus == AfterSalesTicketStatus.Pending || 
-                t.TicketStatus == AfterSalesTicketStatus.InProgress, ct);
-            
-            int resolved = await query.CountAsync(t => t.TicketStatus == AfterSalesTicketStatus.Resolved, ct);
-            int rejected = await query.CountAsync(t => t.TicketStatus == AfterSalesTicketStatus.Rejected, ct);
-            int closed = await query.CountAsync(t => t.TicketStatus == AfterSalesTicketStatus.Closed, ct);
-            
-            int resolutionDenominator = resolved + rejected + closed;
-            double resolutionRate = resolutionDenominator == 0 
-                ? 0 
-                : (double)(resolved + closed) / resolutionDenominator;
+            var byStatusRaw = await query
+                .GroupBy(t => t.TicketStatus)
+                .Select(g => new 
+                {
+                    Status = g.Key,
+                    Count = g.Count()
+                })
+                .ToListAsync(ct);
 
             var byTypeRaw = await query
                 .GroupBy(t => t.TicketType)
@@ -52,6 +47,21 @@ public sealed class GetAfterSalesReport
                 })
                 .ToListAsync(ct);
 
+            int totalTickets = byStatusRaw.Sum(x => x.Count);
+            int openTickets = byStatusRaw
+                .Where(x => x.Status == AfterSalesTicketStatus.Pending || 
+                            x.Status == AfterSalesTicketStatus.InProgress)
+                .Sum(x => x.Count);
+            
+            int resolved = byStatusRaw.Where(x => x.Status == AfterSalesTicketStatus.Resolved).Sum(x => x.Count);
+            int rejected = byStatusRaw.Where(x => x.Status == AfterSalesTicketStatus.Rejected).Sum(x => x.Count);
+            int closed = byStatusRaw.Where(x => x.Status == AfterSalesTicketStatus.Closed).Sum(x => x.Count);
+            
+            int resolutionDenominator = resolved + rejected + closed;
+            double resolutionRate = resolutionDenominator == 0 
+                ? 0 
+                : (double)(resolved + closed) / resolutionDenominator;
+
             List<AfterSalesByTypeDto> byType = byTypeRaw
                 .Select(x => new AfterSalesByTypeDto
                 {
@@ -60,15 +70,6 @@ public sealed class GetAfterSalesReport
                     TotalRefundAmount = x.TotalRefundAmount
                 })
                 .ToList();
-
-            var byStatusRaw = await query
-                .GroupBy(t => t.TicketStatus)
-                .Select(g => new 
-                {
-                    Status = g.Key,
-                    Count = g.Count()
-                })
-                .ToListAsync(ct);
 
             List<AfterSalesByStatusDto> byStatus = byStatusRaw
                 .Select(x => new AfterSalesByStatusDto
