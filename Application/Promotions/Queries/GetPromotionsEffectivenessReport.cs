@@ -22,22 +22,18 @@ public sealed class GetPromotionsEffectivenessReport
         {
             // Promos có 0 usage phải xuất hiện -> Group Join or explicitly fetching Promos and aggregating filtered usage logs
 
+            IQueryable<Promotion> promotionsQuery = context.Promotions.AsNoTracking();
 
-            DateTime from = request.FromDate ?? DateTime.MinValue;
-            DateTime to = request.ToDate ?? DateTime.MaxValue;
-
-            // Strategy: explicit Group Join or Client Evaluation
-            // EF Core optimizes Include with Select heavily
-            var query = context.Promotions
-                .AsNoTracking()
-                .Where(p => p.UsageLogs.Any(u => u.UsedAt >= from && u.UsedAt <= to))
+            var stats = await promotionsQuery
                 .Select(p => new
                 {
                     Promo = p,
-                    UsageLogs = p.UsageLogs.Where(u => u.UsedAt >= from && u.UsedAt <= to)
-                });
+                    UsageLogs = p.UsageLogs.Where(u =>
 
-            var stats = await query.ToListAsync(ct);
+                        (!request.FromDate.HasValue || u.UsedAt >= request.FromDate.Value) &&
+                        (!request.ToDate.HasValue || u.UsedAt <= request.ToDate.Value))
+                })
+                .ToListAsync(ct);
 
             List<PromotionEffectivenessItemDto> items = stats.Select(s => new PromotionEffectivenessItemDto
             {
