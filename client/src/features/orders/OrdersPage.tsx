@@ -1,22 +1,32 @@
-import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Skeleton,
-} from "@mui/material";
+import { useState } from "react";
+import { Box, Typography, Paper, Button, Skeleton, Chip } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import { useMyOrders } from "../../lib/hooks/useOrders";
 import { OrderCard } from "./OrderCard";
 
+const PALETTE = {
+  textMain: "#171717",
+  textSecondary: "#6B6B6B",
+  textMuted: "#8A8A8A",
+  accent: "#B68C5A",
+  accentHover: "#9E7748",
+  border: "#ECECEC",
+  divider: "#F1F1F1",
+};
+
+const FILTERS = ["All", "Pending", "Shipped", "Cancelled"] as const;
+type FilterValue = (typeof FILTERS)[number];
+
 export default function OrdersPage() {
   const { data: page, isLoading, isError, error } = useMyOrders();
+  const [activeFilter, setActiveFilter] = useState<FilterValue>("All");
 
   if (isLoading) {
     return (
       <Box sx={{ maxWidth: 720, mx: "auto", mt: 10, px: { xs: 2, md: 3 }, pb: 8 }}>
-        <Skeleton variant="text" width={200} height={40} sx={{ mb: 3 }} />
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Skeleton variant="text" width={220} height={42} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={120} height={24} sx={{ mb: 3 }} />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} variant="rounded" height={220} sx={{ borderRadius: 3 }} />
           ))}
@@ -40,41 +50,140 @@ export default function OrdersPage() {
 
   const list = page?.items ?? [];
 
-  return (
-    <Box sx={{ maxWidth: 720, mx: "auto", mt: 10, px: { xs: 2, md: 3 }, pb: 8 }}>
-      <Typography fontWeight={900} fontSize={28} mb={1}>
-        My Orders
-      </Typography>
-      <Typography fontSize={15} color="text.secondary" mb={3}>
-        {list.length} order{list.length !== 1 ? "s" : ""}
-      </Typography>
+  const filteredList = list.filter((order) => {
+    if (activeFilter === "All") return true;
+    const status = (order.orderStatus ?? "").toString().toLowerCase();
 
-      {list.length === 0 ? (
+    if (activeFilter === "Pending") {
+      return status.includes("pending");
+    }
+
+    if (activeFilter === "Shipped") {
+      return status.includes("shipped");
+    }
+
+    // Cancelled: gom các trạng thái cancel/refund
+    if (activeFilter === "Cancelled") {
+      return status.includes("cancel") || status.includes("refund");
+    }
+
+    return true;
+  });
+
+  return (
+    <Box
+      sx={{
+        maxWidth: 720,
+        mx: "auto",
+        mt: 10,
+        px: { xs: 2, md: 3 },
+        pb: 8,
+        bgcolor: "#FFFFFF",
+      }}
+    >
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          sx={{
+            fontSize: { xs: 26, md: 30 },
+            fontWeight: 900,
+            color: PALETTE.textMain,
+            lineHeight: 1.1,
+          }}
+        >
+          My orders
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: 14,
+            color: PALETTE.textSecondary,
+            mt: 0.5,
+          }}
+        >
+          {list.length} order{list.length !== 1 ? "s" : ""}
+        </Typography>
+        <Box
+          sx={{
+            mt: 1.5,
+            height: 2,
+            width: 64,
+            borderRadius: 999,
+            bgcolor: "rgba(182,140,90,0.25)",
+          }}
+        />
+      </Box>
+
+      {/* Filter row (UI-only) */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          mb: 3,
+          overflowX: "auto",
+        }}
+      >
+        {FILTERS.map((f) => {
+          const active = activeFilter === f;
+          return (
+            <Chip
+              key={f}
+              label={f}
+              onClick={() => setActiveFilter(f)}
+              clickable
+              sx={{
+                borderRadius: 999,
+                px: 1.5,
+                fontSize: 13,
+                fontWeight: 500,
+                bgcolor: active ? "#171717" : "#FFFFFF",
+                color: active ? "#FFFFFF" : PALETTE.textSecondary,
+                border: active ? "none" : `1px solid ${PALETTE.border}`,
+                boxShadow: active ? "0 4px 14px rgba(0,0,0,0.16)" : "none",
+                transition:
+                  "background-color 180ms ease, color 180ms ease, box-shadow 180ms ease",
+                "&:hover": {
+                  bgcolor: active ? "#111111" : "#FAFAFA",
+                },
+              }}
+            />
+          );
+        })}
+      </Box>
+
+      {filteredList.length === 0 ? (
         <Paper
           elevation={0}
           sx={{
-            border: "1px solid rgba(17,24,39,0.12)",
+            border: `1px solid ${PALETTE.border}`,
             borderRadius: 3,
             p: 5,
             textAlign: "center",
+            bgcolor: "#FFFFFF",
           }}
         >
-          <Typography color="text.secondary" mb={2} fontSize={16}>
+          <Typography sx={{ color: PALETTE.textSecondary, mb: 2, fontSize: 16 }}>
             You have not placed any orders yet.
           </Typography>
           <Button
             component={NavLink}
             to="/collections"
             variant="contained"
-            size="large"
-            sx={{ fontWeight: 700, borderRadius: 2 }}
+            sx={{
+              fontWeight: 700,
+              borderRadius: 999,
+              px: 3,
+              py: 1,
+              textTransform: "none",
+              bgcolor: "#171717",
+              "&:hover": { bgcolor: "#111111" },
+            }}
           >
             Start shopping
           </Button>
         </Paper>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {list.map((order) => (
+          {filteredList.map((order) => (
             <OrderCard key={order.id} orderSummary={order} />
           ))}
         </Box>

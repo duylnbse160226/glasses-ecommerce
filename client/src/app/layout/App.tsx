@@ -5,6 +5,7 @@ import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import HomePage from "../../features/home/HomePage";
 import Footer from "./Footer";
 import ScrollToTopButton from "../components/ScrollToTopButton";
+import ChatbotWidget from "../../features/chatbot/ChatbotWidget";
 
 function App() {
   const location = useLocation();
@@ -15,7 +16,12 @@ function App() {
   );
 
   return (
-    <Box sx={{ bgcolor: "#ffffff" }} minHeight="100vh">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
+      }}
+    >
       <ScrollRestoration />
       <CssBaseline /> {/*Reset Css*/}
 
@@ -31,6 +37,7 @@ function App() {
           </Container>
           <Footer />
           <ScrollToTopButton />
+          <ChatbotWidget />
         </>
       )}
     </Box>

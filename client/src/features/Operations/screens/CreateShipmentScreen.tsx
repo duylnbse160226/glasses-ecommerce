@@ -22,6 +22,9 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { useOperationsOrders, useOperationsOrderDetail, useUpdateOrderStatus } from "../../../lib/hooks/useOperationsOrders";
 import type { StaffOrderDto, StaffOrderDetailDto } from "../../../lib/types/staffOrders";
 import type { OrderStatus } from "../../../lib/types/operations";
+import { OperationsPageHeader } from "../components/OperationsPageHeader";
+import { OrdersTabs } from "../components/OrdersTabs";
+import { OrderDetailExpanded } from "../../../app/shared/components/OrderDetailExpanded";
 
 export function CreateShipmentScreen() {
   const [pageNumber, setPageNumber] = useState(1);
@@ -134,17 +137,34 @@ export function CreateShipmentScreen() {
 
   return (
     <>
-      <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontSize: 12, letterSpacing: 5, textTransform: "uppercase", color: "text.secondary" }}>
-          Operations Center
-        </Typography>
-        <Typography sx={{ mt: 1, fontSize: 26, fontWeight: 900 }} color="text.primary">
-          Packing
-        </Typography>
-        <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: 14 }}>
-          Orders in processing status that are ready to be shipped.
-        </Typography>
-      </Box>
+      <OperationsPageHeader
+        title="Packing orders"
+        subtitle="Orders in processing status that are ready to be shipped."
+        rightSlot={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+              Selected: {selectedOrderIds.length}
+            </Typography>
+            <Button
+              size="small"
+              variant="contained"
+              disabled={selectedOrderIds.length === 0 || updateStatus.isPending}
+              onClick={handleOpenShipmentDialog}
+              sx={{
+                textTransform: "none",
+                fontWeight: 700,
+                borderRadius: 999,
+                px: 2.5,
+                bgcolor: "#111827",
+                "&:hover": { bgcolor: "#0f172a" },
+              }}
+            >
+              Mark shipped
+            </Button>
+          </Box>
+        }
+      />
+      <OrdersTabs active="packing" />
 
       <Box
         sx={{
@@ -175,36 +195,6 @@ export function CreateShipmentScreen() {
             <Typography color="text.secondary">No operations orders yet.</Typography>
           ) : (
             <>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
-                  mb: 1,
-                  gap: 1.5,
-                }}
-              >
-                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                  Selected: {selectedOrderIds.length}
-                </Typography>
-                <Button
-                  size="small"
-                  variant="contained"
-                  disabled={selectedOrderIds.length === 0 || updateStatus.isPending}
-                  onClick={handleOpenShipmentDialog}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 700,
-                    borderRadius: 2,
-                    px: 2,
-                    bgcolor: "#111827",
-                    "&:hover": { bgcolor: "#0f172a" },
-                  }}
-                >
-                  Mark shipped
-                </Button>
-              </Box>
-
               <Box
                 sx={{
                   display: "flex",
@@ -399,11 +389,41 @@ function OperationsOrderRow({
           color: "text.secondary",
         }}
       >
-        <Typography>
-          <b>Source:</b> {summary.orderSource}
+        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <b>Source:</b>
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              border: "1px solid #22c55e",
+              bgcolor: "rgba(34,197,94,0.12)",
+              color: "#15803d",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {summary.orderSource}
+          </Box>
         </Typography>
-        <Typography>
-          <b>Type:</b> {summary.orderType}
+        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <b>Type:</b>
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              border: "1px solid #0ea5e9",
+              bgcolor: "rgba(14,165,233,0.12)",
+              color: "#0369a1",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {summary.orderType}
+          </Box>
         </Typography>
         <Typography>
           <b>Items:</b> {summary.itemCount}
@@ -439,76 +459,7 @@ function OperationsOrderRow({
             Loading detail...
           </Typography>
         ) : (
-          <Box sx={{ fontSize: 13, color: "text.secondary", display: "flex", flexDirection: "column", gap: 1 }}>
-            <Typography sx={{ fontWeight: 700, color: "text.primary" }}>Items</Typography>
-            {detail.items.map((item) => {
-              const lineTotal =
-                (item.totalPrice ?? item.unitPrice * item.quantity) || 0;
-              return (
-                <Box
-                  key={item.id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography sx={{ fontWeight: 600, color: "text.primary" }}>
-                      {item.productName}
-                    </Typography>
-                    <Typography>
-                      {item.variantName} · Qty {item.quantity}
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontWeight: 600 }}>
-                    {lineTotal.toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    })}
-                  </Typography>
-                </Box>
-              );
-            })}
-
-            {detail.payment && (
-              <>
-                <Divider sx={{ my: 1.5 }} />
-                <Typography sx={{ fontWeight: 700, color: "text.primary" }}>Payment</Typography>
-                <Typography>
-                  <b>Method:</b> {detail.payment.paymentMethod}
-                </Typography>
-                <Typography>
-                  <b>Status:</b> {detail.payment.paymentStatus}
-                </Typography>
-                <Typography>
-                  <b>Amount:</b>{" "}
-                  {detail.payment.amount.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  })}
-                </Typography>
-              </>
-            )}
-
-            {detail.statusHistories && detail.statusHistories.length > 0 && (
-              <>
-                <Divider sx={{ my: 1.5 }} />
-                <Typography sx={{ fontWeight: 700, color: "text.primary" }}>Status history</Typography>
-                {detail.statusHistories.map((h, idx) => (
-                  <Box key={idx}>
-                    <Typography>
-                      {h.fromStatus} → <b>{h.toStatus}</b>
-                    </Typography>
-                    <Typography sx={{ fontSize: 12 }}>
-                      {h.notes ? `${h.notes} · ` : ""}
-                      {new Date(h.createdAt).toLocaleString()}
-                    </Typography>
-                  </Box>
-                ))}
-              </>
-            )}
-          </Box>
+          <OrderDetailExpanded detail={detail} />
         )}
       </Collapse>
     </Paper>

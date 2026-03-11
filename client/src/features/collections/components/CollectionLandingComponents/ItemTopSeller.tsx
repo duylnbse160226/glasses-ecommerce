@@ -29,7 +29,7 @@ export default function ItemTopSeller() {
         right: "50%",
         ml: "-50vw",
         mr: "-50vw",
-        bgcolor: "#f9fafb",
+        bgcolor: "#FAFAF8",
       }}
     >
       <Box sx={{ width: "100%", px: { xs: 2, md: 6, lg: 10 } }}>
@@ -49,7 +49,7 @@ export default function ItemTopSeller() {
                 fontSize: 12,
                 letterSpacing: 4,
                 textTransform: "uppercase",
-                color: "rgba(15,23,42,0.6)",
+                color: "#8A8A8A",
               }}
             >
               Our products
@@ -60,7 +60,7 @@ export default function ItemTopSeller() {
                 fontSize: { xs: 24, md: 28 },
                 fontWeight: 900,
                 letterSpacing: -0.8,
-                color: "rgba(15,23,42,0.95)",
+                color: "#171717",
               }}
             >
               Frames customers keep reaching for.
@@ -74,8 +74,9 @@ export default function ItemTopSeller() {
               textTransform: "none",
               fontSize: 14,
               fontWeight: 700,
-              color: "rgba(15,23,42,0.8)",
-              "&:hover": { color: "rgba(15,23,42,1)" },
+              color: "#171717",
+              letterSpacing: 1,
+              "&:hover": { color: "#9E7748" },
             }}
           >
             View all products →
@@ -146,7 +147,7 @@ export default function ItemTopSeller() {
                       sx={{
                         borderRadius: 2,
                         overflow: "hidden",
-                        bgcolor: "#f3f4f6",
+                        bgcolor: "#F8F8F8",
                         height: 140,
                         display: "flex",
                         alignItems: "center",
@@ -182,7 +183,7 @@ export default function ItemTopSeller() {
                           fontSize: 11,
                           textTransform: "uppercase",
                           letterSpacing: 2,
-                          color: "rgba(148,163,184,1)",
+                          color: "#8A8A8A",
                         }}
                       >
                         {product.brand || "Eyewear"}
@@ -192,7 +193,7 @@ export default function ItemTopSeller() {
                           mt: 0.5,
                           fontSize: 14,
                           fontWeight: 700,
-                          color: "rgba(15,23,42,0.95)",
+                          color: "#171717",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -204,7 +205,7 @@ export default function ItemTopSeller() {
                         sx={{
                           mt: 0.5,
                           fontSize: 13,
-                          color: "rgba(55,65,81,0.9)",
+                          color: "#666666",
                           fontWeight: 600,
                         }}
                       >

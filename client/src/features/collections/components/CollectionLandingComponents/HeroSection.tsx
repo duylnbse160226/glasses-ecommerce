@@ -24,28 +24,34 @@ const ROOT_SX = {
 } as const;
 
 const CTA_SX = {
-    bgcolor: "#fff",
-    color: "#000",
-    px: 4.5,
-    py: 1.4,
+    bgcolor: "#171717",
+    color: "#FFFFFF",
+    px: 4,
+    py: 1.3,
     fontWeight: 700,
-    letterSpacing: "0.12em",
+    letterSpacing: "0.08em",
     textTransform: "uppercase",
     borderRadius: "999px",
-    border: "2px solid #000",
-    boxShadow: "none",
-    transition: "all .35s ease",
+    border: "1px solid #171717",
+    boxShadow: "0 10px 24px rgba(0,0,0,0.12)",
+    transition:
+        "background-color .25s ease, color .25s ease, box-shadow .25s ease, transform .25s ease",
     "& .MuiButton-endIcon": {
         ml: 1,
         transition: "transform .3s ease",
     },
     "&:hover": {
-        bgcolor: "#000",
-        color: "#fff",
-        boxShadow: "none",
+        bgcolor: "#111111",
+        color: "#FFFFFF",
+        boxShadow: "0 14px 30px rgba(0,0,0,0.16)",
+        transform: "translateY(-1px)",
         "& .MuiButton-endIcon": {
             transform: "translateX(6px)",
         },
+    },
+    "&:focus-visible": {
+        outline: "2px solid rgba(182,140,90,0.6)",
+        outlineOffset: 3,
     },
 } as const;
 
@@ -157,12 +163,13 @@ export default function HeroSection() {
                             sx={{
                                 fontSize: 12,
                                 fontWeight: 800,
-                                letterSpacing: 1.3,
-                                color: "rgba(17,24,39,0.55)",
+                                letterSpacing: 1.4,
+                                color: "#8A8A8A",
+                                textTransform: "uppercase",
                                 mb: 1,
                             }}
                         >
-                            ESSENCE EYEWEAR
+                            Essence Eyewear
                         </Typography>
 
                         <Typography
@@ -170,7 +177,7 @@ export default function HeroSection() {
                                 fontWeight: 950,
                                 fontSize: { xs: 38, md: 56 },
                                 lineHeight: 1.02,
-                                color: "#111827",
+                                color: "#171717",
                                 mb: 2,
                             }}
                         >
@@ -179,8 +186,8 @@ export default function HeroSection() {
 
                         <Typography
                             sx={{
-                                color: "rgba(17,24,39,0.65)",
-                                fontWeight: 600,
+                                color: "#666666",
+                                fontWeight: 500,
                                 mb: 3.5,
                                 maxWidth: 520,
                             }}
