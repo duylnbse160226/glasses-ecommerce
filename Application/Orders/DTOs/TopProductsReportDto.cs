@@ -5,7 +5,6 @@ namespace Application.Orders.DTOs;
 /// </summary>
 public sealed class TopProductsReportDto
 {
-    public string OrderSource { get; set; } = "All";
     public DateTime FromDate { get; set; }
     public DateTime ToDate { get; set; }
     public int TopN { get; set; }

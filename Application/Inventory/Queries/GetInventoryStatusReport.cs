@@ -42,8 +42,6 @@ public sealed class GetInventoryStatusReport
 
             var lowStockItems = await context.Stocks
                 .AsNoTracking()
-                .Include(s => s.ProductVariant)
-                    .ThenInclude(pv => pv.Product)
                 .Where(s => s.QuantityAvailable < request.LowStockThreshold)
                 .OrderBy(s => s.QuantityAvailable)
                 .Select(s => new LowStockItemDto
