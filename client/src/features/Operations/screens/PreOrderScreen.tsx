@@ -4,6 +4,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ScheduleOutlined from "@mui/icons-material/ScheduleOutlined";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+
 import { isSameDay } from "date-fns";
 
 import { useOperations } from "../context/OperationsContext";
@@ -38,7 +39,7 @@ export function PreOrderScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
 
-  const preOrderOrders = orders.filter((o) => o.orderType === "pre-order");
+  const preOrderOrders = orders.filter((o) => o.orderType === "PreOrder");
   const filteredOrders = useMemo(
     () => filterAndSortOrders(preOrderOrders, searchQuery, dateFilter),
     [preOrderOrders, searchQuery, dateFilter]

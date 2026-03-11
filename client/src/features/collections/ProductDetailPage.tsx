@@ -1,4 +1,4 @@
-
+import { Suspense, lazy, useState } from "react";
 import {
     Accordion,
     AccordionDetails,
@@ -13,11 +13,14 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { useProductDetailPage } from "./hooks/useProductDetailPage";
 import { RelatedProductsCarousel } from "./components/ProductDetailPageComponents/RelatedProductsCarousel";
+import { usePreOrderButton } from "./components/ProductDetailPageComponents/PreOrderDialog";
+
+const VirtualTryOn = lazy(() => import("../Manager/components/VirtualTryOn"));
 
 const NAV_H = 56;
 const GAP_TOP = 24;
@@ -27,6 +30,7 @@ const ACCENT = "#B68C5A";
 
 export default function ProductDetailPage() {
     const nav = useNavigate();
+    const { handlePreOrder } = usePreOrderButton();
     const {
         product,
         isLoading,
@@ -38,6 +42,7 @@ export default function ProductDetailPage() {
         handleVariantSelect,
         isEyeglasses,
     } = useProductDetailPage();
+    const [tryOnOpen, setTryOnOpen] = useState(false);
 
     if (isLoading) {
         return (
@@ -202,15 +207,40 @@ export default function ProductDetailPage() {
                                 }}
                             />
                         </Box>
-                        <Box
+
+                        {/* Virtual Try-On button */}
+                        <Button
+                            variant="contained"
+                            startIcon={<CameraAltIcon />}
+                            onClick={() => setTryOnOpen(true)}
                             sx={{
-                                mt: 1.75,
-                                display: "flex",
-                                gap: 1.5,
-                                flexWrap: "wrap",
+                                position: "absolute",
+                                bottom: 14,
+                                left: 14,
+                                borderRadius: 999,
+                                textTransform: "none",
+                                fontWeight: 800,
+                                fontSize: 13,
+                                bgcolor: "rgba(17,24,39,0.85)",
+                                backdropFilter: "blur(6px)",
+                                "&:hover": { bgcolor: "rgba(17,24,39,0.95)" },
+                                px: 2.5,
+                                py: 1,
+                                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
                             }}
                         >
-                            {images.map((src, idx) => {
+                            Virtual Try-On
+                        </Button>
+
+                    <Box
+                        sx={{
+                            mt: 1.75,
+                            display: "flex",
+                            gap: 1.5,
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        {images.map((src, idx) => {
                                 const isActive = idx === activeImg;
                                 return (
                                     <Box
@@ -344,6 +374,7 @@ export default function ProductDetailPage() {
                                     : "rgba(220,38,38,0.95)",
                             }}
                         />
+
                         {/* Quantity */}
                         <Typography
                             fontSize={13}
@@ -510,8 +541,10 @@ export default function ProductDetailPage() {
                                             },
                                         });
                                     } else {
-                                        // For sunglasses: direct pre-order replaced with alert
-                                        alert("Pre-order feature is coming soon!");
+                                        // For sunglasses: direct pre-order
+                                        handlePreOrder({
+                                            variant: currentVariant,
+                                        });
                                     }
                                 }}
                                 sx={{
@@ -684,11 +717,33 @@ export default function ProductDetailPage() {
             </Grid>
 
             {/* Related products carousel */}
-            <RelatedProductsCarousel
-                categorySlug={product.categorySlug}
-                currentProductId={product.id}
-            />
+            {product && (
+                <RelatedProductsCarousel
+                    categorySlug={product.categorySlug}
+                    currentProductId={product.id}
+                />
+            )}
 
+            {/* Virtual Try-On overlay */}
+            {tryOnOpen && product && (
+                <Suspense fallback={null}>
+                    <VirtualTryOn
+                        open={tryOnOpen}
+                        onClose={() => setTryOnOpen(false)}
+                        productName={product!.name}
+                        variantImages={
+                            (product!.variants || [])
+                                .filter((v) => v.images?.length > 0)
+                                .map((v) => ({
+                                    id: v.id,
+                                    variantName: v.variantName ?? undefined,
+                                    color: v.color ?? undefined,
+                                    imageUrl: v.images[0],
+                                }))
+                        }
+                    />
+                </Suspense>
+            )}
         </Box>
     );
 }
