@@ -19,7 +19,7 @@ import { OrderListCard } from "../components/OrderListCard";
 export function TrackingScreen() {
   const [pageNumber, setPageNumber] = useState(1);
   const [orderIdFilter, setOrderIdFilter] = useState("");
-  const pageSize = 10;
+  const pageSize = 5;
 
   const { data, isLoading } = useOperationsOrders({
     pageNumber,

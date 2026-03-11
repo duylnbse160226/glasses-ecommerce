@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 .react-calendar {
   width: 100% !important;
   border: none !important;
@@ -8,6 +10,7 @@ html, body {
   overflow-x: hidden;
   overflow-y: auto; /* vẫn cho scroll */
   scrollbar-width: none;              /* Firefox */
+  background-color: #FAF8F4;
 }
 
 html::-webkit-scrollbar,

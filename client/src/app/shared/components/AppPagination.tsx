@@ -1,4 +1,5 @@
 import { Box, Pagination, Typography } from "@mui/material";
+import { COLORS } from "../../theme/colors";
 
 export interface AppPaginationProps {
   page: number;
@@ -51,7 +52,7 @@ export function AppPagination({
       sx={{
         mt: 3,
         pt: 2,
-        borderTop: "1px solid rgba(0,0,0,0.04)",
+        borderTop: `1px solid ${COLORS.borderSofter}`,
         display: "flex",
         flexDirection: { xs: "column", md: "row" },
         alignItems: "center",
@@ -62,21 +63,21 @@ export function AppPagination({
       {hasSummary && (
         <Typography
           sx={{
-            color: "#6B6B6B",
+            color: COLORS.textSecondary,
             fontWeight: 500,
             fontSize: 13,
           }}
         >
           Showing{" "}
-          <Box component="span" sx={{ fontWeight: 600, color: "#171717" }}>
+          <Box component="span" sx={{ fontWeight: 600, color: COLORS.textPrimary }}>
             {from}
           </Box>
           –
-          <Box component="span" sx={{ fontWeight: 600, color: "#171717" }}>
+          <Box component="span" sx={{ fontWeight: 600, color: COLORS.textPrimary }}>
             {to}
           </Box>{" "}
           of{" "}
-          <Box component="span" sx={{ fontWeight: 600, color: "#171717" }}>
+          <Box component="span" sx={{ fontWeight: 600, color: COLORS.textPrimary }}>
             {totalItems}
           </Box>{" "}
           {unitLabel}
@@ -104,16 +105,16 @@ export function AppPagination({
             minWidth: 32,
             height: 32,
             border: "1px solid transparent",
-            color: "#6B6B6B",
+            color: COLORS.textSecondary,
           },
           "& .MuiPaginationItem-root.Mui-selected": {
             bgcolor: "#FAFAFA",
-            borderColor: "#ECECEC",
-            color: "#171717",
+            borderColor: COLORS.borderSoft,
+            color: COLORS.textPrimary,
           },
           "& .MuiPaginationItem-previousNext, & .MuiPaginationItem-firstLast": {
             fontSize: 12,
-            color: "#8A8A8A",
+            color: COLORS.textMuted,
           },
         }}
       />

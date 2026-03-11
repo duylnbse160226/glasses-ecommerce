@@ -10,7 +10,7 @@ import { OrderListCard } from "../components/OrderListCard";
 
 export function PackScreen() {
   const [pageNumber, setPageNumber] = useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
 
   const { data, isLoading } = useOperationsOrders({
     pageNumber,
@@ -84,11 +84,15 @@ export function PackScreen() {
                     key={o.id}
                     mode="confirmed"
                     summary={o}
-                    primaryActionLabel={o.orderStatus === "Confirmed" ? "Processing" : undefined}
+                    primaryActionLabel={
+                      String(o.orderStatus).toLowerCase() === "confirmed"
+                        ? "Processing"
+                        : undefined
+                    }
                     onPrimaryActionClick={(orderId) =>
                       updateStatus.mutate({
                         orderId,
-                        status: "processing" as OrderStatus,
+                        status: "Processing" as OrderStatus,
                       })
                     }
                   />

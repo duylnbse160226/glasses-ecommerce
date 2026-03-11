@@ -493,7 +493,7 @@ export function OrderDetailExpanded({ detail }: { detail: StaffOrderDetailDto })
       </Box>
 
       {/* 4) Status history — vertical timeline */}
-      {detail.statusHistories && detail.statusHistories.length > 0 && (
+      {detail.statusHistories && detail.statusHistories.length > 1 && (
         <Box>
           <Typography sx={{ fontSize: 14, fontWeight: 700, color: TOKENS.muted, textTransform: "uppercase", letterSpacing: 1, mb: 1.25 }}>
             Status history
@@ -510,14 +510,14 @@ export function OrderDetailExpanded({ detail }: { detail: StaffOrderDetailDto })
                 bgcolor: TOKENS.divider,
               }}
             />
-            {detail.statusHistories.map((h, idx) => {
+            {detail.statusHistories.slice(1).map((h, idx, arr) => {
               const isLatest = idx === 0;
               return (
                 <Box
                   key={idx}
                   sx={{
                     position: "relative",
-                    pb: idx < detail.statusHistories!.length - 1 ? 2 : 0,
+                    pb: idx < arr.length - 1 ? 2 : 0,
                   }}
                 >
                   <Box
