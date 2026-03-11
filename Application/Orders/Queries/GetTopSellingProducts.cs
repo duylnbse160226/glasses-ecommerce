@@ -34,25 +34,37 @@ public sealed class GetTopSellingProducts
             if (request.ToDate.HasValue)
                 ordersQuery = ordersQuery.Where(o => o.CreatedAt <= request.ToDate.Value);
 
-            var itemsRaw = await context.OrderItems
-                .AsNoTracking()
-                .Where(oi => ordersQuery.Select(o => o.Id).Contains(oi.OrderId))
+            var topVariantsQuery = ordersQuery
+                .SelectMany(o => o.OrderItems)
                 .GroupBy(oi => oi.ProductVariantId)
                 .Select(g => new 
                 {
-                    ProductId = g.First().ProductVariant.ProductId,
-                    ProductName = g.First().ProductVariant.Product.ProductName,
-                    Brand = g.First().ProductVariant.Product.Brand,
-                    ProductType = g.First().ProductVariant.Product.Type,
                     VariantId = g.Key,
-                    VariantName = g.First().ProductVariant.VariantName,
-                    Sku = g.First().ProductVariant.SKU,
                     TotalQuantitySold = g.Sum(oi => oi.Quantity),
                     TotalRevenue = g.Sum(oi => oi.UnitPrice * oi.Quantity),
                     OrderCount = g.Select(oi => oi.OrderId).Distinct().Count()
                 })
                 .OrderByDescending(x => x.TotalQuantitySold)
-                .Take(request.TopN)
+                .Take(request.TopN);
+
+            var itemsRaw = await topVariantsQuery
+                .Join(context.ProductVariants, 
+                    g => g.VariantId, 
+                    pv => pv.Id, 
+                    (g, pv) => new 
+                    {
+                        ProductId = pv.ProductId,
+                        ProductName = pv.Product.ProductName,
+                        Brand = pv.Product.Brand,
+                        ProductType = pv.Product.Type,
+                        VariantId = g.VariantId,
+                        VariantName = pv.VariantName,
+                        Sku = pv.SKU,
+                        TotalQuantitySold = g.TotalQuantitySold,
+                        TotalRevenue = g.TotalRevenue,
+                        OrderCount = g.OrderCount
+                    })
+                .OrderByDescending(x => x.TotalQuantitySold)
                 .ToListAsync(ct);
 
             List<TopProductItemDto> items = itemsRaw.Select(x => new TopProductItemDto
