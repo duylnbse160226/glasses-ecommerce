@@ -18,8 +18,6 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
-import AddBoxOutlined from "@mui/icons-material/AddBoxOutlined";
-import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import ScheduleOutlined from "@mui/icons-material/ScheduleOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import MoveToInboxOutlinedIcon from "@mui/icons-material/MoveToInboxOutlined";
