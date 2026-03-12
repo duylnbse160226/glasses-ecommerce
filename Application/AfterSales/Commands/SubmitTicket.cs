@@ -151,12 +151,15 @@ public sealed class SubmitTicket
             {
                 PolicyConfiguration? refundPolicy = await context.PolicyConfigurations
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(p =>
+                    .Where(p =>
                         p.PolicyType == PolicyType.Refund &&
                         p.IsActive &&
                         !p.IsDeleted &&
                         p.EffectiveFrom <= DateTime.UtcNow &&
-                        (p.EffectiveTo == null || p.EffectiveTo >= DateTime.UtcNow), ct);
+                        (p.EffectiveTo == null || p.EffectiveTo >= DateTime.UtcNow))
+                    .OrderByDescending(p => p.EffectiveFrom)
+                    .ThenByDescending(p => p.UpdatedAt)
+                    .FirstOrDefaultAsync(ct);
 
                 if (refundPolicy != null && refundPolicy.RefundAllowed)
                 {
