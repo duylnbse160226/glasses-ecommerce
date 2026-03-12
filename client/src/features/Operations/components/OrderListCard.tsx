@@ -19,16 +19,9 @@ export interface OrderListCardProps {
   showCheckbox?: boolean;
   selected?: boolean;
   onToggleSelected?: (orderId: string) => void;
-<<<<<<< HEAD
-  /** Optional primary action chip on the right (e.g. Processing / Mark shipped) */
-  primaryActionLabel?: string;
-  onPrimaryActionClick?: (orderId: string) => void;
-  onUpdateStatus?: (status: string) => void;
-=======
   /** Optional actions in the expanded detail area */
   onProcessingClick?: (orderId: string) => void;
   onMarkShippedClick?: (orderId: string) => void;
->>>>>>> 0a15ed6 (update code)
 }
 
 export function OrderListCard({
@@ -37,14 +30,8 @@ export function OrderListCard({
   showCheckbox,
   selected,
   onToggleSelected,
-<<<<<<< HEAD
-  primaryActionLabel,
-  onPrimaryActionClick,
-  onUpdateStatus,
-=======
   onProcessingClick,
   onMarkShippedClick,
->>>>>>> 0a15ed6 (update code)
 }: OrderListCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { data, isLoading } = useOperationsOrderDetail(expanded ? summary.id : undefined);
@@ -234,14 +221,6 @@ export function OrderListCard({
           {isLoading || !detail ? (
             <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>Loading detail...</Typography>
           ) : (
-<<<<<<< HEAD
-            <OrderDetailExpanded 
-              detail={detail} 
-              onUpdateStatus={onUpdateStatus} 
-              primaryActionLabel={primaryActionLabel}
-              onPrimaryActionClick={onPrimaryActionClick}
-            />
-=======
             <>
               <OrderDetailExpanded detail={detail} />
               {(mode === "confirmed" || mode === "packing") && (onProcessingClick || onMarkShippedClick) && (
@@ -305,7 +284,6 @@ export function OrderListCard({
                 </Box>
               )}
             </>
->>>>>>> 0a15ed6 (update code)
           )}
         </Box>
       </Collapse>

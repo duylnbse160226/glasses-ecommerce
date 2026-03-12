@@ -1,10 +1,6 @@
 import React from "react";
-<<<<<<< HEAD
-import { Box, Button, Divider, Tooltip, Typography, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Box, Divider, Typography, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-=======
-import { Box, Divider, Typography, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
->>>>>>> 0a15ed6 (update code)
 import type {
   StaffOrderDetailDto,
   StaffOrderShippingAddressDto,
@@ -60,23 +56,7 @@ function formatPrescriptionVal(n: number | null | undefined): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
 
-<<<<<<< HEAD
-export function OrderDetailExpanded({ 
-  detail,
-  onUpdateStatus,
-  primaryActionLabel,
-  onPrimaryActionClick,
-}: { 
-  detail: StaffOrderDetailDto;
-  onUpdateStatus?: (status: string) => void;
-  primaryActionLabel?: string;
-  onPrimaryActionClick?: (orderId: string) => void;
-}) {
-  const itemsCount = detail.items.reduce((sum, i) => sum + (i.quantity ?? 0), 0);
-  const copyOrderId = () => navigator.clipboard.writeText(detail.id);
-=======
 export function OrderDetailExpanded({ detail }: { detail: StaffOrderDetailDto }) {
->>>>>>> 0a15ed6 (update code)
   const paymentStatusPill = detail.payment ? getPaymentStatusPill(detail.payment.paymentStatus) : null;
 
   const copyAddress = () => {
@@ -426,31 +406,6 @@ export function OrderDetailExpanded({ detail }: { detail: StaffOrderDetailDto })
         </Box>
       </Box>
 
-      {/* Action Button — Add Tracking Details */}
-      {primaryActionLabel && onPrimaryActionClick && (
-        <Button
-          size="small"
-          onClick={() => onPrimaryActionClick(detail.id)}
-          sx={{
-            width: "100%",
-            fontSize: 13,
-            fontWeight: 600,
-            color: TOKENS.accent,
-            border: `1px solid ${TOKENS.accent}`,
-            borderRadius: 1,
-            py: 0.75,
-            textTransform: "none",
-            backgroundColor: "transparent",
-            "&:hover": {
-              backgroundColor: TOKENS.accent,
-              color: TOKENS.surface,
-            },
-          }}
-        >
-          Add Tracking Details
-        </Button>
-      )}
-
       {/* 3.5) Tracking information — shipment tracking */}
       {detail.shipment && detail.shipment.trackingCode && (
         <Box>
@@ -491,29 +446,6 @@ export function OrderDetailExpanded({ detail }: { detail: StaffOrderDetailDto })
                   >
                     {detail.shipment.carrierName || "—"}
                   </Typography>
-                  {detail.orderStatus?.toLowerCase() === "shipped" && onUpdateStatus && (
-                    <Button
-                      size="small"
-                      onClick={() => onUpdateStatus("Delivered")}
-                      sx={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: TOKENS.accent,
-                        border: `1px solid ${TOKENS.accent}`,
-                        borderRadius: 1,
-                        px: 1.5,
-                        py: 0.5,
-                        textTransform: "none",
-                        backgroundColor: "transparent",
-                        "&:hover": {
-                          backgroundColor: TOKENS.accent,
-                          color: TOKENS.surface,
-                        },
-                      }}
-                    >
-                      Make order Delivered
-                    </Button>
-                  )}
                 </Box>
               </Box>
 
