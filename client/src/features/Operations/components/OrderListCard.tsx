@@ -22,15 +22,15 @@ import type { StaffOrderDto, StaffOrderDetailDto } from "../../../lib/types/staf
 import { OrderDetailExpanded } from "../../../app/shared/components/OrderDetailExpanded";
 
 export interface OrderListCardProps {
-  readonly mode: OrderListCardMode;
-  readonly summary: StaffOrderDto;
-  readonly showCheckbox?: boolean;
-  readonly selected?: boolean;
-  readonly onToggleSelected?: (orderId: string) => void;
+  mode: OrderListCardMode;
+  summary: StaffOrderDto;
+  showCheckbox?: boolean;
+  selected?: boolean;
+  onToggleSelected?: (orderId: string) => void;
   /** Optional primary action chip on the right (e.g. Processing / Mark shipped) */
-  readonly primaryActionLabel?: string;
-  readonly onPrimaryActionClick?: (orderId: string) => void;
-  readonly onUpdateStatus?: (status: string) => void;
+  primaryActionLabel?: string;
+  onPrimaryActionClick?: (orderId: string) => void;
+  onUpdateStatus?: (status: string) => void;
 }
 
 export function OrderListCard({
@@ -45,7 +45,7 @@ export function OrderListCard({
 }: OrderListCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { data, isLoading } = useOperationsOrderDetail(expanded ? summary.id : undefined);
-  const detail = data as StaffOrderDetailDto;
+  const detail = data as StaffOrderDetailDto | undefined;
 
   const { bg, color, border } = getStatusChipColors(summary.orderStatus, mode);
 

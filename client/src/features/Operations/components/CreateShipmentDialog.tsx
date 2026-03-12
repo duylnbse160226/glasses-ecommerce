@@ -16,22 +16,22 @@ import { formatDate, ORDER_STATUS_LABEL, ORDER_TYPE_LABEL } from "../constants";
 import type { OrderDto } from "../../../lib/types";
 
 type CreateShipmentDialogProps = {
-  readonly open: boolean;
-  readonly onClose: () => void;
-  readonly order: OrderDto | null;
-  readonly carrier: string;
-  readonly setCarrier: (v: string) => void;
-  readonly trackingNumber: string;
-  readonly setTrackingNumber: (v: string) => void;
-  readonly trackingUrl: string;
-  readonly setTrackingUrl: (v: string) => void;
-  readonly estimatedDeliveryDate: string;
-  readonly setEstimatedDeliveryDate: (v: string) => void;
-  readonly shippingNotes: string;
-  readonly setShippingNotes: (v: string) => void;
-  readonly carriers: string[];
-  readonly onSubmit: () => void;
-  readonly isPending: boolean;
+  open: boolean;
+  onClose: () => void;
+  order: OrderDto | null;
+  carrier: string;
+  setCarrier: (v: string) => void;
+  trackingNumber: string;
+  setTrackingNumber: (v: string) => void;
+  trackingUrl: string;
+  setTrackingUrl: (v: string) => void;
+  estimatedDeliveryDate: string;
+  setEstimatedDeliveryDate: (v: string) => void;
+  shippingNotes: string;
+  setShippingNotes: (v: string) => void;
+  carriers: string[];
+  onSubmit: () => void;
+  isPending: boolean;
 };
 
 export function CreateShipmentDialog({
@@ -174,10 +174,8 @@ export function CreateShipmentDialog({
           value={carrier}
           onChange={(e) => setCarrier(e.target.value)}
           select
-          slotProps={{
-            select: {
-              native: true,
-            }
+          SelectProps={{
+            native: true,
           }}
           sx={{ mt: 1 }}
           disabled={carriers.length === 0}
@@ -199,7 +197,7 @@ export function CreateShipmentDialog({
           onChange={(e) => setTrackingNumber(e.target.value)}
           placeholder="e.g. VN123456789"
           required
-          error={trackingNumber === ""}
+          error={trackingNumber === "" && false}
           sx={{ mt: 2 }}
         />
         {trackingNumber === "" && (
@@ -222,10 +220,8 @@ export function CreateShipmentDialog({
           type="date"
           value={estimatedDeliveryDate}
           onChange={(e) => setEstimatedDeliveryDate(e.target.value)}
-          slotProps={{
-            inputLabel: {
-              shrink: true,
-            },
+          InputLabelProps={{
+            shrink: true,
           }}
           sx={{ mt: 2 }}
         />
