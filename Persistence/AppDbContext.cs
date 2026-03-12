@@ -1357,7 +1357,10 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Id
                     @"
                     (PolicyType != 3 AND RefundOnlyMaxAmount IS NULL AND RefundWindowDays IS NULL)
                     OR
-                    (PolicyType = 3)
+                    (PolicyType = 3 AND 
+                        (RefundWindowDays IS NULL OR RefundWindowDays >= 0) AND
+                        (RefundOnlyMaxAmount IS NULL OR RefundOnlyMaxAmount >= 0)
+                    )
                     "
                 );
             });

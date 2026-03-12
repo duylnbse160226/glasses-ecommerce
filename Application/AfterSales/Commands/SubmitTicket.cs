@@ -112,14 +112,20 @@ public sealed class SubmitTicket
                         "Customized prescription lenses are non-refundable under the current policy.";
             }
 
-            // 6. Duplicate open ticket check (same order + same item + original or effective type, not closed/rejected/resolved)
-            //    Also matches OriginalTicketType so that a Return auto-converted to Refund still blocks a new Return submission.
+
+            // 6. Duplicate open ticket check (same order + same item + original/effective Return OR any Refund, not closed/rejected/resolved)
+            //    - Blocks if: (TicketType == Return || OriginalTicketType == Return || TicketType == Refund)
+            //    - This ensures you can't have both an open Refund and an open Return for the same scope.
             bool duplicateExists = await context.AfterSalesTickets
                 .AsNoTracking()
                 .AnyAsync(t =>
                     t.OrderId == request.Dto.OrderId &&
                     (request.Dto.OrderItemId == null ? t.OrderItemId == null : t.OrderItemId == request.Dto.OrderItemId) &&
-                    (t.TicketType == request.Dto.TicketType || t.OriginalTicketType == request.Dto.TicketType) &&
+                    (
+                        t.TicketType == request.Dto.TicketType ||
+                        t.OriginalTicketType == request.Dto.TicketType ||
+                        (request.Dto.TicketType == AfterSalesTicketType.Return && t.TicketType == AfterSalesTicketType.Refund)
+                    ) &&
                     t.TicketStatus != AfterSalesTicketStatus.Rejected &&
                     t.TicketStatus != AfterSalesTicketStatus.Resolved &&
                     t.TicketStatus != AfterSalesTicketStatus.Closed, ct);
