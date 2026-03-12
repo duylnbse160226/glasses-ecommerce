@@ -14,7 +14,7 @@ import {
   FormControlLabel,
   Radio,
   TextField,
-  Grid,
+  Stack,
   IconButton,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -27,7 +27,7 @@ import { CANCEL_ORDER_REASONS, type CancelReasonValue } from "./cancelReasons";
 import { SubmitAfterSalesTicketDialog } from "./SubmitAfterSalesTicketDialog";
 import { OrderTicketsSection } from "./OrderTicketsSection";
 
-const CANCELABLE_STATUSES = ["Pending", "pending"];
+const CANCELABLE_STATUSES = new Set(["Pending", "pending"]);
 
 const PALETTE = {
   pageBg: "#FFFFFF",
@@ -165,7 +165,7 @@ export default function OrderDetailPage() {
   const [cancelOtherText, setCancelOtherText] = useState("");
   const [afterSalesDialogOpen, setAfterSalesDialogOpen] = useState(false);
 
-  const canCancel = order && CANCELABLE_STATUSES.includes(orderStatus);
+  const canCancel = order && CANCELABLE_STATUSES.has(orderStatus);
   const canSubmitAfterSales = order && orderStatus === "Delivered";
   const isOtherReason = cancelReason === "other";
 
@@ -372,9 +372,9 @@ export default function OrderDetailPage() {
         </Box>
       </Box>
 
-      <Grid container spacing={3} alignItems="flex-start">
+      <Stack spacing={3} sx={{ flexDirection: { xs: "column", md: "row" }, alignItems: "flex-start" }}>
         {/* LEFT: items + shipping / timeline */}
-        <Grid item xs={12} md={8}>
+        <Box sx={{ flex: { xs: "auto", md: "2" } }}>
           <Paper
             elevation={0}
             sx={{
@@ -445,9 +445,9 @@ export default function OrderDetailPage() {
               {(addressStr || order.trackingNumber) && (
                 <>
                   <Divider sx={{ mb: 2, borderColor: PALETTE.divider }} />
-                  <Grid container spacing={2}>
+                  <Stack spacing={2}>
                     {addressStr && (
-                      <Grid item xs={12} md={6}>
+                      <Box>
                         <Typography
                           fontSize={14}
                           fontWeight={600}
@@ -461,10 +461,10 @@ export default function OrderDetailPage() {
                         >
                           {addressStr}
                         </Typography>
-                      </Grid>
+                      </Box>
                     )}
                     {order.trackingNumber && (
-                      <Grid item xs={12} md={6}>
+                      <Box>
                         <Typography
                           fontSize={14}
                           fontWeight={600}
@@ -476,9 +476,9 @@ export default function OrderDetailPage() {
                           <b>Tracking:</b> {order.trackingNumber}
                           {order.carrier ? ` (${order.carrier})` : ""}
                         </Typography>
-                      </Grid>
+                      </Box>
                     )}
-                  </Grid>
+                  </Stack>
                 </>
               )}
 
@@ -821,10 +821,10 @@ export default function OrderDetailPage() {
           {canSubmitAfterSales && orderId && (
             <OrderTicketsSection orderId={orderId} />
           )}
-        </Grid>
+        </Box>
 
         {/* RIGHT: sticky summary card */}
-        <Grid item xs={12} md={4}>
+        <Box sx={{ flex: { xs: "auto", md: "1" } }}>
           <Box
             sx={{
               position: { md: "sticky" },
@@ -1016,8 +1016,8 @@ export default function OrderDetailPage() {
               </Paper>
             )}
           </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Stack>
 
       {/* Cancel dialog */}
       <Dialog open={cancelDialogOpen} onClose={handleCloseCancelDialog} maxWidth="sm" fullWidth>
