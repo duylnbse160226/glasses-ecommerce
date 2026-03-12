@@ -96,39 +96,42 @@ export function StandardScreen() {
                       if (statusFilter === "Delivered") return s === "delivered";
                       return true;
                     })
-                    .map((o) => (
-                      <OrderListCard
-                        key={o.id}
-                        mode="confirmed"
-                        summary={o}
-                        primaryActionLabel={
-                          String(o.orderStatus).toLowerCase() === "confirmed"
-                            ? "Processing"
-                            : String(o.orderStatus).toLowerCase() === "processing"
-                            ? "Mark shipped"
-                            : undefined
-                        }
-                        onPrimaryActionClick={(orderId) => {
-                          const s = String(o.orderStatus).toLowerCase();
-                          if (s === "confirmed") {
-                            updateStatus.mutate({
-                              orderId,
-                              status: "Processing" as OrderStatus,
-                            });
-                          } else if (s === "processing") {
-                            updateStatus.mutate({
-                              orderId,
-                              status: "Shipped" as OrderStatus,
-                              shipmentCarrierName: "GHN",
-                              shipmentTrackingCode: null,
-                              shipmentTrackingUrl: null,
-                              shipmentEstimatedDeliveryAt: null,
-                              shipmentNotes: null,
-                            });
+                    .map((o) => {
+                      const s = String(o.orderStatus).toLowerCase();
+                      const canProcessing = s === "confirmed";
+                      const canMarkShipped = s === "processing";
+
+                      return (
+                        <OrderListCard
+                          key={o.id}
+                          mode="confirmed"
+                          summary={o}
+                          onProcessingClick={
+                            canProcessing
+                              ? (orderId) =>
+                                  updateStatus.mutate({
+                                    orderId,
+                                    status: "Processing" as OrderStatus,
+                                  })
+                              : undefined
                           }
-                        }}
-                      />
-                    ))}
+                          onMarkShippedClick={
+                            canMarkShipped
+                              ? (orderId) =>
+                                  updateStatus.mutate({
+                                    orderId,
+                                    status: "Shipped" as OrderStatus,
+                                    shipmentCarrierName: "GHN",
+                                    shipmentTrackingCode: null,
+                                    shipmentTrackingUrl: null,
+                                    shipmentEstimatedDeliveryAt: null,
+                                    shipmentNotes: null,
+                                  })
+                              : undefined
+                          }
+                        />
+                      );
+                    })}
                 </Box>
               )}
 

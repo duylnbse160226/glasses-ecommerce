@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Checkbox,
-  Chip,
-  Collapse,
-  IconButton,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Checkbox, Chip, Collapse, IconButton, Paper, Typography } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -27,9 +19,9 @@ export interface OrderListCardProps {
   showCheckbox?: boolean;
   selected?: boolean;
   onToggleSelected?: (orderId: string) => void;
-  /** Optional primary action chip on the right (e.g. Processing / Mark shipped) */
-  primaryActionLabel?: string;
-  onPrimaryActionClick?: (orderId: string) => void;
+  /** Optional actions in the expanded detail area */
+  onProcessingClick?: (orderId: string) => void;
+  onMarkShippedClick?: (orderId: string) => void;
 }
 
 export function OrderListCard({
@@ -38,8 +30,8 @@ export function OrderListCard({
   showCheckbox,
   selected,
   onToggleSelected,
-  primaryActionLabel,
-  onPrimaryActionClick,
+  onProcessingClick,
+  onMarkShippedClick,
 }: OrderListCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { data, isLoading } = useOperationsOrderDetail(expanded ? summary.id : undefined);
@@ -139,30 +131,6 @@ export function OrderListCard({
             }}
           />
 
-          {/* Optional primary action as secondary chip (e.g. Processing / Mark shipped) */}
-          {(mode === "confirmed" || mode === "packing") && primaryActionLabel && onPrimaryActionClick && (
-            <Chip
-              label={primaryActionLabel}
-              size="small"
-              clickable
-              onClick={(e) => {
-                e.stopPropagation();
-                onPrimaryActionClick(summary.id);
-              }}
-              sx={{
-                fontWeight: 600,
-                fontSize: 12,
-                textTransform: "capitalize",
-                borderRadius: 999,
-                height: 26,
-                px: 1.25,
-                border: "1px solid rgba(249,115,22,0.5)",
-                bgcolor: "rgba(249,115,22,0.08)",
-                color: "#c2410c",
-              }}
-            />
-          )}
-
           <IconButton
             size="small"
             onClick={() => setExpanded((e) => !e)}
@@ -249,11 +217,73 @@ export function OrderListCard({
       </Box>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <Box sx={{ mt: 1.5 }}>
+        <Box sx={{ mt: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
           {isLoading || !detail ? (
             <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>Loading detail...</Typography>
           ) : (
-            <OrderDetailExpanded detail={detail} />
+            <>
+              <OrderDetailExpanded detail={detail} />
+              {(mode === "confirmed" || mode === "packing") && (onProcessingClick || onMarkShippedClick) && (
+                <Box sx={{ display: "flex", flexDirection: "row", gap: 1, mt: 1 }}>
+                  {onProcessingClick && (
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="medium"
+                      sx={{
+                        flex: 1,
+                        height: 40,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        textTransform: "capitalize",
+                        borderRadius: 1,
+                        borderColor: "rgba(249,115,22,0.5)",
+                        bgcolor: "rgba(249,115,22,0.08)",
+                        color: "#c2410c",
+                        "&:hover": {
+                          borderColor: "rgba(234,88,12,0.8)",
+                          bgcolor: "rgba(254,215,170,0.5)",
+                        },
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onProcessingClick(summary.id);
+                      }}
+                    >
+                      Processing
+                    </Button>
+                  )}
+                  {onMarkShippedClick && (
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="medium"
+                      sx={{
+                        flex: 1,
+                        height: 40,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        textTransform: "capitalize",
+                        borderRadius: 1,
+                        borderColor: "rgba(59,130,246,0.4)",
+                        bgcolor: "rgba(59,130,246,0.06)",
+                        color: "#1D4ED8",
+                        "&:hover": {
+                          borderColor: "rgba(37,99,235,0.9)",
+                          bgcolor: "rgba(191,219,254,0.7)",
+                        },
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkShippedClick(summary.id);
+                      }}
+                    >
+                      Mark shipped
+                    </Button>
+                  )}
+                </Box>
+              )}
+            </>
           )}
         </Box>
       </Collapse>
