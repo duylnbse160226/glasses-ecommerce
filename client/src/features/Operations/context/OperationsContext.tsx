@@ -3,7 +3,6 @@ import {
   useOperationsOrders,
   useOperationsShipments,
   useUpdateOrderStatus,
-  useCreateShipment,
   useUpdateTracking,
 } from "../../../lib/hooks/useOperationsOrders";
 import { useLookups } from "../../../lib/hooks/useLookups";
@@ -43,7 +42,6 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
   const { data: shipmentsData, isLoading: shipmentsLoading } = useOperationsShipments();
   const { data: lookupsData } = useLookups();
   const updateStatus = useUpdateOrderStatus();
-  const createShipment = useCreateShipment();
   const updateTracking = useUpdateTracking();
 
   const carriers = lookupsData?.shippingCarrier || [];

@@ -96,7 +96,6 @@ export default function OrderDetailPage() {
   const canSubmitAfterSales = order && orderStatus === "Delivered";
   const isOtherReason = cancelReason === "other";
 
-  const handleOpenCancelDialog = () => setCancelDialogOpen(true);
   const handleCloseCancelDialog = () => {
     setCancelDialogOpen(false);
     setCancelReason("changed_mind");
