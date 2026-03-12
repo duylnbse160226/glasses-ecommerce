@@ -98,6 +98,7 @@ export function PreOrderScreen() {
                     if (statusFilter === "Delivered") return s === "delivered";
                     return true;
                   })
+<<<<<<< HEAD
                   .map((o) => (
                     <OrderListCard
                       key={o.id}
@@ -129,6 +130,44 @@ export function PreOrderScreen() {
                       }}
                     />
                   ))}
+=======
+                  .map((o) => {
+                    const s = String(o.orderStatus).toLowerCase();
+                    const canProcessing = s === "confirmed";
+                    const canMarkShipped = s === "processing";
+
+                    return (
+                      <OrderListCard
+                        key={o.id}
+                        mode="confirmed"
+                        summary={o}
+                        onProcessingClick={
+                          canProcessing
+                            ? (orderId) =>
+                                updateStatus.mutate({
+                                  orderId,
+                                  status: "Processing" as OrderStatus,
+                                })
+                            : undefined
+                        }
+                        onMarkShippedClick={
+                          canMarkShipped
+                            ? (orderId) =>
+                                updateStatus.mutate({
+                                  orderId,
+                                  status: "Shipped" as OrderStatus,
+                                  shipmentCarrierName: "GHN",
+                                  shipmentTrackingCode: null,
+                                  shipmentTrackingUrl: null,
+                                  shipmentEstimatedDeliveryAt: null,
+                                  shipmentNotes: null,
+                                })
+                            : undefined
+                        }
+                      />
+                    );
+                  })}
+>>>>>>> 0a15ed6 (update code)
               </Box>
               )}
 
