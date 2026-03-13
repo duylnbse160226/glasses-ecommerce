@@ -22,6 +22,7 @@ export interface OrderListCardProps {
   /** Optional actions in the expanded detail area */
   onProcessingClick?: (orderId: string) => void;
   onMarkShippedClick?: (orderId: string) => void;
+  onMarkDeliveredClick?: (orderId: string) => void;
 }
 
 export function OrderListCard({
@@ -32,6 +33,7 @@ export function OrderListCard({
   onToggleSelected,
   onProcessingClick,
   onMarkShippedClick,
+  onMarkDeliveredClick,
 }: OrderListCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { data, isLoading } = useOperationsOrderDetail(expanded ? summary.id : undefined);
@@ -223,8 +225,8 @@ export function OrderListCard({
           ) : (
             <>
               <OrderDetailExpanded detail={detail} />
-              {(mode === "confirmed" || mode === "packing") && (onProcessingClick || onMarkShippedClick) && (
-                <Box sx={{ display: "flex", flexDirection: "row", gap: 1, mt: 1 }}>
+              {(mode === "confirmed" || mode === "packing") && (onProcessingClick || onMarkShippedClick || onMarkDeliveredClick) && (
+                <Box sx={{ display: "flex", flexDirection: "row", gap: 1, mt: 1, flexWrap: "wrap" }}>
                   {onProcessingClick && (
                     <Button
                       fullWidth
@@ -279,6 +281,34 @@ export function OrderListCard({
                       }}
                     >
                       Add Tracking Detail
+                    </Button>
+                  )}
+                  {onMarkDeliveredClick && (
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="medium"
+                      sx={{
+                        flex: 1,
+                        height: 40,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        textTransform: "capitalize",
+                        borderRadius: 1,
+                        borderColor: "rgba(34,197,94,0.4)",
+                        bgcolor: "rgba(34,197,94,0.06)",
+                        color: "#15803d",
+                        "&:hover": {
+                          borderColor: "rgba(22,163,74,0.9)",
+                          bgcolor: "rgba(187,247,208,0.7)",
+                        },
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkDeliveredClick(summary.id);
+                      }}
+                    >
+                      Mark Delivered
                     </Button>
                   )}
                 </Box>
