@@ -4,6 +4,8 @@ import { NavLink } from "react-router-dom";
 import { useMyOrders } from "../../lib/hooks/useOrders";
 import { OrderCard } from "./OrderCard";
 import { AppPagination } from "../../app/shared/components/AppPagination";
+import { StatusFilterTabs } from "../../features/Operations/components/StatusFilterTabs";
+import type { StatusFilterValue } from "../../features/Operations/components/StatusFilterTabs";
 
 const PALETTE = {
   textMain: "#171717",
@@ -16,6 +18,7 @@ const PALETTE = {
 };
 export default function OrdersPage() {
   const [pageNumber, setPageNumber] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("All");
 
   const { data: page, isLoading, isError, error } = useMyOrders(pageNumber);
 
@@ -36,6 +39,15 @@ export default function OrdersPage() {
     >();
 
     list.forEach((order) => {
+      // Filter by status
+      if (statusFilter !== "All") {
+        const orderStatus = String(order.orderStatus ?? "").toLowerCase();
+        const filterStatus = statusFilter.toLowerCase();
+        if (orderStatus !== filterStatus) {
+          return;
+        }
+      }
+
       const d = new Date(order.createdAt);
       const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
       const label = d.toLocaleDateString("en-US", {
@@ -52,7 +64,7 @@ export default function OrdersPage() {
 
     // Giữ nguyên thứ tự theo backend (mới nhất trước)
     return Array.from(map.values());
-  }, [list]);
+  }, [list, statusFilter]);
 
   if (isLoading) {
     return (
@@ -135,27 +147,51 @@ export default function OrdersPage() {
           }}
         >
           <Typography sx={{ color: PALETTE.textSecondary, mb: 2, fontSize: 16 }}>
-            You have not placed any orders yet.
+            {statusFilter === "All"
+              ? "You have not placed any orders yet."
+              : `No ${statusFilter.toLowerCase()} orders found.`}
           </Typography>
-          <Button
-            component={NavLink}
-            to="/collections"
-            variant="contained"
+          {statusFilter === "All" && (
+            <Button
+              component={NavLink}
+              to="/collections"
+              variant="contained"
+              sx={{
+                fontWeight: 700,
+                borderRadius: 999,
+                px: 3,
+                py: 1,
+                textTransform: "none",
+                bgcolor: "#171717",
+                "&:hover": { bgcolor: "#111111" },
+              }}
+            >
+              Start shopping
+            </Button>
+          )}
+        </Paper>
+      ) : groupedByDate.length === 0 ? (
+        <Box>
+          <StatusFilterTabs value={statusFilter} onChange={setStatusFilter} />
+          <Paper
+            elevation={0}
             sx={{
-              fontWeight: 700,
-              borderRadius: 999,
-              px: 3,
-              py: 1,
-              textTransform: "none",
-              bgcolor: "#171717",
-              "&:hover": { bgcolor: "#111111" },
+              border: `1px solid ${PALETTE.border}`,
+              borderRadius: 3,
+              p: 5,
+              textAlign: "center",
+              bgcolor: "#FFFFFF",
             }}
           >
-            Start shopping
-          </Button>
-        </Paper>
+            <Typography sx={{ color: PALETTE.textSecondary, fontSize: 16 }}>
+              No {statusFilter.toLowerCase()} orders found.
+            </Typography>
+          </Paper>
+        </Box>
       ) : (
         <>
+          <StatusFilterTabs value={statusFilter} onChange={setStatusFilter} />
+
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
             {groupedByDate.map((group) => (
               <Box key={group.key} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
