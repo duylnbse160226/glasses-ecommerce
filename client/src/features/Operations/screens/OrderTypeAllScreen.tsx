@@ -3,8 +3,10 @@ import { Box, LinearProgress, Paper, Typography, TextField, InputAdornment } fro
 import SearchIcon from "@mui/icons-material/Search";
 
 import { AppPagination } from "../../../app/shared/components/AppPagination";
-import { useOperationsOrders } from "../../../lib/hooks/useOperationsOrders";
+import { useOperationsOrders, useUpdateOrderStatus } from "../../../lib/hooks/useOperationsOrders";
+import { useOperations } from "../context/OperationsContext";
 import type { StaffOrderDto } from "../../../lib/types/staffOrders";
+import type { OrderStatus } from "../../../lib/types/operations";
 import { OperationsPageHeader } from "../components/OperationsPageHeader";
 import { OrderListCard } from "../components";
 
@@ -19,6 +21,9 @@ export function OrderTypeAllScreen() {
     pageNumber: 1,
     pageSize: 50,
   });
+
+  const updateStatus = useUpdateOrderStatus();
+  const { openCreateShipment } = useOperations();
 
   const safeOrders: StaffOrderDto[] = Array.isArray(data?.items)
     ? (data!.items as unknown as StaffOrderDto[])
@@ -200,14 +205,33 @@ export function OrderTypeAllScreen() {
                   },
                 }}
               >
-                {visibleOrders.map((o) => (
-                  <OrderListCard
-                    key={o.id}
-                    mode="confirmed"
-                    summary={o}
-                    // No primaryActionLabel / onPrimaryActionClick => read-only view
-                  />
-                ))}
+                {visibleOrders.map((o) => {
+                  const s = String(o.orderStatus).toLowerCase();
+                  const canProcessing = s === "confirmed";
+                  const canMarkShipped = s === "processing";
+
+                  return (
+                    <OrderListCard
+                      key={o.id}
+                      mode="confirmed"
+                      summary={o}
+                      onProcessingClick={
+                        canProcessing
+                          ? (orderId) =>
+                              updateStatus.mutate({
+                                orderId,
+                                status: "Processing" as OrderStatus,
+                              })
+                          : undefined
+                      }
+                      onMarkShippedClick={
+                        canMarkShipped
+                          ? (orderId) => openCreateShipment(orderId)
+                          : undefined
+                      }
+                    />
+                  );
+                })}
               </Box>
 
               <AppPagination
