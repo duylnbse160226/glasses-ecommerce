@@ -16,12 +16,17 @@ public static class StockQueryExtensions
     /// The caller is responsible for ensuring <paramref name="variantIds"/> is non-empty
     /// before calling this method (an empty IN-list is invalid SQL).
     /// </remarks>
-    public static Task<List<Stock>> GetStocksWithLockAsync(
+    internal static Task<List<Stock>> GetStocksWithLockAsync(
         this AppDbContext context,
         IEnumerable<Guid> variantIds,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(variantIds);
+
         List<Guid> ids = variantIds.Distinct().ToList();
+
+        if (ids.Count == 0)
+            return Task.FromResult(new List<Stock>());
 
         string paramList = string.Join(", ", ids.Select((_, i) => $"@p{i}"));
         object[] sqlParams = ids

@@ -153,16 +153,21 @@ public sealed class UpdateOrderStatus
 
                     if (newStatus == OrderStatus.Completed)
                     {
-                        // Skip stock deduction if RecordOutbound was already called for this order —
-                        // that handler already deducted QuantityOnHand and QuantityReserved.
-                        // Only deduct here for orders that bypass the outbound step (e.g. offline/walk-in).
-                        bool outboundAlreadyRecorded = await context.InventoryTransactions
-                            .AnyAsync(t => t.ReferenceType == ReferenceType.Order
+                        // Load all outbound transactions for this order to validate per-variant coverage.
+                        // AnyAsync is too coarse: one stray row would skip deductions for all variants.
+                        // Group by variant and sum quantities so multi-row outbounds (split shipments) are handled correctly.
+                        Dictionary<Guid, int> outboundQtyByVariant = (await context.InventoryTransactions
+                            .Where(t => t.ReferenceType == ReferenceType.Order
                                 && t.ReferenceId == order.Id
-                                && t.TransactionType == TransactionType.Outbound, ct);
+                                && t.TransactionType == TransactionType.Outbound)
+                            .ToListAsync(ct))
+                            .GroupBy(t => t.ProductVariantId)
+                            .ToDictionary(g => g.Key, g => g.Sum(t => t.Quantity));
 
-                        if (!outboundAlreadyRecorded)
+                        if (outboundQtyByVariant.Count == 0)
                         {
+                            // No outbound recorded at all — this order bypassed RecordOutbound (e.g. offline/walk-in).
+                            // Deduct stock here.
                             foreach (OrderItem item in items)
                             {
                                 if (!stockByVariant.TryGetValue(item.ProductVariantId, out Stock? stock))
@@ -177,6 +182,24 @@ public sealed class UpdateOrderStatus
                                 stock.UpdatedAt = DateTime.UtcNow;
                                 stock.UpdatedBy = staffUserId;
                             }
+                        }
+                        else
+                        {
+                            // Outbound rows exist — validate full per-variant coverage before skipping deduction.
+                            // Partial coverage (missing variant or short quantity) is a data-integrity violation → 409.
+                            foreach (OrderItem item in items)
+                            {
+                                if (!outboundQtyByVariant.TryGetValue(item.ProductVariantId, out int outboundQty))
+                                    return Result<Unit>.Failure(
+                                        $"Outbound record missing for product variant '{item.ProductVariantId}'. " +
+                                        "Cannot complete order with partial outbound coverage.", 409);
+
+                                if (outboundQty < item.Quantity)
+                                    return Result<Unit>.Failure(
+                                        $"Outbound quantity ({outboundQty}) for product variant '{item.ProductVariantId}' " +
+                                        $"is less than order quantity ({item.Quantity}). Cannot complete order.", 409);
+                            }
+                            // All variants fully covered by outbound — stock already deducted by RecordOutbound.
                         }
                     }
                 }
