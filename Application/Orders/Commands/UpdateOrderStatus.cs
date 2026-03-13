@@ -148,19 +148,30 @@ public sealed class UpdateOrderStatus
 
                     if (newStatus == OrderStatus.Completed)
                     {
-                        foreach (OrderItem item in items)
-                        {
-                            if (!stockByVariant.TryGetValue(item.ProductVariantId, out Stock? stock))
-                                return Result<Unit>.Failure(
-                                    $"Stock record not found for product variant '{item.ProductVariantId}'.", 409);
-                            if (stock.QuantityOnHand < item.Quantity || stock.QuantityReserved < item.Quantity)
-                                return Result<Unit>.Failure(
-                                    $"Insufficient stock for product variant '{item.ProductVariantId}'.", 409);
+                        // Skip stock deduction if RecordOutbound was already called for this order —
+                        // that handler already deducted QuantityOnHand and QuantityReserved.
+                        // Only deduct here for orders that bypass the outbound step (e.g. offline/walk-in).
+                        bool outboundAlreadyRecorded = await context.InventoryTransactions
+                            .AnyAsync(t => t.ReferenceType == ReferenceType.Order
+                                && t.ReferenceId == order.Id
+                                && t.TransactionType == TransactionType.Outbound, ct);
 
-                            stock.QuantityOnHand -= item.Quantity;
-                            stock.QuantityReserved -= item.Quantity;
-                            stock.UpdatedAt = DateTime.UtcNow;
-                            stock.UpdatedBy = staffUserId;
+                        if (!outboundAlreadyRecorded)
+                        {
+                            foreach (OrderItem item in items)
+                            {
+                                if (!stockByVariant.TryGetValue(item.ProductVariantId, out Stock? stock))
+                                    return Result<Unit>.Failure(
+                                        $"Stock record not found for product variant '{item.ProductVariantId}'.", 409);
+                                if (stock.QuantityOnHand < item.Quantity || stock.QuantityReserved < item.Quantity)
+                                    return Result<Unit>.Failure(
+                                        $"Insufficient stock for product variant '{item.ProductVariantId}'.", 409);
+
+                                stock.QuantityOnHand -= item.Quantity;
+                                stock.QuantityReserved -= item.Quantity;
+                                stock.UpdatedAt = DateTime.UtcNow;
+                                stock.UpdatedBy = staffUserId;
+                            }
                         }
                     }
                 }

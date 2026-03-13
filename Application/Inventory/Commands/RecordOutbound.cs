@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Application.Inventory.DTOs;
 using Domain;
 using MediatR;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Persistence;
@@ -65,8 +66,32 @@ public sealed class RecordOutbound
                 if (order.OrderItems.Count == 0)
                     return Result<Unit>.Failure("Order has no items to record outbound.", 400);
 
+                // 5. Lock stock rows with UPDLOCK to prevent race conditions on concurrent outbound requests
+                List<Guid> variantIds = order.OrderItems.Select(oi => oi.ProductVariantId).Distinct().ToList();
+                string paramList = string.Join(", ", variantIds.Select((_, i) => $"@p{i}"));
+                object[] sqlParams = variantIds
+                    .Select((id, i) => (object)new SqlParameter($"@p{i}", id)).ToArray();
+
+                List<Stock> stocks = await context.Stocks
+                    .FromSqlRaw($"SELECT * FROM Stocks WITH (UPDLOCK) WHERE ProductVariantId IN ({paramList})", sqlParams)
+                    .ToListAsync(ct);
+                Dictionary<Guid, Stock> stockByVariant = stocks.ToDictionary(s => s.ProductVariantId);
+
                 foreach (OrderItem item in order.OrderItems)
                 {
+                    if (!stockByVariant.TryGetValue(item.ProductVariantId, out Stock? stock))
+                        return Result<Unit>.Failure(
+                            $"Stock record not found for product variant '{item.ProductVariantId}'.", 409);
+
+                    if (stock.QuantityOnHand < item.Quantity || stock.QuantityReserved < item.Quantity)
+                        return Result<Unit>.Failure(
+                            $"Insufficient stock for product variant '{item.ProductVariantId}'.", 409);
+
+                    stock.QuantityOnHand -= item.Quantity;
+                    stock.QuantityReserved -= item.Quantity;
+                    stock.UpdatedAt = DateTime.UtcNow;
+                    stock.UpdatedBy = staffUserId;
+
                     context.InventoryTransactions.Add(new InventoryTransaction
                     {
                         UserId = staffUserId,
