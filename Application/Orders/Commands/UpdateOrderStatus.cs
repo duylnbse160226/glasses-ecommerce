@@ -80,13 +80,7 @@ public sealed class UpdateOrderStatus
 
                     // Lock stock rows with UPDLOCK
                     List<Guid> variantIds = items.Select(oi => oi.ProductVariantId).Distinct().ToList();
-                    string paramList = string.Join(", ", variantIds.Select((_, i) => $"@p{i}"));
-                    object[] sqlParams = variantIds
-                        .Select((id, i) => (object)new SqlParameter($"@p{i}", id)).ToArray();
-
-                    List<Stock> stocks = await context.Stocks
-                        .FromSqlRaw($"SELECT * FROM Stocks WITH (UPDLOCK) WHERE ProductVariantId IN ({paramList})", sqlParams)
-                        .ToListAsync(ct);
+                    List<Stock> stocks = await context.GetStocksWithLockAsync(variantIds, ct);
                     Dictionary<Guid, Stock> stockByVariant = stocks.ToDictionary(s => s.ProductVariantId);
 
                     // Load variants chỉ khi là PreOrder order — cần biết IsPreOrder của từng item
