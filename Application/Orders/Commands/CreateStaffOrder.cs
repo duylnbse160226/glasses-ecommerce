@@ -77,7 +77,7 @@ public sealed class CreateStaffOrder
                 }
 
                 // 2. Validate Prescription requirement
-                if (dto.OrderType == OrderType.Prescription && dto.Prescription == null)
+                if (dto.OrderType == OrderType.Prescription && !dto.Items.Any(i => i.Prescription != null))
                     return Result<Guid>.Failure("Prescription details are required for prescription orders.", 400);
 
                 // 3. Validate items and stock
