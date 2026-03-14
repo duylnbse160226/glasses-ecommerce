@@ -47,10 +47,13 @@ public sealed class GetMyOrders
                     }
                 }
 
-                if (statusEnums.Count > 0)
+                if (statusEnums.Count == 0)
                 {
-                    query = query.Where(o => statusEnums.Contains(o.OrderStatus));
+                    return Result<PagedResult<CustomerOrderListDto>>
+                         .Failure("No valid status values provided.", 400);
                 }
+
+                query = query.Where(o => statusEnums.Contains(o.OrderStatus));
             }
 
             int totalCount = await query.CountAsync(cancellationToken);
