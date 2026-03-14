@@ -79,7 +79,7 @@ public sealed class GetOutboundDetail
                 OrderId = orderInfo.Id,
                 OrderNumber = "ORD-" + orderInfo.Id.ToString().Substring(0, 8).ToUpper(),
                 OrderStatus = orderInfo.OrderStatus.ToString(),
-                CustomerName = orderInfo.Address != null
+                CustomerName = orderInfo.Address != null && !string.IsNullOrWhiteSpace(orderInfo.Address.RecipientName)
                                     ? orderInfo.Address.RecipientName
                                     : orderInfo.WalkInCustomerName,
                 TotalItems = txns.Count,

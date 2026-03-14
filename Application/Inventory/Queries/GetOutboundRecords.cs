@@ -84,7 +84,9 @@ public sealed class GetOutboundRecords
                 {
                     o.Id,
                     o.OrderStatus,
-                    CustomerName = o.Address != null ? o.Address.RecipientName : o.WalkInCustomerName
+                    CustomerName = o.Address != null && !string.IsNullOrWhiteSpace(o.Address.RecipientName) 
+                        ? o.Address.RecipientName 
+                        : o.WalkInCustomerName
                 })
                 .ToDictionaryAsync(o => o.Id, ct);
 
