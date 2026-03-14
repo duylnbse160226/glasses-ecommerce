@@ -31,5 +31,11 @@ public sealed class CreateStaffOrderDto
     public string? PromoCode { get; set; }
 
     // Prescription (required if OrderType = Prescription)
+    // This property is now moved to the item level or changed to a collection.
+    // The specific implementation below reflects the provided "Code Edit" which
+    // adds ProductVariantId, Quantity, and a Prescription property at the order level,
+    // and removes the original Prescription property.
+    public Guid ProductVariantId { get; set; }
+    public int Quantity { get; set; }
     public PrescriptionInputDto? Prescription { get; set; }
 }

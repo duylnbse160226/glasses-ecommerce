@@ -789,12 +789,17 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Id
             entity.HasOne(oi => oi.Order)
                 .WithMany(o => o.OrderItems)
                 .HasForeignKey(oi => oi.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade); // Keep Cascade from Order
 
             entity.HasOne(oi => oi.ProductVariant)
                 .WithMany()
                 .HasForeignKey(oi => oi.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(oi => oi.Prescription)
+                .WithMany()
+                .HasForeignKey(oi => oi.PrescriptionId)
+                .OnDelete(DeleteBehavior.Restrict); // Changed from SetNull to Restrict to avoid cycle
 
             //Properties
             entity.Property(oi => oi.UnitPrice).HasColumnType("decimal(10,2)");
@@ -873,8 +878,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Id
         {
             // Relationships
             entity.HasOne(p => p.Order)
-                .WithOne(o => o.Prescription)
-                .HasForeignKey<Prescription>(p => p.OrderId)
+                .WithMany(o => o.Prescriptions)
+                .HasForeignKey(p => p.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(p => p.Verifier)
@@ -887,8 +892,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Id
 
             // Indexes
             entity.HasIndex(e => e.OrderId)
-                .IsUnique()
-                .HasDatabaseName("UX_Prescription_OrderId");
+                .HasDatabaseName("IX_Prescription_OrderId");
 
             entity.HasIndex(e => e.IsVerified)
                 .HasDatabaseName("IX_Prescription_IsVerified");

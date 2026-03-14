@@ -48,7 +48,7 @@ public sealed class GetOperationsOrders
                 .Include(o => o.User)
                 .Include(o => o.SalesStaff)
                 .Include(o => o.ShipmentInfo)
-                .Include(o => o.Prescription)
+                .Include(o => o.Prescriptions)
                 .Include(o => o.OrderItems!)
                     .ThenInclude(oi => oi.ProductVariant!)
                     .ThenInclude(pv => pv.Product)
@@ -62,15 +62,15 @@ public sealed class GetOperationsOrders
             foreach (Order order in orders)
             {
                 StaffOrderListDto dto = mapper.Map<Order, StaffOrderListDto>(order);
-                
+
                 // Set ExpectedStockDate for pre-orders
                 if (order.OrderType == OrderType.PreOrder)
                     dto.ExpectedStockDate = DateTime.UtcNow.AddDays(14).ToString("O");
-                
+
                 // Set PrescriptionStatus for prescriptions
-                if (order.Prescription != null)
+                if (order.Prescriptions != null && order.Prescriptions.Count != 0)
                     dto.PrescriptionStatus = "lens_ordered";
-                
+
                 // Set ShipmentInfo details
                 if (order.ShipmentInfo != null)
                 {
@@ -78,7 +78,7 @@ public sealed class GetOperationsOrders
                     dto.TrackingNumber = order.ShipmentInfo.TrackingCode;
                     dto.Carrier = order.ShipmentInfo.CarrierName.ToString();
                 }
-                
+
                 dto.Items = order.OrderItems.Select(oi => new StaffOrderItemDto
                 {
                     Id = oi.Id,

@@ -311,27 +311,44 @@ public sealed class Checkout
                 }
 
                 // 11. Prescription (lưu nếu có, bất kể OrderType — PreOrder cũng có thể kèm đơn thuốc)
-                if (dto.Prescription != null)
+                if (dto.Prescriptions != null && dto.Prescriptions.Count > 0)
                 {
-                    Prescription prescription = new Prescription
+                    foreach (var prescriptionInfo in dto.Prescriptions)
                     {
-                        OrderId = order.Id,
-                        IsVerified = false,
-                    };
-                    context.Prescriptions.Add(prescription);
-
-                    foreach (PrescriptionDetailInputDto detail in dto.Prescription.Details)
-                    {
-                        context.PrescriptionDetails.Add(new PrescriptionDetail
+                        Prescription prescription = new Prescription
                         {
-                            PrescriptionId = prescription.Id,
-                            Eye = detail.Eye,
-                            SPH = detail.SPH,
-                            CYL = detail.CYL,
-                            AXIS = detail.AXIS,
-                            PD = detail.PD,
-                            ADD = detail.ADD,
-                        });
+                            OrderId = order.Id,
+                            IsVerified = false,
+                        };
+                        context.Prescriptions.Add(prescription);
+
+                        foreach (PrescriptionDetailInputDto detail in prescriptionInfo.Prescription.Details)
+                        {
+                            context.PrescriptionDetails.Add(new PrescriptionDetail
+                            {
+                                PrescriptionId = prescription.Id,
+                                Eye = detail.Eye,
+                                SPH = detail.SPH,
+                                CYL = detail.CYL,
+                                AXIS = detail.AXIS,
+                                PD = detail.PD,
+                                ADD = detail.ADD,
+                            });
+                        }
+
+                        // Map to OrderItem using CartItemId -> ProductVariantId
+                        var cartItem = selectedItems.FirstOrDefault(i => i.Id == prescriptionInfo.CartItemId);
+                        if (cartItem != null)
+                        {
+                            // Find the corresponding OrderItem we just created (matching variant ID)
+                            // In case of multiple items of the same variant, we just attach to the first one available
+                            // that hasn't been assigned a prescription yet.
+                            var orderItem = orderItems.FirstOrDefault(oi => oi.ProductVariantId == cartItem.ProductVariantId && oi.PrescriptionId == null);
+                            if (orderItem != null)
+                            {
+                                orderItem.PrescriptionId = prescription.Id;
+                            }
+                        }
                     }
                 }
 

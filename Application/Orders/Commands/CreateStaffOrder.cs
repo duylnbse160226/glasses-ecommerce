@@ -301,17 +301,17 @@ public sealed class CreateStaffOrder
                 }
 
                 // 11. Create Prescription (lưu nếu có, bất kể OrderType — PreOrder cũng có thể kèm đơn thuốc)
-                if (dto.Prescription != null)
+                foreach (var itemWithPrescription in dto.Items.Where(i => i.Prescription != null))
                 {
                     Prescription prescription = new Prescription
                     {
                         OrderId = order.Id,
-                        IsVerified = false,
+                        IsVerified = true, // Staff orders may be pre-verified, but keep current logic or default false.
                     };
 
                     context.Prescriptions.Add(prescription);
 
-                    foreach (PrescriptionDetailInputDto detail in dto.Prescription.Details)
+                    foreach (PrescriptionDetailInputDto detail in itemWithPrescription.Prescription!.Details)
                     {
                         context.PrescriptionDetails.Add(new PrescriptionDetail
                         {
@@ -323,6 +323,12 @@ public sealed class CreateStaffOrder
                             PD = detail.PD,
                             ADD = detail.ADD,
                         });
+                    }
+
+                    var orderItem = orderItems.FirstOrDefault(oi => oi.ProductVariantId == itemWithPrescription.ProductVariantId && oi.PrescriptionId == null);
+                    if (orderItem != null)
+                    {
+                        orderItem.PrescriptionId = prescription.Id;
                     }
                 }
 
