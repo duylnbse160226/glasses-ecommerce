@@ -29,6 +29,10 @@ public sealed class GetOutboundRecords
                 .AsNoTracking()
                 .Where(t => t.TransactionType == TransactionType.Outbound && t.ReferenceType == ReferenceType.Order);
 
+            if (request.OrderId.HasValue && request.OrderId.Value == Guid.Empty)
+                return Result<PagedResult<OutboundRecordListDto>>
+                    .Failure("Invalid orderId.", 400);
+
             if (request.OrderId.HasValue)
                 txnQuery = txnQuery.Where(t => t.ReferenceId == request.OrderId.Value);
 
@@ -44,8 +48,9 @@ public sealed class GetOutboundRecords
                     RecordedAt = g.Min(x => x.CreatedAt),
                     RecordedByName = g.Where(x => x.Creator != null)
                                       .OrderBy(x => x.CreatedAt)
+                                      .ThenBy(x => x.Id)
                                       .Select(x => x.Creator!.DisplayName)
-                                      .FirstOrDefault()     
+                                      .FirstOrDefault()
                 });
 
             int totalCount = await query.CountAsync(ct);

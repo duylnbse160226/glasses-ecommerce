@@ -19,6 +19,9 @@ public sealed class GetOutboundDetail
     {
         public async Task<Result<OutboundRecordDto>> Handle(Query request, CancellationToken ct)
         {
+            if (request.OrderId == Guid.Empty)
+                return Result<OutboundRecordDto>.Failure("Invalid orderId.", 400);
+
             // 1. Retrieve order details
             var orderInfo = await context.Orders
                 .AsNoTracking()
