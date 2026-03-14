@@ -646,8 +646,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Id
                 .HasDatabaseName("IX_CartItem_ProductVariantId");
 
             entity.HasIndex(e => new { e.CartId, e.ProductVariantId })
-                .IsUnique()
-                .HasDatabaseName("UX_CartItem_Cart_ProductVariant");
+                .HasDatabaseName("IX_CartItem_Cart_ProductVariant");
 
             //Constraints
             entity.ToTable(t =>
