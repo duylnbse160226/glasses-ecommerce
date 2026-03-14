@@ -150,23 +150,57 @@ public sealed class Checkout
                     }
                 }
 
-                // 4. Calculate totals (use mergedItems for order items too)
+                // 4. Calculate totals and build OrderItems.
+                // Items with prescriptions are kept as individual order lines so each line can hold
+                // a distinct prescription. Non-prescription items are merged by variant as before.
+                HashSet<Guid> prescriptionCartItemIds = dto.Prescriptions?
+                    .Select(p => p.CartItemId)
+                    .ToHashSet() ?? [];
+
+                // cartItemId → OrderItem lookup for prescription items (used when linking prescriptions below)
+                Dictionary<Guid, OrderItem> cartItemOrderItemMap = [];
+
                 decimal totalAmount = 0;
                 List<OrderItem> orderItems = [];
 
-                foreach (var mergedItem in mergedItems)
+                // Non-prescription items: merge by variant (aggregate quantity)
+                var mergedNonPrescriptionItems = selectedItems
+                    .Where(i => !prescriptionCartItemIds.Contains(i.Id))
+                    .GroupBy(i => i.ProductVariantId)
+                    .Select(g => new { ProductVariantId = g.Key, Quantity = g.Sum(i => i.Quantity) })
+                    .ToList();
+
+                foreach (var item in mergedNonPrescriptionItems)
                 {
-                    ProductVariant variant = variants.First(v => v.Id == mergedItem.ProductVariantId);
+                    ProductVariant variant = variants.First(v => v.Id == item.ProductVariantId);
                     decimal unitPrice = variant.Price;
-                    totalAmount += unitPrice * mergedItem.Quantity;
+                    totalAmount += unitPrice * item.Quantity;
 
                     orderItems.Add(new OrderItem
                     {
-                        ProductVariantId = mergedItem.ProductVariantId,
-                        Quantity = mergedItem.Quantity,
+                        ProductVariantId = item.ProductVariantId,
+                        Quantity = item.Quantity,
                         UnitPrice = unitPrice,
                         OrderId = Guid.Empty,
                     });
+                }
+
+                // Prescription items: one OrderItem per cart item to allow a distinct prescription per line
+                foreach (CartItem cartItem in selectedItems.Where(i => prescriptionCartItemIds.Contains(i.Id)))
+                {
+                    ProductVariant variant = variants.First(v => v.Id == cartItem.ProductVariantId);
+                    decimal unitPrice = variant.Price;
+                    totalAmount += unitPrice * cartItem.Quantity;
+
+                    OrderItem orderItem = new OrderItem
+                    {
+                        ProductVariantId = cartItem.ProductVariantId,
+                        Quantity = cartItem.Quantity,
+                        UnitPrice = unitPrice,
+                        OrderId = Guid.Empty,
+                    };
+                    orderItems.Add(orderItem);
+                    cartItemOrderItemMap[cartItem.Id] = orderItem;
                 }
 
                 decimal shippingFee = 0; // TODO: Calculate shipping fee
@@ -336,21 +370,10 @@ public sealed class Checkout
                             });
                         }
 
-                        // Map to OrderItem using CartItemId -> ProductVariantId
-                        CartItem? cartItem = selectedItems.FirstOrDefault(i => i.Id == prescriptionInfo.CartItemId);
-                        if (cartItem == null)
-                        {
+                        // Direct lookup: each prescription cart item has its own dedicated OrderItem,
+                        // built during OrderItem creation above — no variant-ambiguity possible.
+                        if (!cartItemOrderItemMap.TryGetValue(prescriptionInfo.CartItemId, out OrderItem? orderItem))
                             return Result<Guid>.Failure($"Cart item {prescriptionInfo.CartItemId} for prescription not found in selected items.", 400);
-                        }
-
-                        // Find the corresponding OrderItem we just created (matching variant ID)
-                        // In case of multiple items of the same variant, we just attach to the first one available
-                        // that hasn't been assigned a prescription yet.
-                        OrderItem? orderItem = orderItems.FirstOrDefault(oi => oi.ProductVariantId == cartItem.ProductVariantId && oi.PrescriptionId == null);
-                        if (orderItem == null)
-                        {
-                            return Result<Guid>.Failure($"Could not link prescription to an available order item for variant {cartItem.ProductVariantId}. Multiple prescriptions for the same variant are not supported without splitting items.", 400);
-                        }
 
                         orderItem.PrescriptionId = prescription.Id;
                     }
