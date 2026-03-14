@@ -152,7 +152,7 @@ public sealed class Checkout
 
                 // 4. Calculate totals (use mergedItems for order items too)
                 decimal totalAmount = 0;
-                List<OrderItem> orderItems = new List<OrderItem>();
+                List<OrderItem> orderItems = [];
 
                 foreach (var mergedItem in mergedItems)
                 {

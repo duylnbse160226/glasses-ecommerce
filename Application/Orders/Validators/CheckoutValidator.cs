@@ -42,6 +42,9 @@ public sealed class CheckoutValidator : AbstractValidator<Checkout.Command>
             {
                 RuleForEach(x => x.Dto.Prescriptions).ChildRules(prescriptionInfo =>
                 {
+                    prescriptionInfo.RuleFor(p => p.CartItemId)
+                        .NotEmpty().WithMessage("CartItemId is required for each prescription.");
+
                     prescriptionInfo.RuleFor(p => p.Prescription.Details)
                         .NotEmpty().WithMessage("Each prescription must have at least one eye detail.");
 
