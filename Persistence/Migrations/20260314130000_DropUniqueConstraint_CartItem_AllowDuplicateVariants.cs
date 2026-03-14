@@ -23,6 +23,16 @@ namespace Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("""
+                IF EXISTS (
+                    SELECT 1
+                    FROM CartItems
+                    GROUP BY CartId, ProductVariantId
+                    HAVING COUNT(*) > 1
+                )
+                    THROW 50000, 'Cannot restore UX_CartItem_Cart_ProductVariant while duplicate CartItems exist.', 1;
+                """);
+
             migrationBuilder.DropIndex(
                 name: "IX_CartItem_Cart_ProductVariant",
                 table: "CartItems");
