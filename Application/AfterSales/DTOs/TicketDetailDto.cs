@@ -1,9 +1,10 @@
+using Application.Orders.DTOs;
 using Domain;
 using System.Collections.Generic;
 
 namespace Application.AfterSales.DTOs;
 /// <summary>
-/// Dto output chi tiết ticket bao gồm attachments
+/// Dto output chi tiết ticket bao gồm attachments và order items
 /// </summary>
 public sealed class TicketDetailDto
 {
@@ -28,4 +29,5 @@ public sealed class TicketDetailDto
     public DateTime? ReceivedAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
     public List<TicketAttachmentDto> Attachments { get; set; } = [];
+    public List<OrderItemOutputDto> Items { get; set; } = [];
 }

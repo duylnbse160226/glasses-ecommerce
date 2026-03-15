@@ -20,9 +20,9 @@ public sealed class GetOpsTicketDetail
         AppDbContext context,
         IMapper mapper) : IRequestHandler<Query, Result<TicketDetailDto>>
     {
-        public async Task<Result<TicketDetailDto>> Handle(Query request, CancellationToken ct)
+        public async Task<Result<TicketDetailDto>> Handle(Query request, CancellationToken cancellationToken)
         {
-            TicketDetailDto? dto = await context.AfterSalesTickets
+            AfterSalesTicket? ticket = await context.AfterSalesTickets
                 .AsNoTracking()
                 .Where(t => t.Id == request.Id &&
                             (t.TicketStatus == AfterSalesTicketStatus.InProgress ||
@@ -39,12 +39,13 @@ public sealed class GetOpsTicketDetail
                 .ThenInclude(oi => oi.ProductVariant)
                 .ThenInclude(pv => pv.Product)
                 .ThenInclude(p => p.Images)
-                .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync(ct);
+                .Include(t => t.Attachments)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (dto == null)
+            if (ticket == null)
                 return Result<TicketDetailDto>.Failure("Ticket not found or you do not have permission to view it.", 404);
 
+            TicketDetailDto dto = mapper.Map<TicketDetailDto>(ticket);
             return Result<TicketDetailDto>.Success(dto);
         }
     }

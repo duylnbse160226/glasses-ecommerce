@@ -329,12 +329,12 @@ public sealed class SubmitTicket
                 return Result<TicketDetailDto>.Failure(
                     "Failed to submit your support request. Please try again or contact support for assistance.", 500);
 
-            // 7. Return full detail of last created ticket via projection
+            // 7. Return full detail of last created ticket via mapping
             if (lastCreatedTicket == null)
                 return Result<TicketDetailDto>.Failure(
                     "Failed to process your request. Please try again.", 500);
 
-            TicketDetailDto? dto = await context.AfterSalesTickets
+            AfterSalesTicket? updatedTicket = await context.AfterSalesTickets
                 .AsNoTracking()
                 .Where(t => t.Id == lastCreatedTicket.Id)
                 .Include(t => t.Order)
@@ -346,13 +346,14 @@ public sealed class SubmitTicket
                 .ThenInclude(oi => oi.ProductVariant)
                 .ThenInclude(pv => pv.Product)
                 .ThenInclude(p => p.Images)
-                .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
+                .Include(t => t.Attachments)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (dto == null)
+            if (updatedTicket == null)
                 return Result<TicketDetailDto>.Failure(
                     "Your request was submitted but we could not load the details. Please check your support tickets section.", 500);
 
+            TicketDetailDto dto = mapper.Map<TicketDetailDto>(updatedTicket);
             return Result<TicketDetailDto>.Success(dto);
         }
     }

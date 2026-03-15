@@ -73,15 +73,26 @@ public sealed class InspectReturn
 
                     await transaction.CommitAsync(ct);
 
-                    TicketDetailDto? rejectedDto = await context.AfterSalesTickets
+                    AfterSalesTicket? rejectedTicket = await context.AfterSalesTickets
                         .AsNoTracking()
                         .Where(t => t.Id == ticket.Id)
-                        .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
+                        .Include(t => t.Order)
+                        .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                        .ThenInclude(p => p.Images)
+                        .Include(t => t.OrderItem)
+                        .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                        .ThenInclude(p => p.Images)
+                        .Include(t => t.Attachments)
                         .FirstOrDefaultAsync(ct);
 
-                    return rejectedDto != null
-                        ? Result<TicketDetailDto>.Success(rejectedDto)
-                        : Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
+                    if (rejectedTicket == null)
+                        return Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
+
+                    TicketDetailDto rejectedDto = mapper.Map<TicketDetailDto>(rejectedTicket);
+                    return Result<TicketDetailDto>.Success(rejectedDto);
                 }
 
                 // Determine which order items are in scope
@@ -209,15 +220,25 @@ public sealed class InspectReturn
 
                 await transaction.CommitAsync(ct);
 
-                TicketDetailDto? dto = await context.AfterSalesTickets
+                AfterSalesTicket? updatedTicket = await context.AfterSalesTickets
                     .AsNoTracking()
                     .Where(t => t.Id == ticket.Id)
-                    .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
+                    .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                    .ThenInclude(p => p.Images)
+                    .Include(t => t.OrderItem)
+                    .ThenInclude(oi => oi.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                    .ThenInclude(p => p.Images)
+                    .Include(t => t.Attachments)
                     .FirstOrDefaultAsync(ct);
 
-                if (dto == null)
+                if (updatedTicket == null)
                     return Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
 
+                TicketDetailDto dto = mapper.Map<TicketDetailDto>(updatedTicket);
                 return Result<TicketDetailDto>.Success(dto);
             });
         }

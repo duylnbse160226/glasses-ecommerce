@@ -22,11 +22,11 @@ public sealed class GetMyTicketDetail
         IMapper mapper,
         IUserAccessor userAccessor) : IRequestHandler<Query, Result<TicketDetailDto>>
     {
-        public async Task<Result<TicketDetailDto>> Handle(Query request, CancellationToken ct)
+        public async Task<Result<TicketDetailDto>> Handle(Query request, CancellationToken cancellationToken)
         {
             Guid userId = userAccessor.GetUserId();
 
-            TicketDetailDto? dto = await context.AfterSalesTickets
+            AfterSalesTicket? ticket = await context.AfterSalesTickets
                 .AsNoTracking()
                 .Where(t => t.Id == request.Id && t.CustomerId == userId)
                 .Include(t => t.Order)
@@ -38,12 +38,13 @@ public sealed class GetMyTicketDetail
                 .ThenInclude(oi => oi.ProductVariant)
                 .ThenInclude(pv => pv.Product)
                 .ThenInclude(p => p.Images)
-                .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync(ct);
+                .Include(t => t.Attachments)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (dto == null)
+            if (ticket == null)
                 return Result<TicketDetailDto>.Failure("Ticket not found.", 404);
 
+            TicketDetailDto dto = mapper.Map<TicketDetailDto>(ticket);
             return Result<TicketDetailDto>.Success(dto);
         }
     }

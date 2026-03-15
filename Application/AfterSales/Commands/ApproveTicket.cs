@@ -74,6 +74,34 @@ public sealed class ApproveTicket
                         return Result<TicketDetailDto>.Failure(
                             "Refund amount is required and must be greater than zero for RefundOnly resolution.", 400);
 
+                    // Calculate total amount of items in the ticket
+                    decimal itemsTotal;
+                    if (ticket.OrderItemId != null)
+                    {
+                        // Ticket is for a specific item
+                        OrderItem? orderItem = await context.OrderItems
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(oi => oi.Id == ticket.OrderItemId, ct);
+
+                        if (orderItem == null)
+                            return Result<TicketDetailDto>.Failure("Order item not found for this ticket.", 404);
+
+                        itemsTotal = orderItem.Quantity * orderItem.UnitPrice;
+                    }
+                    else
+                    {
+                        // Ticket is for the whole order
+                        itemsTotal = await context.OrderItems
+                            .AsNoTracking()
+                            .Where(oi => oi.OrderId == ticket.OrderId)
+                            .SumAsync(oi => oi.Quantity * oi.UnitPrice, ct);
+                    }
+
+                    // Validate refund amount equals items total
+                    if (request.Dto.RefundAmount.Value != itemsTotal)
+                        return Result<TicketDetailDto>.Failure(
+                            $"Refund amount ({request.Dto.RefundAmount.Value:C}) must equal the total amount of items ({itemsTotal:C}) for RefundOnly resolution.", 400);
+
                     // Load the most recent completed payment for the order
                     Payment? payment = await context.Payments
                         .AsNoTracking()
@@ -119,15 +147,25 @@ public sealed class ApproveTicket
 
                 await transaction.CommitAsync(ct);
 
-                TicketDetailDto? dto = await context.AfterSalesTickets
+                AfterSalesTicket? updatedTicket = await context.AfterSalesTickets
                     .AsNoTracking()
                     .Where(t => t.Id == ticket.Id)
-                    .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
+                    .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                    .ThenInclude(p => p.Images)
+                    .Include(t => t.OrderItem)
+                    .ThenInclude(oi => oi.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                    .ThenInclude(p => p.Images)
+                    .Include(t => t.Attachments)
                     .FirstOrDefaultAsync(ct);
 
-                if (dto == null)
+                if (updatedTicket == null)
                     return Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
 
+                TicketDetailDto dto = mapper.Map<TicketDetailDto>(updatedTicket);
                 return Result<TicketDetailDto>.Success(dto);
             });
         }

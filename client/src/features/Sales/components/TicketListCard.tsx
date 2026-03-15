@@ -109,7 +109,21 @@ export function TicketListCard({ summary }: TicketListCardProps) {
     navigator.clipboard.writeText(summary.id);
   };
 
+  const getAutoResolutionType = (ticketType: string | undefined): string => {
+    const type = (ticketType ?? "").toLowerCase();
+    if (type === "return") return "ReturnAndRefund";
+    if (type === "refund") return "RefundOnly";
+    if (type === "warranty") return "WarrantyReplace";
+    return "RefundOnly"; // fallback
+  };
+
   const handleApproveClick = () => {
+    const autoResolutionType = getAutoResolutionType(summary.ticketType);
+    setApproveData({
+      resolutionType: autoResolutionType,
+      staffNotes: "",
+      refundAmount: "",
+    });
     setShowApproveDialog(true);
   };
 
@@ -355,20 +369,20 @@ export function TicketListCard({ summary }: TicketListCardProps) {
       <Dialog open={showApproveDialog} onClose={() => setShowApproveDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>Confirm Ticket</DialogTitle>
         <DialogContent sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-          <FormControl fullWidth>
-            <InputLabel>Resolution Type</InputLabel>
-            <Select
-              value={approveData.resolutionType}
-              label="Resolution Type"
-              onChange={(e) => setApproveData({ ...approveData, resolutionType: e.target.value })}
-            >
-              <MenuItem value="RefundOnly">Refund Only</MenuItem>
-              <MenuItem value="ReturnAndRefund">Return & Refund</MenuItem>
-              <MenuItem value="WarrantyRepair">Warranty Repair</MenuItem>
-              <MenuItem value="WarrantyReplace">Warranty Replace</MenuItem>
-            </Select>
-          </FormControl>
+          {/* Resolution Type Display (Auto-determined) */}
+          <Box>
+            <Typography sx={{ fontSize: 12, color: "#6B6B6B", fontWeight: 600, mb: 0.5 }}>
+              Resolution Type
+            </Typography>
+            <Typography sx={{ fontSize: 14, fontWeight: 500, p: 1.5, bgcolor: "#F5F5F5", borderRadius: 1 }}>
+              {approveData.resolutionType === "RefundOnly" && "Refund Only"}
+              {approveData.resolutionType === "ReturnAndRefund" && "Return & Refund"}
+              {approveData.resolutionType === "WarrantyRepair" && "Warranty Repair"}
+              {approveData.resolutionType === "WarrantyReplace" && "Warranty Replace"}
+            </Typography>
+          </Box>
 
+          {/* Refund Amount - Only for RefundOnly */}
           {approveData.resolutionType === "RefundOnly" && (
             <TextField
               label="Refund Amount"
@@ -377,9 +391,11 @@ export function TicketListCard({ summary }: TicketListCardProps) {
               value={approveData.refundAmount}
               onChange={(e) => setApproveData({ ...approveData, refundAmount: e.target.value })}
               fullWidth
+              required
             />
           )}
 
+          {/* Staff Notes - Always Optional */}
           <TextField
             label="Staff Notes (Optional)"
             multiline
