@@ -789,6 +789,87 @@ namespace Persistence.Migrations
                     b.ToTable("OrderStatusHistories");
                 });
 
+            modelBuilder.Entity("Domain.OutboundRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApproverId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourceReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalItems")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApproverId");
+
+                    b.HasIndex("CreatorId");
+
+                    b.ToTable("OutboundRecords");
+                });
+
+            modelBuilder.Entity("Domain.OutboundRecordItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OutboundRecordId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OutboundRecordId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.ToTable("OutboundRecordItems");
+                });
+
             modelBuilder.Entity("Domain.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2126,6 +2207,40 @@ namespace Persistence.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("Domain.OutboundRecord", b =>
+                {
+                    b.HasOne("Domain.User", "Approver")
+                        .WithMany()
+                        .HasForeignKey("ApproverId");
+
+                    b.HasOne("Domain.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId");
+
+                    b.Navigation("Approver");
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("Domain.OutboundRecordItem", b =>
+                {
+                    b.HasOne("Domain.OutboundRecord", "OutboundRecord")
+                        .WithMany("Items")
+                        .HasForeignKey("OutboundRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OutboundRecord");
+
+                    b.Navigation("ProductVariant");
+                });
+
             modelBuilder.Entity("Domain.Payment", b =>
                 {
                     b.HasOne("Domain.Order", "Order")
@@ -2441,6 +2556,11 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.OrderItem", b =>
                 {
                     b.Navigation("AfterSalesTickets");
+                });
+
+            modelBuilder.Entity("Domain.OutboundRecord", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Domain.Payment", b =>
