@@ -74,9 +74,9 @@ public class PhotoService : IPhotoService
     {
         if (file.Length > 0)
         {
-            await using var stream = file.OpenReadStream();
+            await using Stream stream = file.OpenReadStream();
 
-            var uploadParams = new RawUploadParams
+            RawUploadParams uploadParams = new RawUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
                 Folder = "glasses/models"
