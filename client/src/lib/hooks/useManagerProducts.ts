@@ -285,6 +285,19 @@ export function useManagerProducts(params?: GetProductsParams) {
     },
   });
 
+  const patchImageModelUrlMutation = useMutation({
+    mutationFn: async (data: { productId: string; imageId: string; modelUrl: string | null }) => {
+      await agent.patch(
+        `/manager/products/${data.productId}/images/${data.imageId}/model-url`,
+        { modelUrl: data.modelUrl }
+      );
+    },
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["product-detail", variables.productId] });
+      await queryClient.invalidateQueries({ queryKey: ["manager-product-detail", variables.productId] });
+    },
+  });
+
   return {
     products: response?.items || [],
     totalCount: response?.totalCount || 0,
@@ -313,5 +326,7 @@ export function useManagerProducts(params?: GetProductsParams) {
     isReorderingProductImages: reorderProductImagesMutation.isPending,
     reorderVariantImages: reorderVariantImagesMutation.mutateAsync,
     isReorderingVariantImages: reorderVariantImagesMutation.isPending,
+    patchImageModelUrl: patchImageModelUrlMutation.mutateAsync,
+    isPatchingModelUrl: patchImageModelUrlMutation.isPending,
   };
 }

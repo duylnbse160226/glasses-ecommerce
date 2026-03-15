@@ -25,4 +25,15 @@ public sealed class UploadsController : BaseApiController
 
         return HandleResult(await Mediator.Send(new UploadImage.Command { File = file }));
     }
+
+    [HttpPost("model")]
+    public async Task<ActionResult<ImageUploadDto>> UploadModel(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file uploaded.");
+        }
+
+        return HandleResult(await Mediator.Send(new UploadModel.Command { File = file }));
+    }
 }

@@ -83,6 +83,7 @@ type VariantDraft = CreateProductVariantDto & {
   _tempId: string;
   quantityAvailable: number;
   pendingImages: PendingImage[];
+  modelUrl: string | null;
 };
 
 type WizardLocalState = {
@@ -278,6 +279,26 @@ export default function ManagerProductCreateWizardScreen() {
     },
   });
 
+  const uploadGlbMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await agent.post<{ url: string; publicId: string }>("/uploads/glb", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const [productModelUrl, setProductModelUrl] = useState<string | null>(null);
+
+  const validateGlbFile = (file: File) => {
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".glb")) return "Only .glb files are supported";
+    if (file.size > 50 * 1024 * 1024) return "GLB file too large (max 50MB)";
+    return null;
+  };
+
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
@@ -455,7 +476,7 @@ export default function ManagerProductCreateWizardScreen() {
             imageUrl: uploaded.url,
             altText: null,
             displayOrder: existingCount + i,
-            modelUrl: null,
+            modelUrl: i === 0 ? (productModelUrl ?? null) : null,
           };
           await addProductImage({ productId, image: imageDto });
         }
@@ -512,7 +533,7 @@ export default function ManagerProductCreateWizardScreen() {
                 imageUrl: uploaded.url,
                 altText: null,
                 displayOrder: i,
-                modelUrl: null,
+                modelUrl: i === 0 ? (v.modelUrl ?? null) : null,
               },
             });
           }
@@ -898,6 +919,73 @@ export default function ManagerProductCreateWizardScreen() {
               Uploading...
             </div>
           ) : null}
+
+          {/* GLB 3D Model */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <div className="text-sm font-bold text-zinc-900">3D Model (.glb)</div>
+            <p className="mt-1 text-sm text-zinc-600">
+              Upload a GLB file or paste a URL to enable 3D viewing. Attached to the first product image.
+            </p>
+            <div className="mt-3 flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.getElementById("product-glb-input") as HTMLInputElement | null;
+                  input?.click();
+                }}
+                disabled={!productId || uploadGlbMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {uploadGlbMutation.isPending ? "Uploading…" : "Upload .glb"}
+              </button>
+              <input
+                id="product-glb-input"
+                type="file"
+                accept=".glb,model/gltf-binary"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  (e.target as HTMLInputElement).value = "";
+                  if (!file) return;
+                  const errMsg = validateGlbFile(file);
+                  if (errMsg) { toast.error(errMsg); return; }
+                  try {
+                    const uploaded = await uploadGlbMutation.mutateAsync(file);
+                    setProductModelUrl(uploaded.url);
+                    setIsDirty((prev) => ({ ...prev, 1: true }));
+                    toast.success("3D model uploaded");
+                  } catch (err) {
+                    toast.error(getAxiosMessage(err, "Failed to upload model"));
+                  }
+                }}
+              />
+              {productModelUrl && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
+                    <Check className="h-3 w-3" /> Model ready
+                  </span>
+                  <button
+                    type="button"
+                    className="text-xs text-red-600 hover:underline"
+                    onClick={() => { setProductModelUrl(null); setIsDirty((prev) => ({ ...prev, 1: true })); }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="mt-2">
+              <input
+                type="text"
+                placeholder="Or paste .glb URL here"
+                value={productModelUrl ?? ""}
+                onChange={(e) => { setProductModelUrl(e.target.value || null); setIsDirty((prev) => ({ ...prev, 1: true })); }}
+                disabled={!productId}
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-zinc-100 disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
         </div>
       );
     }
@@ -959,6 +1047,7 @@ export default function ManagerProductCreateWizardScreen() {
                     isPreOrder: false,
                     quantityAvailable: 0,
                     pendingImages: [],
+                    modelUrl: null,
                   },
                 ]);
                 setIsDirty((prev) => ({ ...prev, 2: true }));
@@ -1314,6 +1403,77 @@ export default function ManagerProductCreateWizardScreen() {
                     ) : (
                       <div className="mt-3 text-sm text-zinc-600">No images selected.</div>
                     )}
+                  </div>
+
+                  {/* Variant GLB 3D Model */}
+                  <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                    <div className="text-sm font-bold text-zinc-900">3D Model (.glb)</div>
+                    <p className="mt-1 text-xs text-zinc-600">Optional — attached to the first variant image.</p>
+                    <div className="mt-2 flex items-center gap-3 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = document.getElementById(`variant-glb-${v._tempId}`) as HTMLInputElement | null;
+                          input?.click();
+                        }}
+                        disabled={uploadGlbMutation.isPending}
+                        className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-bold text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                        {uploadGlbMutation.isPending ? "Uploading…" : "Upload .glb"}
+                      </button>
+                      <input
+                        id={`variant-glb-${v._tempId}`}
+                        type="file"
+                        accept=".glb,model/gltf-binary"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          (e.target as HTMLInputElement).value = "";
+                          if (!file) return;
+                          const errMsg = validateGlbFile(file);
+                          if (errMsg) { toast.error(errMsg); return; }
+                          try {
+                            const uploaded = await uploadGlbMutation.mutateAsync(file);
+                            setNewVariants((prev) => prev.map((x) => (x._tempId === v._tempId ? { ...x, modelUrl: uploaded.url } : x)));
+                            setIsDirty((prev) => ({ ...prev, 2: true }));
+                            toast.success("3D model uploaded for variant");
+                          } catch (err) {
+                            toast.error(getAxiosMessage(err, "Failed to upload model"));
+                          }
+                        }}
+                      />
+                      {v.modelUrl && (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+                            <Check className="h-3 w-3" /> Model ready
+                          </span>
+                          <button
+                            type="button"
+                            className="text-xs text-red-600 hover:underline"
+                            onClick={() => {
+                              setNewVariants((prev) => prev.map((x) => (x._tempId === v._tempId ? { ...x, modelUrl: null } : x)));
+                              setIsDirty((prev) => ({ ...prev, 2: true }));
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Or paste .glb URL here"
+                        value={v.modelUrl ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value || null;
+                          setNewVariants((prev) => prev.map((x) => (x._tempId === v._tempId ? { ...x, modelUrl: val } : x)));
+                          setIsDirty((prev) => ({ ...prev, 2: true }));
+                        }}
+                        className="w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}

@@ -65,10 +65,10 @@ function mapDetailApiToView(api: ProductDetailApi): ProductDetailView {
     ? mainVariant.images
         .slice()
         .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-        .map((img) => img.imageUrl)
+        .map((img) => ({ url: img.imageUrl, modelUrl: img.modelUrl ?? null }))
     : [];
 
-  const productImages = sortedProductImages.map((img) => img.imageUrl);
+  const productImages = sortedProductImages.map((img) => ({ url: img.imageUrl, modelUrl: img.modelUrl ?? null }));
   const images = [...variantImages, ...productImages];
 
   const variantsMapped = apiVariants.map((v) => ({
@@ -89,7 +89,7 @@ function mapDetailApiToView(api: ProductDetailApi): ProductDetailView {
       ? v.images
           .slice()
           .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-          .map((img) => img.imageUrl)
+          .map((img) => ({ url: img.imageUrl, modelUrl: img.modelUrl ?? null }))
       : [],
   }));
 
