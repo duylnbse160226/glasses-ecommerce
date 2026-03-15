@@ -55,7 +55,7 @@ internal sealed class VnPayLibrary
 
     public void AddRequestData(string key, string? value)
     {
-        if (!string.IsNullOrEmpty(value))
+        if (!string.IsNullOrWhiteSpace(value))
         {
             _requestData.Add(key, value);
         }
@@ -63,7 +63,7 @@ internal sealed class VnPayLibrary
 
     public void AddResponseData(string key, string? value)
     {
-        if (!string.IsNullOrEmpty(value))
+        if (!string.IsNullOrWhiteSpace(value))
         {
             _responseData.Add(key, value);
         }
@@ -134,17 +134,11 @@ internal sealed class VnPayLibrary
     private string GetResponseData()
     {
         StringBuilder data = new StringBuilder();
-        if (_responseData.ContainsKey("vnp_SecureHashType"))
-        {
-            _responseData.Remove("vnp_SecureHashType");
-        }
 
-        if (_responseData.ContainsKey("vnp_SecureHash"))
-        {
-            _responseData.Remove("vnp_SecureHash");
-        }
-
-        foreach ((string key, string value) in _responseData.Where(kv => !string.IsNullOrEmpty(kv.Value)))
+        foreach ((string key, string value) in _responseData.Where(kv =>
+                     !string.IsNullOrWhiteSpace(kv.Value) &&
+                     !string.Equals(kv.Key, "vnp_SecureHashType", StringComparison.Ordinal) &&
+                     !string.Equals(kv.Key, "vnp_SecureHash", StringComparison.Ordinal)))
         {
             data.Append(WebUtility.UrlEncode(key) + "=" + WebUtility.UrlEncode(value) + "&");
         }

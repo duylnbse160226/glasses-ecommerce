@@ -53,7 +53,7 @@ public sealed class PhotoService : IPhotoService
                 Folder = "glasses"
             };
 
-            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            RawUploadResult uploadResult = await _cloudinary.UploadAsync(uploadParams);
 
             if (uploadResult.Error != null)
             {
