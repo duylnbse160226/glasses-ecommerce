@@ -37,20 +37,17 @@ public sealed class VnPayService(IOptions<VnpaySettings> config) : IVnPayService
 
     public PaymentResponseDto PaymentExecute(IQueryCollection collections)
     {
-        VnPayLibrary pay = new VnPayLibrary();
-        PaymentResponseDto response = pay.GetFullResponseData(collections, config.Value.HashSecret);
-
-        return response;
+        return VnPayLibrary.GetFullResponseData(collections, config.Value.HashSecret);
     }
 
     private TimeZoneInfo GetPaymentTimeZone()
     {
-        var configuredTimeZoneId = config.Value.TimeZoneId;
-        var timeZoneCandidates = OperatingSystem.IsWindows()
+        string? configuredTimeZoneId = config.Value.TimeZoneId;
+        string[] timeZoneCandidates = OperatingSystem.IsWindows()
             ? new[] { configuredTimeZoneId, "SE Asia Standard Time", "Asia/Bangkok" }
             : new[] { configuredTimeZoneId, "Asia/Bangkok", "SE Asia Standard Time" };
 
-        foreach (var timeZoneId in timeZoneCandidates.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (string timeZoneId in timeZoneCandidates.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             try
             {

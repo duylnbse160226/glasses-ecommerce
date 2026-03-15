@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Application.Payments.DTOs;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 
 namespace Infrastructure.Payments;
 
@@ -13,11 +14,11 @@ internal sealed class VnPayLibrary
     private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
     private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
 
-    public PaymentResponseDto GetFullResponseData(IQueryCollection collection, string hashSecret)
+    public static PaymentResponseDto GetFullResponseData(IQueryCollection collection, string hashSecret)
     {
-        var vnPay = new VnPayLibrary();
+        VnPayLibrary vnPay = new VnPayLibrary();
 
-        foreach (var (key, value) in collection)
+        foreach ((string key, StringValues value) in collection)
         {
             if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
             {
@@ -25,14 +26,13 @@ internal sealed class VnPayLibrary
             }
         }
 
-        var orderId = vnPay.GetResponseData("vnp_TxnRef");
-        var vnPayTranId = vnPay.GetResponseData("vnp_TransactionNo");
-        var vnpResponseCode = vnPay.GetResponseData("vnp_ResponseCode");
-        var vnpSecureHash = collection.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString(); //hash của dữ liệu trả về
-        var orderInfo = vnPay.GetResponseData("vnp_OrderInfo");
+        string orderId = vnPay.GetResponseData("vnp_TxnRef");
+        string vnPayTranId = vnPay.GetResponseData("vnp_TransactionNo");
+        string vnpResponseCode = vnPay.GetResponseData("vnp_ResponseCode");
+        string vnpSecureHash = collection.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString() ?? string.Empty; //hash của dữ liệu trả về
+        string orderInfo = vnPay.GetResponseData("vnp_OrderInfo");
 
-        var checkSignature =
-            vnPay.ValidateSignature(vnpSecureHash, hashSecret); //check Signature
+        bool checkSignature = vnPay.ValidateSignature(vnpSecureHash, hashSecret); //check Signature
 
         if (!checkSignature)
             return new PaymentResponseDto()
@@ -45,9 +45,9 @@ internal sealed class VnPayLibrary
             Success = vnpResponseCode.Equals("00"),
             PaymentMethod = "VnPay",
             OrderDescription = orderInfo,
-            OrderId = orderId,
-            PaymentId = vnPayTranId,
-            TransactionId = vnPayTranId,
+            OrderId = string.IsNullOrEmpty(orderId) ? null : orderId,
+            PaymentId = string.IsNullOrEmpty(vnPayTranId) ? null : vnPayTranId,
+            TransactionId = string.IsNullOrEmpty(vnPayTranId) ? null : vnPayTranId,
             Token = vnpSecureHash,
             VnPayResponseCode = vnpResponseCode
         };
@@ -71,7 +71,7 @@ internal sealed class VnPayLibrary
 
     public string GetResponseData(string key)
     {
-        return _responseData.TryGetValue(key, out var retValue) ? retValue : string.Empty;
+        return _responseData.TryGetValue(key, out string? retValue) ? retValue : string.Empty;
     }
 
     public string CreateRequestUrl(string baseUrl, string vnpHashSecret)
@@ -119,10 +119,10 @@ internal sealed class VnPayLibrary
         StringBuilder hash = new StringBuilder();
         byte[] keyBytes = Encoding.UTF8.GetBytes(key);
         byte[] inputBytes = Encoding.UTF8.GetBytes(inputData);
-        using (var hmac = new HMACSHA512(keyBytes))
+        using (HMACSHA512 hmac = new HMACSHA512(keyBytes))
         {
             byte[] hashValue = hmac.ComputeHash(inputBytes);
-            foreach (var theByte in hashValue)
+            foreach (byte theByte in hashValue)
             {
                 hash.Append(theByte.ToString("x2"));
             }
@@ -133,7 +133,7 @@ internal sealed class VnPayLibrary
 
     private string GetResponseData()
     {
-        var data = new StringBuilder();
+        StringBuilder data = new StringBuilder();
         if (_responseData.ContainsKey("vnp_SecureHashType"))
         {
             _responseData.Remove("vnp_SecureHashType");
@@ -144,7 +144,7 @@ internal sealed class VnPayLibrary
             _responseData.Remove("vnp_SecureHash");
         }
 
-        foreach (var (key, value) in _responseData.Where(kv => !string.IsNullOrEmpty(kv.Value)))
+        foreach ((string key, string value) in _responseData.Where(kv => !string.IsNullOrEmpty(kv.Value)))
         {
             data.Append(WebUtility.UrlEncode(key) + "=" + WebUtility.UrlEncode(value) + "&");
         }
