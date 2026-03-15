@@ -54,7 +54,8 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
   const hasImage = imageFromItem ?? cachedImage;
   // Chỉ gọi GET /products/:id khi có productId — API không nhận productVariantId, gọi với variantId sẽ 404
   const { product } = useProductDetail(hasImage ? undefined : productId ?? undefined);
-  const imageUrl = imageFromItem ?? cachedImage ?? (product?.images?.[0] ?? "");
+  const firstProductImage = product?.images?.[0];
+  const imageUrl = imageFromItem ?? cachedImage ?? (typeof firstProductImage === "string" ? firstProductImage : firstProductImage?.url) ?? "";
 
   const name =
     (item as { productName?: string }).productName ??
