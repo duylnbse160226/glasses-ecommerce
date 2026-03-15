@@ -196,7 +196,7 @@ export function OperationsTicketListCard({ summary }: OperationsTicketListCardPr
             <Box
               component="button"
               type="button"
-              onClick={() => handleCopy(summary.orderId)}
+              onClick={() => handleCopy(summary.orderId!)}
               sx={{
                 display: "inline-flex",
                 alignItems: "center",

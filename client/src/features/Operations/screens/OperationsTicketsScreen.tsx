@@ -103,11 +103,11 @@ export function OperationsTicketsScreen() {
         {totalCount > 0 && (
           <Box sx={{ mt: "auto", pt: 2, px: 3 }}>
             <AppPagination
-              pageNumber={pageNumber}
+              page={pageNumber}
               pageSize={20}
-              totalCount={totalCount}
+              totalItems={totalCount}
               totalPages={totalPages}
-              onPageChange={setPageNumber}
+              onChange={setPageNumber}
             />
           </Box>
         )}

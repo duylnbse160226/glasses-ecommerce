@@ -51,7 +51,7 @@ export function TrackingScreen() {
         count={totalCount}
         countLabel="orders"
       />
-      <OrdersTabs active="shipped" />
+      <OrdersTabs active="in-transit" />
 
       <Box
         sx={{
@@ -138,7 +138,7 @@ export function TrackingScreen() {
                 {filteredOrders.map((o) => (
                   <OrderListCard 
                     key={o.id} 
-                    mode="shipped" 
+                    mode="in-transit" 
                     summary={o}
                     onMarkDeliveredClick={(orderId) =>
                       updateStatus.mutate({

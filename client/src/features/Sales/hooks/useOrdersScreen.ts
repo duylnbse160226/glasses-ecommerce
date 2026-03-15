@@ -1,8 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
-import { useStaffOrders } from "../../../lib/hooks/useStaffOrders";
 import type { StaffOrderDto } from "../../../lib/types/staffOrders";
 import agent from "../../../lib/api/agent";
 import type { StaffOrdersResponse } from "../../../lib/types/staffOrders";
