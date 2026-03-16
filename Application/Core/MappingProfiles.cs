@@ -173,6 +173,7 @@ public sealed class MappingProfiles : Profile
                 s.ProductVariant != null && s.ProductVariant.Product != null
                     ? s.ProductVariant.Product.ProductName : null))
             .ForMember(d => d.TotalPrice, o => o.MapFrom(s => s.Quantity * s.UnitPrice))
+            .ForMember(d => d.PrescriptionId, o => o.MapFrom(s => s.PrescriptionId))
             .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
                 s.ProductVariant != null
                     ? (s.ProductVariant.Images

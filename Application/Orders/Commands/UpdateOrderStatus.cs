@@ -63,7 +63,8 @@ public sealed class UpdateOrderStatus
                         $"Cannot transition from '{oldStatus}' to '{newStatus}'.", 400);
 
                 // Auto-verify prescriptions when order transitions from Pending → Confirmed
-                if (order.OrderType == OrderType.Prescription 
+                // Applies to both Prescription and PreOrder orders that have prescriptions
+                if ((order.OrderType == OrderType.Prescription || order.OrderType == OrderType.PreOrder)
                     && oldStatus == OrderStatus.Pending 
                     && newStatus == OrderStatus.Confirmed)
                 {

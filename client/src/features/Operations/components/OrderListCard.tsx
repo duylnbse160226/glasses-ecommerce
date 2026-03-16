@@ -195,7 +195,7 @@ export function OrderListCard({
                 color: "#3730A3",
               }}
             />
-            {summary.prescriptions && summary.prescriptions.length > 0 && (
+            {summary.orderType === "PreOrder" && summary.prescriptions && summary.prescriptions.length > 0 && (
               <>
                 <Typography component="span" sx={{ color: "rgba(0,0,0,0.3)", mx: 0.25 }}>
                   •
