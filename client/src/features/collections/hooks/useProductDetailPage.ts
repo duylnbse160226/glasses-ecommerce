@@ -6,9 +6,7 @@ import { toast } from "react-toastify";
 import { useProductDetail } from "../../../lib/hooks/useProducts";
 import { cartStore } from "../../../lib/stores/cartStore";
 import { useCart } from "../../../lib/hooks/useCart";
-import { getPrescriptionByVariantId } from "../../cart/prescriptionCache";
 import { setCartItemPrescription } from "../../cart/prescriptionCache";
-import { setPrescriptionByVariantId } from "../../cart/prescriptionCache";
 import type { PrescriptionData } from "../../../lib/types/prescription";
 import type { CartDto } from "../../../lib/types/cart";
 
@@ -16,7 +14,7 @@ export function useProductDetailPage(initialVariantId?: string | null) {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { product, isLoading } = useProductDetail(id);
-  const { cart, addItem, addItemAsync } = useCart();
+  const { addItem, addItemAsync } = useCart();
 
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
     initialVariantId ?? null
@@ -51,31 +49,8 @@ export function useProductDetailPage(initialVariantId?: string | null) {
     };
   }, [product, currentVariant, images]);
 
-  const variantAlreadyInCart = useMemo(() => {
-    if (!cart?.items?.length || !addToCartPayload) return false;
-    return cart.items.some((i) => i.productVariantId === addToCartPayload!.variantId);
-  }, [cart?.items, addToCartPayload]);
-
-  /** True if this variant is in cart and that line has prescription (cannot add non-prescription). */
-  const cartLineHasPrescription = useMemo(() => {
-    if (!addToCartPayload?.variantId) return false;
-    return !!getPrescriptionByVariantId(addToCartPayload.variantId);
-  }, [addToCartPayload?.variantId, cart?.items]);
-
   const handleAddToCart = () => {
     if (!addToCartPayload) return;
-    if (variantAlreadyInCart && cartLineHasPrescription) {
-      toast.error(
-        "This product is already in your cart with prescription. You cannot add the same product as non-prescription. Please place a separate order for non-prescription."
-      );
-      return;
-    }
-    if (variantAlreadyInCart) {
-      toast.error(
-        "This product is already in your cart. You cannot add the same product again with a different option (with/without prescription)."
-      );
-      return;
-    }
     cartStore.addItem({
       productId: addToCartPayload.productId,
       name: addToCartPayload.name,
@@ -90,14 +65,6 @@ export function useProductDetailPage(initialVariantId?: string | null) {
 
   const handleAddWithPrescription = async (prescription: PrescriptionData) => {
     if (!addToCartPayload) return;
-    // Allow adding same variant with different prescription (separate line items)
-    // Only reject if variant already in cart WITHOUT prescription (can't mix)
-    if (variantAlreadyInCart && cartLineHasPrescription === false) {
-      toast.error(
-        "This product is already in your cart without prescription. You cannot add the same product with prescription. Please place a separate order."
-      );
-      return;
-    }
     cartStore.addItem({
       productId: addToCartPayload.productId,
       name: addToCartPayload.name,
@@ -109,21 +76,32 @@ export function useProductDetailPage(initialVariantId?: string | null) {
       productVariantId: variantId,
       quantity: 1,
     });
+    
     // Get the LAST item with this variant (newly added), not first
     // Important: when same variant added multiple times with different prescriptions,
     // we need to link the prescription to the specific new cart item, not an old one
-    const variantItems = cart?.items?.filter((i) => i.productVariantId === variantId);
-    let item = variantItems?.[variantItems.length - 1];
+    let item = cart?.items?.filter((i) => i.productVariantId === variantId).at(-1);
     
+    // If immediate response doesn't have the item, wait briefly and refetch
+    // This handles race conditions where backend is still processing
     if (!item && cart) {
-      const fresh = await queryClient.fetchQuery<CartDto>({ queryKey: ["cart"] });
-      const freshVariantItems = fresh?.items?.filter((i) => i.productVariantId === variantId);
-      item = freshVariantItems?.[freshVariantItems?.length - 1];
+      // Small delay to allow backend to process
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const fresh = await queryClient.fetchQuery<CartDto>({
+        queryKey: ["cart"],
+        staleTime: 0,  // Force fresh fetch
+      });
+      item = fresh?.items?.filter((i) => i.productVariantId === variantId).at(-1);
     }
-    if (item) {
-      setCartItemPrescription(item.id, prescription);
+    
+    // Fail-fast: If still can't find item after retries, report error and stop
+    if (!item) {
+      toast.error("Failed to save prescription to cart. Please refresh and try again.");
+      return;
     }
-    setPrescriptionByVariantId(variantId, prescription);
+    
+    // Item found - save prescription to cache
+    setCartItemPrescription(item.id, prescription);
   };
 
   const handleVariantSelect = (variantId: string) => {
