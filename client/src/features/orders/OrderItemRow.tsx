@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useProductDetail } from "../../lib/hooks/useProducts";
 import { formatMoney } from "../../lib/utils/format";
@@ -66,10 +65,9 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
   const price = getItemPrice(item as Parameters<typeof getItemPrice>[0]);
 
   const prescription =
-    orderId && productVariantId ? getOrderPrescription(orderId, productVariantId) : undefined;
+    orderId && item.id ? getOrderPrescription(orderId, item.id) : undefined;
 
   const thumbSize = compact ? 40 : 56;
-  const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
 
   return (
     <Box
@@ -79,14 +77,21 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
         gap: 2,
         py: compact ? 0.75 : 1.5,
         px: compact ? 1.5 : 2,
+        transition: "background-color 180ms ease",
+        "@media (hover: hover)": {
+          "&:hover": {
+            bgcolor: "#FAFAFA",
+          },
+        },
       }}
     >
       <Box
         sx={{
           width: thumbSize,
           height: thumbSize,
-          borderRadius: 2,
-          bgcolor: "rgba(17,24,39,0.06)",
+          borderRadius: 2.5,
+          bgcolor: "#F7F7F7",
+          border: "1px solid #ECECEC",
           overflow: "hidden",
           flexShrink: 0,
         }}
@@ -120,48 +125,38 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography fontSize={compact ? 14 : 15} fontWeight={600} noWrap>
+        <Typography
+          fontSize={compact ? 14 : 15}
+          fontWeight={compact ? 600 : 700}
+          noWrap
+          sx={{ color: "#171717" }}
+        >
           {name}
         </Typography>
-        <Typography fontSize={13} color="text.secondary">
+        <Typography fontSize={13} sx={{ color: "#8A8A8A" }}>
           {variantName ? `${variantName} · Qty ${qty}` : `Qty ${qty}`}
         </Typography>
         {prescription &&
           (showPrescriptionDetails ? (
-            <Box sx={{ mt: 0.25 }}>
-              <Typography
-                fontSize={12}
-                fontWeight={700}
-                color="primary"
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  cursor: "pointer",
-                }}
-                onClick={() => setIsPrescriptionOpen((v) => !v)}
-              >
-                Prescription details {isPrescriptionOpen ? "▲" : "▼"}
-              </Typography>
-              {isPrescriptionOpen && (
-                <Box sx={{ mt: 0.5 }}>
-                  <PrescriptionDisplay prescription={prescription} variant="inline" />
-                </Box>
-              )}
+            <Box sx={{ mt: 0.5 }}>
+              <PrescriptionDisplay prescription={prescription} variant="inline" />
             </Box>
           ) : (
             <Typography
               fontSize={12}
               fontWeight={700}
-              color="primary"
-              sx={{ mt: 0.25 }}
+              sx={{ mt: 0.25, color: "#B68C5A" }}
             >
               Prescription
             </Typography>
           ))}
       </Box>
 
-      <Typography fontSize={compact ? 14 : 15} fontWeight={700} sx={{ flexShrink: 0 }}>
+      <Typography
+        fontSize={compact ? 14 : 15}
+        fontWeight={700}
+        sx={{ flexShrink: 0, color: "#171717" }}
+      >
         {formatMoney(price)}
       </Typography>
     </Box>

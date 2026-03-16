@@ -1,3 +1,4 @@
+import { Suspense, lazy, useState } from "react";
 import {
     Accordion,
     AccordionDetails,
@@ -7,24 +8,29 @@ import {
     Chip,
     Divider,
     Grid,
-    IconButton,
     Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { useProductDetailPage } from "./hooks/useProductDetailPage";
 import { RelatedProductsCarousel } from "./components/ProductDetailPageComponents/RelatedProductsCarousel";
+import { usePreOrderButton } from "./components/ProductDetailPageComponents/PreOrderDialog";
+
+const VirtualTryOn = lazy(() => import("../Manager/components/VirtualTryOn"));
 
 const NAV_H = 56;
 const GAP_TOP = 24;
 const GAP_BOTTOM = 56;
 const FOOT_H = 0;
+const ACCENT = "#B68C5A";
 
 export default function ProductDetailPage() {
     const nav = useNavigate();
+    const { handlePreOrder } = usePreOrderButton();
     const {
         product,
         isLoading,
@@ -36,16 +42,24 @@ export default function ProductDetailPage() {
         handleVariantSelect,
         isEyeglasses,
     } = useProductDetailPage();
+    const [tryOnOpen, setTryOnOpen] = useState(false);
 
     if (isLoading) {
         return (
             <Box
+                component="main"
                 sx={{
-                    bgcolor: "#fff",
+                    position: "relative",
+                    left: "50%",
+                    right: "50%",
+                    ml: "-50vw",
+                    mr: "-50vw",
+                    width: "100vw",
+                    background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
                     pt: `calc(${NAV_H}px + ${GAP_TOP}px)`,
                     pb: `calc(${FOOT_H}px + ${GAP_BOTTOM}px)`,
                     minHeight: `calc(100vh - ${NAV_H}px - ${FOOT_H}px)`,
-                    px: { xs: 2, md: 4, lg: 6 },
+                    px: { xs: 2, md: 3 },
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
@@ -59,12 +73,19 @@ export default function ProductDetailPage() {
     if (!product) {
         return (
             <Box
+                component="main"
                 sx={{
-                    bgcolor: "#fff",
+                    position: "relative",
+                    left: "50%",
+                    right: "50%",
+                    ml: "-50vw",
+                    mr: "-50vw",
+                    width: "100vw",
+                    background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
                     pt: `calc(${NAV_H}px + ${GAP_TOP}px)`,
                     pb: `calc(${FOOT_H}px + ${GAP_BOTTOM}px)`,
                     minHeight: `calc(100vh - ${NAV_H}px - ${FOOT_H}px)`,
-                    px: { xs: 2, md: 4, lg: 6 },
+                    px: { xs: 2, md: 3 },
                 }}
             >
                 <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
@@ -91,27 +112,47 @@ export default function ProductDetailPage() {
                 ml: "-50vw",
                 mr: "-50vw",
                 width: "100vw",
-                bgcolor: "#fff",
+                background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
                 pt: `calc(${NAV_H}px + ${GAP_TOP}px)`,
                 pb: `calc(${FOOT_H}px + ${GAP_BOTTOM}px)`,
                 minHeight: `calc(100vh - ${NAV_H}px - ${FOOT_H}px)`,
-                px: { xs: 2, md: 4, lg: 6 },
+                px: { xs: 2, md: 3 },
             }}
         >
             {/* Back + breadcrumb */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                <IconButton
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.75,
+                    mb: 2.5,
+                }}
+            >
+                <Button
                     onClick={() => nav(-1)}
+                    startIcon={<ArrowBackIcon />}
                     sx={{
-                        border: "1px solid rgba(17,24,39,0.12)",
-                        borderRadius: 2,
+                        alignSelf: "flex-start",
+                        p: 0,
+                        minWidth: "auto",
+                        textTransform: "none",
+                        fontSize: 13,
+                        color: "#5B5B5B",
+                        "&:hover": {
+                            color: ACCENT,
+                            backgroundColor: "transparent",
+                            textDecoration: "underline",
+                        },
                     }}
                 >
-                    <ArrowBackIcon />
-                </IconButton>
-
-                <Typography sx={{ color: "rgba(17,24,39,0.65)", fontSize: 13.5 }}>
-                    <Box component={NavLink} to="/collections" sx={{ textDecoration: "none", color: "inherit" }}>
+                    Back to Eyewear
+                </Button>
+                <Typography sx={{ color: "#8A8A8A", fontSize: 12.5 }}>
+                    <Box
+                        component={NavLink}
+                        to="/collections"
+                        sx={{ textDecoration: "none", color: "inherit" }}
+                    >
                         Collections
                     </Box>{" "}
                     /{" "}
@@ -123,7 +164,7 @@ export default function ProductDetailPage() {
                         {product.categoryName}
                     </Box>{" "}
                     /{" "}
-                    <Box component="span" sx={{ color: "#111827", fontWeight: 800 }}>
+                    <Box component="span" sx={{ color: "#121212", fontWeight: 700 }}>
                         {product.name}
                     </Box>
                 </Typography>
@@ -131,60 +172,145 @@ export default function ProductDetailPage() {
 
             <Grid container spacing={4}>
                 {/* Gallery */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={7}>
                     <Box
                         sx={{
-                            border: "1px solid rgba(17,24,39,0.10)",
-                            bgcolor: "#f3f4f6",
+                            borderRadius: 3,
+                            border: "1px solid rgba(0,0,0,0.06)",
+                            bgcolor: "#F6F4F2",
+                            boxShadow: "0 16px 40px rgba(0,0,0,0.08)",
+                            px: { xs: 2.5, md: 3 },
+                            pt: { xs: 2.5, md: 3 },
+                            pb: { xs: 2.75, md: 3 },
+                            position: "relative",
                         }}
                     >
                         <Box
-                            component="img"
-                            src={images[activeImg]}
-                            alt={product.name}
                             sx={{
                                 width: "100%",
                                 aspectRatio: "4 / 3",
-                                objectFit: "cover",
+                                maxHeight: 420,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                position: "relative",
                             }}
-                        />
-                    </Box>
-
-                    <Box sx={{ display: "flex", gap: 1.2, mt: 1.5 }}>
-                        {images.map((src, idx) => (
+                        >
                             <Box
-                                key={src}
-                                onClick={() => setActiveImg(idx)}
+                                component="img"
+                                src={images[activeImg]}
+                                alt={product.name}
                                 sx={{
-                                    width: 86,
-                                    height: 66,
-                                    border:
-                                        idx === activeImg
-                                            ? "2px solid #111827"
-                                            : "1px solid rgba(17,24,39,0.12)",
-                                    cursor: "pointer",
+                                    maxWidth: "100%",
+                                    maxHeight: "100%",
+                                    objectFit: "contain",
                                 }}
-                            >
-                                <Box
-                                    component="img"
-                                    src={src}
-                                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                />
-                            </Box>
-                        ))}
+                            />
+                        </Box>
+
+                        {/* Virtual Try-On button */}
+                        <Button
+                            variant="contained"
+                            startIcon={<CameraAltIcon />}
+                            onClick={() => setTryOnOpen(true)}
+                            sx={{
+                                position: "absolute",
+                                bottom: 14,
+                                left: 14,
+                                borderRadius: 999,
+                                textTransform: "none",
+                                fontWeight: 800,
+                                fontSize: 13,
+                                bgcolor: "rgba(17,24,39,0.85)",
+                                backdropFilter: "blur(6px)",
+                                "&:hover": { bgcolor: "rgba(17,24,39,0.95)" },
+                                px: 2.5,
+                                py: 1,
+                                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                            }}
+                        >
+                            Virtual Try-On
+                        </Button>
+
+                    <Box
+                        sx={{
+                            mt: 1.75,
+                            display: "flex",
+                            gap: 1.5,
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        {images.map((src, idx) => {
+                                const isActive = idx === activeImg;
+                                return (
+                                    <Box
+                                        key={src}
+                                        onClick={() => setActiveImg(idx)}
+                                        sx={{
+                                            width: 70,
+                                            height: 70,
+                                            borderRadius: 2,
+                                            overflow: "hidden",
+                                            cursor: "pointer",
+                                            border: isActive
+                                                ? `2px solid ${ACCENT}`
+                                                : "1px solid rgba(0,0,0,0.08)",
+                                            boxShadow: isActive
+                                                ? "0 0 0 1px rgba(182,140,90,0.35)"
+                                                : "none",
+                                            transition: "all 160ms ease",
+                                            "&:hover": {
+                                                borderColor: isActive
+                                                    ? ACCENT
+                                                    : "rgba(0,0,0,0.18)",
+                                            },
+                                        }}
+                                    >
+                                        <Box
+                                            component="img"
+                                            src={src}
+                                            sx={{
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: "contain",
+                                                backgroundColor: "#F6F6F6",
+                                            }}
+                                        />
+                                    </Box>
+                                );
+                            })}
+                        </Box>
                     </Box>
                 </Grid>
 
                 {/* Info */}
-                <Grid item xs={12} md={6}>
-                    <Typography fontWeight={900}>{product.brand}</Typography>
-                    <Typography fontWeight={900} fontSize={22} mt={0.6}>
+                <Grid item xs={12} md={5}>
+                    <Typography
+                        sx={{
+                            fontSize: 11,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.16em",
+                            color: "#8A8A8A",
+                            fontWeight: 600,
+                        }}
+                    >
+                        {product.brand}
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontWeight: 800,
+                            fontSize: 26,
+                            mt: 0.6,
+                            color: "#121212",
+                            lineHeight: 1.1,
+                        }}
+                    >
                         {product.name}
                     </Typography>
 
                     {/* Price + compareAtPrice */}
                     <Box sx={{ mt: 2, display: "flex", alignItems: "baseline", gap: 1.5 }}>
-                        <Typography fontWeight={900} fontSize={20}>
+                        <Typography sx={{ fontWeight: 800, fontSize: 22, color: "#121212" }}>
                             {(currentVariant?.price ?? product.price).toLocaleString("en-US", {
                                 style: "currency",
                                 currency: "USD",
@@ -198,7 +324,7 @@ export default function ProductDetailPage() {
                                     fontSize={14}
                                     sx={{
                                         textDecoration: "line-through",
-                                        color: "rgba(17,24,39,0.5)",
+                                        color: "#8A8A8A",
                                     }}
                                 >
                                     {currentVariant.compareAtPrice.toLocaleString("en-US", {
@@ -211,28 +337,30 @@ export default function ProductDetailPage() {
                             )}
                     </Box>
 
-                    {/* Status + sku */}
-                    <Box sx={{ mt: 1.5, display: "flex", alignItems: "center", gap: 1.5 }}>
+                    {/* Stock status (based on quantity) + Quantity + SKU */}
+                    <Box sx={{ mt: 1.5, display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                         <Chip
-                            label={product.status}
+                            label={(currentVariant?.quantityAvailable ?? 0) > 0 ? "In stock" : "Out of stock"}
                             size="small"
                             sx={{
                                 borderRadius: 999,
                                 fontWeight: 700,
-                                bgcolor:
-                                    product.status.toLowerCase() === "active"
-                                        ? "rgba(22,163,74,0.12)"
-                                        : "rgba(148,163,184,0.18)",
-                                color:
-                                    product.status.toLowerCase() === "active"
-                                        ? "rgba(22,163,74,0.95)"
-                                        : "rgba(71,85,105,0.95)",
+                                bgcolor: (currentVariant?.quantityAvailable ?? 0) > 0
+                                    ? "rgba(22,163,74,0.08)"
+                                    : "rgba(248,113,113,0.08)",
+                                color: (currentVariant?.quantityAvailable ?? 0) > 0
+                                    ? "#166534"
+                                    : "#b91c1c",
+                                border: (currentVariant?.quantityAvailable ?? 0) > 0
+                                    ? "1px solid rgba(22,163,74,0.35)"
+                                    : "1px solid rgba(248,113,113,0.55)",
                             }}
                         />
+
                         {product.sku && (
                             <Typography
-                                fontSize={13}
-                                sx={{ color: "rgba(17,24,39,0.65)" }}
+                                fontSize={12}
+                                sx={{ color: "#8A8A8A" }}
                             >
                                 SKU: {product.sku}
                             </Typography>
@@ -241,10 +369,10 @@ export default function ProductDetailPage() {
 
                     <Divider sx={{ my: 2.5 }} />
 
-                    {/* Variants (color) - bubble màu (kể cả chỉ có 1 màu cũng hiển thị) */}
+                    {/* Variants (color) */}
                     {!!product.variants?.length && (
                         <Box mb={2} mt={2}>
-                            <Typography fontWeight={900} mb={1}>
+                            <Typography sx={{ fontWeight: 600, fontSize: 13, mb: 1, color: "#5B5B5B" }}>
                                 Colour options
                             </Typography>
                             <Box
@@ -255,18 +383,16 @@ export default function ProductDetailPage() {
                                 }}
                             >
                                 {product.variants.map((v) => {
-                                    const isActive = currentVariant?.id === v.id;
-                                    const colorName = (v.color ?? v.variantName ?? "").toLowerCase();
-                                    const bgColor =
-                                        colorName === "black" || colorName.includes("black")
-                                            ? "#111827"
-                                            : colorName === "red" || colorName.includes("red")
-                                                ? "#dc2626"
-                                                : colorName.includes("ivory")
-                                                    ? "#f5f5f4"
-                                                    : colorName.includes("gold")
-                                                        ? "#facc15"
-                                                        : "rgba(148,163,184,0.5)";
+                                const isActive = currentVariant?.id === v.id;
+
+                                // Lấy đúng tên màu để tô: ưu tiên field `color`, fallback `variantName`.
+                                const rawLabel = (v.color ?? v.variantName ?? "").trim();
+                                // Nếu có nhiều từ (VD: "Glossy Black") thì lấy từ cuối cùng làm CSS color ("Black").
+                                const lastWord =
+                                    rawLabel.indexOf(" ") >= 0
+                                        ? rawLabel.split(/\s+/).slice(-1)[0]
+                                        : rawLabel;
+                                const bgColor = lastWord || "rgba(148,163,184,0.6)";
                                     return (
                                         <Box
                                             key={v.id}
@@ -280,25 +406,43 @@ export default function ProductDetailPage() {
                                             <Box
                                                 onClick={() => handleVariantSelect(v.id)}
                                                 sx={{
-                                                    width: 26,
-                                                    height: 26,
+                                                    width: 24,
+                                                    height: 24,
                                                     borderRadius: "999px",
                                                     bgcolor: bgColor,
                                                     border: isActive
-                                                        ? "2px solid #111827"
-                                                        : "1px solid rgba(17,24,39,0.18)",
+                                                        ? `2px solid ${ACCENT}`
+                                                        : "1px solid rgba(15,23,42,0.2)",
                                                     boxShadow: isActive
-                                                        ? "0 0 0 2px rgba(17,24,39,0.25)"
+                                                        ? "0 0 0 3px rgba(182,140,90,0.3)"
                                                         : "none",
                                                     cursor: "pointer",
+                                                    position: "relative",
+                                                    transition: "all 160ms ease",
+                                                    "&:hover": {
+                                                        boxShadow: isActive
+                                                            ? "0 0 0 4px rgba(182,140,90,0.35)"
+                                                            : "0 0 0 2px rgba(148,163,184,0.4)",
+                                                    },
                                                 }}
-                                            />
+                                            >
+                                                {isActive && (
+                                                    <Box
+                                                        sx={{
+                                                            position: "absolute",
+                                                            inset: 6,
+                                                            borderRadius: "50%",
+                                                            border: "2px solid #FFFFFF",
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
                                             <Typography
                                                 sx={{
                                                     fontSize: 11,
                                                     color: isActive
-                                                        ? "#111827"
-                                                        : "rgba(17,24,39,0.65)",
+                                                        ? "#121212"
+                                                        : "#6B6B6B",
                                                 }}
                                             >
                                                 {v.variantName ?? v.color}
@@ -311,42 +455,86 @@ export default function ProductDetailPage() {
                     )}
 
                     {/* Actions */}
-                    <Box sx={{ display: "flex", gap: 1.2, mt: 1 }}>
-        {isEyeglasses ? (
+                    <Box sx={{ display: "flex", gap: 1.2, mt: 1, flexWrap: "wrap", flexDirection: "column" }}>
+                        <Box sx={{ display: "flex", gap: 1.2, width: "100%", flexWrap: "wrap" }}>
+                        {/* Show Add to Cart / Select Lenses only if in stock */}
+                        {(currentVariant?.quantityAvailable ?? 0) > 0 && (
                             <>
-                                <Button
-                                    variant="contained"
-                                    onClick={() =>
-                                        nav(`/product/${product.id}/lenses`, {
-                                            state: { variantId: currentVariant?.id ?? null },
-                                        })
-                                    }
-                                    sx={{
-                                        bgcolor: "#111827",
-                                        borderRadius: 2,
-                                        height: 46,
-                                        px: 3,
-                                        fontWeight: 900,
-                                        "&:hover": { bgcolor: "#0b1220" },
-                                    }}
-                                >
-                                    Select lenses
-                                </Button>
+                                {isEyeglasses ? (
+                                    <>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() =>
+                                                nav(`/product/${product.id}/lenses`, {
+                                                    state: { variantId: currentVariant?.id ?? null },
+                                                })
+                                            }
+                                            sx={{
+                                                bgcolor: "#111827",
+                                                borderRadius: 1.75,
+                                                height: 46,
+                                                px: 3,
+                                                fontWeight: 900,
+                                                "&:hover": { bgcolor: "#0b1220", boxShadow: "0 14px 36px rgba(0,0,0,0.2)" },
+                                            }}
+                                        >
+                                            Select lenses
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        variant="contained"
+                                        onClick={handleAddToCart}
+                                        sx={{
+                                            bgcolor: "#111827",
+                                            borderRadius: 1.75,
+                                            height: 46,
+                                            px: 3,
+                                            fontWeight: 900,
+                                            "&:hover": { bgcolor: "#0b1220", boxShadow: "0 14px 36px rgba(0,0,0,0.2)" },
+                                        }}
+                                    >
+                                        Add to cart
+                                    </Button>
+                                )}
                             </>
-                        ) : (
+                        )}
+
+                        {/* Show Pre-Order only if out of stock AND variant is enabled for pre-order */}
+                        {(currentVariant?.quantityAvailable ?? 0) === 0 && currentVariant?.isPreOrder && (
                             <Button
                                 variant="contained"
-                                onClick={handleAddToCart}
+                                onClick={() => {
+                                    if (isEyeglasses) {
+                                        // For eyeglasses: navigate to select lenses with pre-order flag
+                                        nav(`/product/${product.id}/lenses`, {
+                                            state: { 
+                                                variantId: currentVariant?.id ?? null,
+                                                isPreOrder: true 
+                                            },
+                                        });
+                                    } else {
+                                        // For sunglasses: direct pre-order
+                                        handlePreOrder({
+                                            variant: currentVariant,
+                                        });
+                                    }
+                                }}
                                 sx={{
                                     bgcolor: "#111827",
-                                    borderRadius: 2,
-                                    height: 46,
+                                    borderRadius: 1.75,
+                                    height: 50,
                                     px: 3,
-                                    fontWeight: 900,
-                                    "&:hover": { bgcolor: "#0b1220" },
+                                    fontWeight: 700,
+                                    textTransform: "none",
+                                    boxShadow: "0 12px 32px rgba(0,0,0,0.18)",
+                                    "&:hover": {
+                                        bgcolor: "#020617",
+                                        boxShadow: "0 14px 36px rgba(0,0,0,0.2)",
+                                    },
                                 }}
                             >
-                                Add to cart
+                                Pre-Order
                             </Button>
                         )}
 
@@ -354,25 +542,47 @@ export default function ProductDetailPage() {
                             variant="outlined"
                             startIcon={<FavoriteBorderIcon />}
                             sx={{
-                                borderRadius: 2,
+                                borderRadius: 1.75,
                                 height: 46,
                                 px: 2.2,
-                                fontWeight: 900,
+                                fontWeight: 600,
+                                textTransform: "none",
+                                borderColor: "rgba(0,0,0,0.16)",
+                                color: "#121212",
+                                bgcolor: "#FFFFFF",
+                                "&:hover": {
+                                    bgcolor: "#FAFAFA",
+                                    borderColor: ACCENT,
+                                },
                             }}
                         >
                             Wishlist
                         </Button>
+                        </Box>
+                        <Typography sx={{ mt: 1.5, fontSize: 12, color: "#8A8A8A" }}>
+                            Free returns • Secure checkout • 2-year warranty
+                        </Typography>
                     </Box>
 
-                    <Divider sx={{ my: 2.5 }} />
+                    <Divider sx={{ my: 2.75, borderColor: "rgba(0,0,0,0.06)" }} />
 
                     {/* Accordions */}
-                    <Accordion defaultExpanded disableGutters elevation={0}>
+                    <Accordion
+                        defaultExpanded
+                        disableGutters
+                        elevation={0}
+                        sx={{
+                            borderTop: "1px solid transparent",
+                            borderBottom: "1px solid rgba(0,0,0,0.06)",
+                        }}
+                    >
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography fontWeight={900}>Description</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#121212" }}>
+                                Description
+                            </Typography>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <Typography fontSize={14} color="rgba(17,24,39,0.75)">
+                            <Typography fontSize={14} sx={{ color: "#5B5B5B", lineHeight: 1.7 }}>
                                 {product.description ??
                                     product.categoryDescription ??
                                     "No description available."}
@@ -381,19 +591,25 @@ export default function ProductDetailPage() {
                     </Accordion>
 
                     {/* Specs */}
-                    <Accordion disableGutters elevation={0}>
+                    <Accordion
+                        disableGutters
+                        elevation={0}
+                        sx={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}
+                    >
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography fontWeight={900}>Specifications</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#121212" }}>
+                                Specifications
+                            </Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <Box sx={{ display: "grid", rowGap: 0.5, fontSize: 13.5 }}>
-                                {currentVariant?.color && (
+                                {(currentVariant?.variantName || currentVariant?.color) && (
                                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                                         <Typography color="rgba(15,23,42,0.6)">
                                             Color
                                         </Typography>
                                         <Typography fontWeight={600}>
-                                            {currentVariant.color}
+                                            {currentVariant.variantName ?? currentVariant.color}
                                         </Typography>
                                     </Box>
                                 )}
@@ -474,10 +690,33 @@ export default function ProductDetailPage() {
             </Grid>
 
             {/* Related products carousel */}
-            <RelatedProductsCarousel
-                categorySlug={product.categorySlug}
-                currentProductId={product.id}
-            />
+            {product && (
+                <RelatedProductsCarousel
+                    categorySlug={product.categorySlug}
+                    currentProductId={product.id}
+                />
+            )}
+
+            {/* Virtual Try-On overlay */}
+            {tryOnOpen && product && (
+                <Suspense fallback={null}>
+                    <VirtualTryOn
+                        open={tryOnOpen}
+                        onClose={() => setTryOnOpen(false)}
+                        productName={product!.name}
+                        variantImages={
+                            (product!.variants || [])
+                                .filter((v) => v.images?.length > 0)
+                                .map((v) => ({
+                                    id: v.id,
+                                    variantName: v.variantName ?? undefined,
+                                    color: v.color ?? undefined,
+                                    imageUrl: v.images[0],
+                                }))
+                        }
+                    />
+                </Suspense>
+            )}
         </Box>
     );
 }

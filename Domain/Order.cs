@@ -70,7 +70,7 @@ public class Order
 
     public ICollection<OrderItem> OrderItems { get; set; } = [];
     public ICollection<OrderStatusHistory> StatusHistories { get; set; } = [];
-    public Prescription? Prescription { get; set; }
+    public ICollection<Prescription> Prescriptions { get; set; } = [];
     public ShipmentInfo? ShipmentInfo { get; set; }
     public ICollection<Payment> Payments { get; set; } = [];
     public ICollection<AfterSalesTicket> AfterSalesTickets { get; set; } = [];
@@ -88,7 +88,7 @@ public class Order
         return OrderType switch
         {
             OrderType.ReadyStock => true,
-            OrderType.PreOrder => true, // Additional logic in service layer to check goods arrival
+            OrderType.PreOrder => true, // Can cancel until goods arrive and are shipped
             OrderType.Prescription => CancellationDeadline.HasValue && now <= CancellationDeadline.Value,
             _ => false
         };

@@ -11,6 +11,8 @@ export interface StaffOrderDto {
   salesStaffName: string | null;
   itemCount: number;
   createdAt: string;
+  prescriptionStatus?: string | null;
+  prescriptions?: StaffOrderPrescriptionDto[];
 }
 
 export interface StaffOrdersResponse {
@@ -47,6 +49,8 @@ export interface StaffOrderItemDto {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  productImageUrl?: string | null;
+  prescriptionId?: string | null;
 }
 
 export interface StaffOrderPaymentDto {
@@ -64,6 +68,50 @@ export interface StaffOrderStatusHistoryDto {
   createdAt: string;
 }
 
+export interface StaffOrderShippingAddressDto {
+  id?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  venue?: string;
+  ward?: string;
+  district?: string;
+  city?: string;
+  postalCode?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  isDefault?: boolean;
+}
+
+/** Prescription detail per eye from GET order detail (camelCase from API) */
+export interface StaffOrderPrescriptionDetailDto {
+  id?: string;
+  eye: string;
+  sph: number | null;
+  cyl: number | null;
+  axis: number | null;
+  pd: number | null;
+  add: number | null;
+}
+
+/** Prescription block from GET order detail */
+export interface StaffOrderPrescriptionDto {
+  id?: string;
+  isVerified?: boolean;
+  verifiedAt?: string | null;
+  verificationNotes?: string | null;
+  details: StaffOrderPrescriptionDetailDto[];
+}
+
+export interface ShipmentInfoDto {
+  carrierName: string;
+  trackingCode?: string | null;
+  trackingUrl?: string | null;
+  shippedAt?: string | null;
+  estimatedDeliveryAt?: string | null;
+  actualDeliveryAt?: string | null;
+  shippingNotes?: string | null;
+}
+
 export interface StaffOrderDetailDto {
   id: string;
   orderSource: string;
@@ -76,6 +124,9 @@ export interface StaffOrderDetailDto {
   customerNote: string | null;
   walkInCustomerName: string | null;
   walkInCustomerPhone: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  shippingAddress?: StaffOrderShippingAddressDto | null;
   createdBySalesStaff: string | null;
   salesStaffName: string | null;
   userId: string | null;
@@ -83,8 +134,8 @@ export interface StaffOrderDetailDto {
   updatedAt: string | null;
   items: StaffOrderItemDto[];
   payment: StaffOrderPaymentDto | null;
-  prescription: unknown;
-  shipment: unknown;
+  prescriptions: StaffOrderPrescriptionDto[];
+  shipment?: ShipmentInfoDto | null;
   statusHistories: StaffOrderStatusHistoryDto[];
 }
 

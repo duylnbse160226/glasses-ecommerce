@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { router } from "../../app/router/Routes";
 
 const agent = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL ?? "/api",
   withCredentials: true,
 });
 
@@ -37,6 +37,9 @@ agent.interceptors.response.use(
             }
           }
           throw modelStateErrors.flat();
+        } else if (data.message) {
+          // Handle Result<T>.Failure with message (e.g., policy violations)
+          throw new Error(data.message);
         } else {
           toast.error(data);
         }
@@ -57,6 +60,12 @@ agent.interceptors.response.use(
       }
       case 404:
         // Không redirect toàn cục — để từng trang/component xử lý (vd: OrderCard "Could not load", OrderDetailPage "Order not found")
+        break;
+      case 409:
+        // Conflict — duplicate request, validation error, etc.
+        if (data.message) {
+          throw new Error(data.message);
+        }
         break;
       case 500:
         router.navigate("/server-error", { state: { error: data } });

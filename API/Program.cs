@@ -5,6 +5,7 @@ using Application.Core;
 using Application.Interfaces;
 using Domain;
 using FluentValidation;
+using Infrastructure.Payments;
 using Infrastructure.Photos;
 using Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +35,8 @@ builder.Services.AddControllers(opt =>
 {
     // Configure the JSON serializer to convert enum values to their string representations
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    // Configure camelCase for both serialization and deserialization (requests and responses)
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 });
 
 builder.Services.AddOpenApi();
@@ -57,6 +60,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         });
 });
 
+builder.Services.AddMemoryCache();
 builder.Services.AddCors();
 
 /*
@@ -80,6 +84,9 @@ builder.Services.AddMediatR(x =>
 
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<VnpaySettings>(builder.Configuration.GetSection("VnPay"));
 
 /*
     Register auto mapper and specify where the assembly - [kết quả biên dịch (compile) của project]

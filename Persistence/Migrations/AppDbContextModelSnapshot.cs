@@ -183,6 +183,9 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("OrderItemId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("OriginalTicketType")
+                        .HasColumnType("int");
+
                     b.Property<string>("PolicyViolation")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -323,8 +326,7 @@ namespace Persistence.Migrations
                         .HasDatabaseName("IX_CartItem_ProductVariantId");
 
                     b.HasIndex("CartId", "ProductVariantId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_CartItem_Cart_ProductVariant");
+                        .HasDatabaseName("IX_CartItem_Cart_ProductVariant");
 
                     b.ToTable("CartItems", t =>
                         {
@@ -377,7 +379,8 @@ namespace Persistence.Migrations
 
                     b.HasIndex("FeatureName")
                         .IsUnique()
-                        .HasDatabaseName("UX_FeatureToggle_FeatureName");
+                        .HasDatabaseName("UX_FeatureToggle_FeatureName_Global")
+                        .HasFilter("[Scope] IS NULL");
 
                     b.HasIndex("IsEnabled")
                         .HasDatabaseName("IX_FeatureToggle_IsEnabled")
@@ -388,8 +391,10 @@ namespace Persistence.Migrations
                     b.HasIndex("FeatureName", "IsEnabled")
                         .HasDatabaseName("IX_FeatureToggle_FeatureName_IsEnabled");
 
-                    b.HasIndex("Scope", "ScopeValue")
-                        .HasDatabaseName("IX_FeatureToggle_Scope_ScopeValue");
+                    b.HasIndex("FeatureName", "Scope", "ScopeValue")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FeatureToggle_FeatureName_Scoped")
+                        .HasFilter("[Scope] IS NOT NULL");
 
                     b.ToTable("FeatureToggles", t =>
                         {
@@ -703,6 +708,9 @@ namespace Persistence.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PrescriptionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("ProductVariantId")
                         .HasColumnType("uniqueidentifier");
 
@@ -720,9 +728,12 @@ namespace Persistence.Migrations
                     b.HasIndex("ProductVariantId")
                         .HasDatabaseName("IX_OrderItem_ProductVariantId");
 
-                    b.HasIndex("OrderId", "ProductVariantId")
+                    b.HasIndex("PrescriptionId", "OrderId");
+
+                    b.HasIndex("OrderId", "ProductVariantId", "PrescriptionId")
                         .IsUnique()
-                        .HasDatabaseName("UX_OrderItem_Order_ProductVariant");
+                        .HasDatabaseName("UX_OrderItem_Order_ProductVariant")
+                        .HasFilter("[PrescriptionId] IS NOT NULL");
 
                     b.ToTable("OrderItems", t =>
                         {
@@ -910,6 +921,12 @@ namespace Persistence.Migrations
                     b.Property<bool>("RefundAllowed")
                         .HasColumnType("bit");
 
+                    b.Property<decimal?>("RefundOnlyMaxAmount")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("RefundWindowDays")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ReturnWindowDays")
                         .HasColumnType("int");
 
@@ -949,6 +966,8 @@ namespace Persistence.Migrations
                             t.HasCheckConstraint("CK_PolicyConfiguration_EffectivePeriod", "EffectiveTo IS NULL OR (EffectiveTo > EffectiveFrom)");
 
                             t.HasCheckConstraint("CK_PolicyConfiguration_PolicyType", "[PolicyType] IN (1, 2, 3)");
+
+                            t.HasCheckConstraint("CK_PolicyConfiguration_RefundOnly_Requires_RefundPolicy", "\r\n                    (PolicyType != 3 AND RefundOnlyMaxAmount IS NULL AND RefundWindowDays IS NULL)\r\n                    OR\r\n                    (PolicyType = 3 AND \r\n                        (RefundWindowDays IS NULL OR RefundWindowDays >= 0) AND\r\n                        (RefundOnlyMaxAmount IS NULL OR RefundOnlyMaxAmount >= 0)\r\n                    )\r\n                    ");
 
                             t.HasCheckConstraint("CK_PolicyConfiguration_ReturnWindowDays_Requires_ReturnPolicy", "\r\n                    (PolicyType != 1 AND ReturnWindowDays IS NULL)\r\n                    OR\r\n                    (PolicyType = 1 AND ReturnWindowDays IS NOT NULL AND ReturnWindowDays >= 0)\r\n                    ");
 
@@ -993,8 +1012,7 @@ namespace Persistence.Migrations
                         .HasDatabaseName("IX_Prescription_IsVerified");
 
                     b.HasIndex("OrderId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Prescription_OrderId");
+                        .HasDatabaseName("IX_Prescription_OrderId");
 
                     b.HasIndex("VerifiedAt")
                         .HasDatabaseName("IX_Prescription_VerifiedAt");
@@ -2077,7 +2095,15 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Prescription", "Prescription")
+                        .WithMany()
+                        .HasForeignKey("PrescriptionId", "OrderId")
+                        .HasPrincipalKey("Id", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Order");
+
+                    b.Navigation("Prescription");
 
                     b.Navigation("ProductVariant");
                 });
@@ -2149,8 +2175,8 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Prescription", b =>
                 {
                     b.HasOne("Domain.Order", "Order")
-                        .WithOne("Prescription")
-                        .HasForeignKey("Domain.Prescription", "OrderId")
+                        .WithMany("Prescriptions")
+                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2403,7 +2429,7 @@ namespace Persistence.Migrations
 
                     b.Navigation("Payments");
 
-                    b.Navigation("Prescription");
+                    b.Navigation("Prescriptions");
 
                     b.Navigation("PromoUsageLogs");
 

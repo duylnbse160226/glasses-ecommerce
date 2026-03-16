@@ -14,13 +14,20 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: async (payload: CreateOrderPayload) => {
       // Backend expects CheckoutDto at ROOT of body (no wrapper).
-      const body = {
+      const body: Record<string, unknown> = {
         addressId: payload.addressId,
         orderType: payload.orderType ?? "ReadyStock",
         paymentMethod: payload.paymentMethod,
-        orderNote: payload.orderNote ?? null,
+        customerNote: payload.orderNote ?? null,
         selectedCartItemIds: payload.selectedCartItemIds,
       };
+      if (payload.promoCode != null && payload.promoCode.trim() !== "") {
+        body.promoCode = payload.promoCode.trim();
+      }
+      // Send prescriptions array formatted as OrderItemPrescriptionDto for backend
+      if (payload.prescriptions != null && payload.prescriptions.length > 0) {
+        body.prescriptions = payload.prescriptions;
+      }
       const res = await agent.post<MeOrderDto>("/me/orders", body);
       return res.data;
     },
@@ -30,12 +37,20 @@ export function useCreateOrder() {
   });
 }
 
-/** GET /api/me/orders — list my orders */
-export function useMyOrders() {
+/** GET /api/me/orders — list my orders (paginated from backend) */
+export function useMyOrders(pageNumber: number = 1, status?: string) {
   return useQuery<MyOrdersPageDto>({
-    queryKey: QUERY_KEY_MY_ORDERS,
+    queryKey: [...QUERY_KEY_MY_ORDERS, pageNumber, status],
     queryFn: async () => {
-      const res = await agent.get<MyOrdersPageDto>("/me/orders");
+      const params: Record<string, unknown> = {
+        pageNumber,
+      };
+      if (status && status.trim() !== "") {
+        params.status = status;
+      }
+      const res = await agent.get<MyOrdersPageDto>("/me/orders", {
+        params,
+      });
       return res.data;
     },
   });

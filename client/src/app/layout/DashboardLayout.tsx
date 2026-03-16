@@ -18,17 +18,21 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
-import AddBoxOutlined from "@mui/icons-material/AddBoxOutlined";
-import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import ScheduleOutlined from "@mui/icons-material/ScheduleOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
-
+import MoveToInboxOutlinedIcon from "@mui/icons-material/MoveToInboxOutlined";
+import OutboxOutlined from "@mui/icons-material/OutboxOutlined";
+import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import SecurityIcon from "@mui/icons-material/Security";
+import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
+import StorefrontOutlined from "@mui/icons-material/StorefrontOutlined";
+import MoveToInboxOutlined from "@mui/icons-material/MoveToInboxOutlined";
+import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useAccount } from "../../lib/hooks/useAccount";
 
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 272;
 
 const DASHBOARD_LINKS: { path: string; label: string; role: string; icon: React.ReactNode }[] = [
   { path: "/sales", label: "Sales", role: "Sales", icon: <PointOfSaleIcon /> },
@@ -40,25 +44,28 @@ const DASHBOARD_LINKS: { path: string; label: string; role: string; icon: React.
 const SALES_SUB_LINKS: { path: string; label: string; icon: React.ReactNode }[] = [
   { path: "/sales", label: "Overview", icon: <PointOfSaleIcon /> },
   { path: "/sales/orders", label: "Orders", icon: <Inventory2Outlined /> },
+  { path: "/sales/tickets", label: "Tickets", icon: <HistoryOutlined /> },
 ];
 
-const OPERATIONS_SUB_LINKS: { path: string; label: string; icon: React.ReactNode }[] = [
-  { path: "/operations/pack", label: "Confirmed orders", icon: <Inventory2Outlined /> },
-  { path: "/operations/create-shipment", label: "Packing orders", icon: <AddBoxOutlined /> },
-  { path: "/operations/tracking", label: "Shipped", icon: <TrackChangesOutlined /> },
-  { path: "/operations/pre-order", label: "Pre-order", icon: <ScheduleOutlined /> },
-  { path: "/operations/prescription", label: "Prescription", icon: <VisibilityOutlined /> },
+const MANAGER_SUB_LINKS: { path: string; label: string; icon: React.ReactNode }[] = [
+  { path: "/manager", label: "Dashboard", icon: <DashboardOutlined /> },
+  { path: "/manager/products", label: "Products", icon: <StorefrontOutlined /> },
+  { path: "/manager/inbound", label: "Inbound", icon: <MoveToInboxOutlined /> },
+  { path: "/manager/promotions", label: "Promotions", icon: <LocalOfferOutlined /> },
+  { path: "/manager/preorder-summary", label: "Pre-Orders", icon: <ScheduleOutlined /> },
 ];
 
 const ADMIN_SUB_LINKS: { path: string; label: string; icon: React.ReactNode }[] = [
   { path: "/admin", label: "Dashboard", icon: <AdminPanelSettingsIcon /> },
   { path: "/admin/roles", label: "Role Management", icon: <SecurityIcon /> },
+  { path: "/admin/policies", label: "Policies", icon: <SecurityIcon /> },
 ];
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [salesOrdersOpen, setSalesOrdersOpen] = useState(true);
   const [operationsOpen, setOperationsOpen] = useState(true);
+  const [adminOpen, setAdminOpen] = useState(true);
   const { currentUser, logoutUser } = useAccount();
   const roles = Array.isArray(currentUser?.roles) ? currentUser.roles : [];
   const location = useLocation();
@@ -111,7 +118,6 @@ export default function DashboardLayout() {
           mt: 7,
           position: "sticky",
           top: 56,
-          overflow: "hidden",
           bgcolor: "#ffffff",
           borderRight: sidebarOpen ? "1px solid rgba(0,0,0,0.08)" : "none",
           transition: (theme) =>
@@ -121,7 +127,7 @@ export default function DashboardLayout() {
             }),
         }}
       >
-        <List sx={{ pt: 2, px: 1 }}>
+        <List sx={{ pt: 2, px: 1, flex: 1, overflowY: "auto", overflowX: "hidden" }}>
           {visibleLinks.map(({ path, label, icon }) => {
             if (path === "/sales") {
               return (
@@ -141,6 +147,7 @@ export default function DashboardLayout() {
                   </Typography>
                   {SALES_SUB_LINKS.map((sub) => {
                     if (sub.path === "/sales") {
+                      const isActive = location.pathname === "/sales";
                       return (
                         <ListItemButton
                           key={sub.path}
@@ -150,18 +157,30 @@ export default function DashboardLayout() {
                           sx={{
                             borderRadius: 2,
                             mb: 0.5,
-                            color: "rgba(0,0,0,0.7)",
-                            "&.active": {
-                              bgcolor: "rgba(25,118,210,0.12)",
-                              color: "primary.main",
-                            },
+                            color: isActive ? "#171717" : "rgba(0,0,0,0.7)",
+                            borderLeft: "3px solid transparent",
+                            pl: 1.5,
+                            ...(isActive
+                              ? {
+                                  bgcolor: "rgba(182,140,90,0.12)",
+                                  color: "#171717",
+                                  borderLeftColor: "#B68C5A",
+                                }
+                              : {}),
                             "&:hover": {
                               bgcolor: "rgba(0,0,0,0.04)",
-                              color: "rgba(0,0,0,0.9)",
+                              color: "#171717",
                             },
                           }}
                         >
-                          <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{sub.icon}</ListItemIcon>
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 40,
+                              color: isActive ? "#B68C5A" : "inherit",
+                            }}
+                          >
+                            {sub.icon}
+                          </ListItemIcon>
                           <ListItemText primary={sub.label} primaryTypographyProps={{ fontWeight: 600 }} />
                         </ListItemButton>
                       );
@@ -205,16 +224,19 @@ export default function DashboardLayout() {
                                 const baseStyles = {
                                   borderRadius: 2,
                                   mb: 0.25,
-                                  color: "rgba(0,0,0,0.7)",
+                                  color: "#8A8A8A",
+                                  borderLeft: "3px solid transparent",
+                                  pl: 1.5,
                                   "&:hover": {
                                     bgcolor: "rgba(0,0,0,0.04)",
-                                    color: "rgba(0,0,0,0.9)",
+                                    color: "#171717",
                                   },
                                 } as const;
 
                                 const activeStyles = {
-                                  bgcolor: "rgba(25,118,210,0.12)",
-                                  color: "primary.main",
+                                  bgcolor: "rgba(182,140,90,0.12)",
+                                  color: "#171717",
+                                  borderLeftColor: "#B68C5A",
                                 } as const;
 
                                 const isOrdersRoute = location.pathname.startsWith("/sales/orders");
@@ -271,6 +293,35 @@ export default function DashboardLayout() {
                       );
                     }
 
+                    if (sub.path === "/sales/tickets") {
+                      return (
+                        <ListItemButton
+                          key={sub.path}
+                          component={NavLink}
+                          to={sub.path}
+                          sx={{
+                            borderRadius: 2,
+                            mb: 0.5,
+                            color: "rgba(0,0,0,0.7)",
+                            borderLeft: "3px solid transparent",
+                            pl: 1.5,
+                            "&.active": {
+                              bgcolor: "rgba(182,140,90,0.12)",
+                              color: "#171717",
+                              borderLeftColor: "#B68C5A",
+                            },
+                            "&:hover": {
+                              bgcolor: "rgba(0,0,0,0.04)",
+                              color: "#171717",
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{sub.icon}</ListItemIcon>
+                          <ListItemText primary={sub.label} primaryTypographyProps={{ fontWeight: 600 }} />
+                        </ListItemButton>
+                      );
+                    }
+
                     return null;
                   })}
                 </Fragment>
@@ -319,36 +370,243 @@ export default function DashboardLayout() {
 
                   <Collapse in={operationsOpen} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding sx={{ pl: 4 }}>
-                      {OPERATIONS_SUB_LINKS.map((sub) => (
-                        <ListItemButton
-                          key={sub.path}
-                          component={NavLink}
-                          to={sub.path}
-                          sx={{
-                            borderRadius: 2,
-                            mb: 0.25,
-                            color: "rgba(0,0,0,0.7)",
-                            "&.active": {
-                              bgcolor: "rgba(25,118,210,0.12)",
-                              color: "primary.main",
-                            },
-                            "&:hover": {
-                              bgcolor: "rgba(0,0,0,0.04)",
-                              color: "rgba(0,0,0,0.9)",
-                            },
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
-                            {sub.icon}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={sub.label}
-                            primaryTypographyProps={{ fontWeight: 500 }}
-                          />
-                        </ListItemButton>
-                      ))}
+                      {/* Order type group */}
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          letterSpacing: 2,
+                          textTransform: "uppercase",
+                          color: "text.secondary",
+                          px: 1.5,
+                          pt: 1.5,
+                          pb: 0.5,
+                        }}
+                      >
+                        Order type
+                      </Typography>
+                      {[
+                        { path: "/operations/order-types", label: "All", icon: <DashboardOutlined /> },
+                        { path: "/operations/standard", label: "Standard", icon: <StorefrontOutlined /> },
+                        { path: "/operations/pre-order", label: "Pre-order", icon: <ScheduleOutlined /> },
+                        { path: "/operations/prescription", label: "Prescription", icon: <VisibilityOutlined /> },
+                      ].map((sub) => {
+                        const isActive = location.pathname === sub.path;
+                        return (
+                          <ListItemButton
+                            key={sub.path}
+                            component={NavLink}
+                            to={sub.path}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 0.25,
+                              color: isActive ? "#171717" : "#8A8A8A",
+                              borderLeft: "3px solid transparent",
+                              pl: 1.5,
+                              "&.active": {
+                                bgcolor: "rgba(182,140,90,0.12)",
+                                color: "#171717",
+                                borderLeftColor: "#B68C5A",
+                              },
+                              "&:hover": {
+                                bgcolor: "rgba(0,0,0,0.04)",
+                                color: "#171717",
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 32,
+                                color: isActive ? "#B68C5A" : "inherit",
+                              }}
+                            >
+                              {sub.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={sub.label}
+                              primaryTypographyProps={{ fontWeight: 600 }}
+                            />
+                          </ListItemButton>
+                        );
+                      })}
+
+                      {/* After-sales group */}
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          letterSpacing: 2,
+                          textTransform: "uppercase",
+                          color: "text.secondary",
+                          px: 1.5,
+                          pt: 1.5,
+                          pb: 0.5,
+                        }}
+                      >
+                        After-sales
+                      </Typography>
+                      {[
+                        { path: "/operations/tickets", label: "Tickets", icon: <HistoryOutlined /> },
+                      ].map((sub) => {
+                        const isActive = location.pathname === sub.path;
+                        return (
+                          <ListItemButton
+                            key={sub.path}
+                            component={NavLink}
+                            to={sub.path}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 0.25,
+                              color: isActive ? "#171717" : "#8A8A8A",
+                              borderLeft: "3px solid transparent",
+                              pl: 1.5,
+                              "&.active": {
+                                bgcolor: "rgba(182,140,90,0.12)",
+                                color: "#171717",
+                                borderLeftColor: "#B68C5A",
+                              },
+                              "&:hover": {
+                                bgcolor: "rgba(0,0,0,0.04)",
+                                color: "#171717",
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 32,
+                                color: isActive ? "#B68C5A" : "inherit",
+                              }}
+                            >
+                              {sub.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={sub.label}
+                              primaryTypographyProps={{ fontWeight: 600 }}
+                            />
+                          </ListItemButton>
+                        );
+                      })}
+
+                      {/* Inventory group */}
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          letterSpacing: 2,
+                          textTransform: "uppercase",
+                          color: "text.secondary",
+                          px: 1.5,
+                          pt: 1.5,
+                          pb: 0.5,
+                        }}
+                      >
+                        Inventory
+                      </Typography>
+                      {[
+                        { path: "/operations/stock", label: "Stock", icon: <Inventory2Outlined /> },
+                        { path: "/operations/inbound", label: "Inbound", icon: <MoveToInboxOutlinedIcon /> },
+                        { path: "/operations/outbound", label: "Outbound", icon: <OutboxOutlined /> },
+                        { path: "/operations/inventory-transactions", label: "History", icon: <HistoryOutlined /> },
+                      ].map((sub) => {
+                        const isActive = location.pathname === sub.path;
+                        return (
+                          <ListItemButton
+                            key={sub.path}
+                            component={NavLink}
+                            to={sub.path}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 0.25,
+                              color: isActive ? "#171717" : "#8A8A8A",
+                              borderLeft: "3px solid transparent",
+                              pl: 1.5,
+                              "&.active": {
+                                bgcolor: "rgba(182,140,90,0.12)",
+                                color: "#171717",
+                                borderLeftColor: "#B68C5A",
+                              },
+                              "&:hover": {
+                                bgcolor: "rgba(0,0,0,0.04)",
+                                color: "#171717",
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 32,
+                                color: isActive ? "#B68C5A" : "inherit",
+                              }}
+                            >
+                              {sub.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={sub.label}
+                              primaryTypographyProps={{ fontWeight: 600 }}
+                            />
+                          </ListItemButton>
+                        );
+                      })}
                     </List>
                   </Collapse>
+                </Fragment>
+              );
+            }
+
+            if (path === "/manager") {
+              return (
+                <Fragment key="manager">
+                  <Typography
+                    sx={{
+                      fontSize: 11,
+                      letterSpacing: 4,
+                      textTransform: "uppercase",
+                      color: "text.secondary",
+                      px: 2,
+                      py: 1,
+                      mt: 1,
+                    }}
+                  >
+                    Manager
+                  </Typography>
+                  {MANAGER_SUB_LINKS.map((sub) => {
+                    const isActive = sub.path === "/manager"
+                      ? location.pathname === "/manager"
+                      : location.pathname.startsWith(sub.path);
+                    return (
+                      <ListItemButton
+                        key={sub.path}
+                        component={NavLink}
+                        to={sub.path}
+                        end={sub.path === "/manager"}
+                        sx={{
+                          borderRadius: 2,
+                          mb: 0.5,
+                          color: "rgba(0,0,0,0.7)",
+                          borderLeft: "3px solid transparent",
+                          pl: 1.5,
+                          ...(isActive
+                            ? {
+                                bgcolor: "rgba(182,140,90,0.12)",
+                                color: "#171717",
+                                borderLeftColor: "#B68C5A",
+                              }
+                            : {}),
+                          "&:hover": {
+                            bgcolor: "rgba(0,0,0,0.04)",
+                            color: "#171717",
+                          },
+                        }}
+                      >
+                        
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 40,
+                            color: isActive ? "#B68C5A" : "inherit",
+                          }}
+                        >
+                          {sub.icon}
+                        </ListItemIcon>
+                        <ListItemText primary={sub.label} primaryTypographyProps={{ fontWeight: 600 }} />
+                      </ListItemButton>
+                    );
+                  })}
                 </Fragment>
               );
             }
@@ -369,29 +627,78 @@ export default function DashboardLayout() {
                   >
                     Admin
                   </Typography>
-                  {ADMIN_SUB_LINKS.map((sub) => (
-                    <ListItemButton
-                      key={sub.path}
-                      component={NavLink}
-                      to={sub.path}
-                      sx={{
-                        borderRadius: 2,
-                        mb: 0.5,
-                        color: "rgba(0,0,0,0.7)",
-                        "&.active": {
-                          bgcolor: "rgba(25,118,210,0.12)",
-                          color: "primary.main",
-                        },
-                        "&:hover": {
-                          bgcolor: "rgba(0,0,0,0.04)",
-                          color: "rgba(0,0,0,0.9)",
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{sub.icon}</ListItemIcon>
-                      <ListItemText primary={sub.label} primaryTypographyProps={{ fontWeight: 600 }} />
-                    </ListItemButton>
-                  ))}
+
+                  {/* Parent Settings group for Admin */}
+                  <ListItemButton
+                    onClick={() => setAdminOpen((open) => !open)}
+                    sx={{
+                      borderRadius: 2,
+                      mb: 0.25,
+                      color: "rgba(0,0,0,0.7)",
+                      "&:hover": {
+                        bgcolor: "rgba(0,0,0,0.04)",
+                        color: "rgba(0,0,0,0.9)",
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+                      <AdminPanelSettingsIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Settings"
+                      primaryTypographyProps={{ fontWeight: 600 }}
+                    />
+                    {adminOpen ? <ExpandLess /> : <ExpandMore />}
+                  </ListItemButton>
+
+                  <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding sx={{ pl: 4 }}>
+                      {ADMIN_SUB_LINKS.map((sub) => {
+                        const isActive = sub.path === "/admin"
+                          ? location.pathname === "/admin"
+                          : location.pathname.startsWith(sub.path);
+                        return (
+                          <ListItemButton
+                            key={sub.path}
+                            component={NavLink}
+                            to={sub.path}
+                            end={sub.path === "/admin"}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 0.25,
+                              color: isActive ? "#171717" : "#8A8A8A",
+                              borderLeft: "3px solid transparent",
+                              pl: 1.5,
+                              ...(isActive
+                                ? {
+                                    bgcolor: "rgba(182,140,90,0.12)",
+                                    color: "#171717",
+                                    borderLeftColor: "#B68C5A",
+                                  }
+                                : {}),
+                              "&:hover": {
+                                bgcolor: "rgba(0,0,0,0.04)",
+                                color: "#171717",
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 32,
+                                color: isActive ? "#B68C5A" : "inherit",
+                              }}
+                            >
+                              {sub.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={sub.label}
+                              primaryTypographyProps={{ fontWeight: 600 }}
+                            />
+                          </ListItemButton>
+                        );
+                      })}
+                    </List>
+                  </Collapse>
                 </Fragment>
               );
             }
@@ -422,17 +729,16 @@ export default function DashboardLayout() {
           })}
         </List>
 
-        <Box sx={{ flex: 1 }} />
-
-        <List sx={{ px: 1, pb: 2 }}>
+        <List sx={{ px: 1, pb: 2, borderTop: "1px solid rgba(0,0,0,0.06)", pt: 1.5, mt: 1 }}>
           <ListItemButton
             onClick={handleLogout}
             disabled={logoutUser.isPending}
             sx={{
               borderRadius: 2,
-              color: "#d32f2f",
+              color: "#6B6B6B",
               "&:hover": {
-                bgcolor: "rgba(211,47,47,0.08)",
+                bgcolor: "rgba(0,0,0,0.04)",
+                color: "#171717",
               },
             }}
           >

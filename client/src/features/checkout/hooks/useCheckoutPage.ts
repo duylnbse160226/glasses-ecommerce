@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCart } from "../../../lib/hooks/useCart";
-import { useCreateAddress } from "../../../lib/hooks/useAddresses";
+import { useAddresses, useCreateAddress, useDefaultAddress } from "../../../lib/hooks/useAddresses";
 import { useCreateOrder } from "../../../lib/hooks/useOrders";
+import { useValidatePromotion, useActivePromotions } from "../../../lib/hooks/usePromotions";
 import { setOrderItemImages } from "../../orders/orderImageCache";
 import { setOrderShippingAddress } from "../../orders/orderShippingAddressCache";
 import { setOrderPrescriptions } from "../../orders/orderPrescriptionCache";
 import { getCartItemPrescriptions } from "../../cart/prescriptionCache";
 import type { PrescriptionData } from "../../../lib/types/prescription";
+import type { ActivePromotionDto } from "../../../lib/types/promotion";
 import type { CheckoutShippingForm, CheckoutSnackbarState, PaymentMethodUI } from "../types";
-import { toApiPaymentMethod, isValidVietnamPhone } from "../utils";
+import { toApiPaymentMethod, isValidVietnamPhone, toPrescriptionInputDto } from "../utils";
 
 const initialAddress: CheckoutShippingForm = {
   recipientName: "",
@@ -34,10 +36,25 @@ export function useCheckoutPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { cart, isLoading: cartLoading } = useCart();
+  const { data: savedAddresses = [] } = useAddresses();
+  const { data: defaultAddress } = useDefaultAddress();
   const createAddress = useCreateAddress();
   const createOrder = useCreateOrder();
+  const validatePromotion = useValidatePromotion();
+  const { data: activePromotions = [] } = useActivePromotions();
 
-  const selectedCartItemIds = (location.state as { selectedCartItemIds?: string[] } | null)?.selectedCartItemIds;
+  const [address, setAddress] = useState<CheckoutShippingForm>(initialAddress);
+  const [addressSearch, setAddressSearch] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodUI>("COD");
+  const [appliedPromo, setAppliedPromo] = useState<{ promoCode: string; discountAmount: number } | null>(null);
+  const [privatePromoInput, setPrivatePromoInput] = useState("");
+  const [setAsDefault, setSetAsDefault] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState<CheckoutSnackbarState>(initialSnackbar);
+
+  const selectedCartItemIds = (location.state as { selectedCartItemIds?: string[]; isPreOrder?: boolean } | null)?.selectedCartItemIds;
+  const isPreOrder = (location.state as { selectedCartItemIds?: string[]; isPreOrder?: boolean } | null)?.isPreOrder ?? false;
+  
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
   const items = useMemo(() => {
     if (selectedCartItemIds != null && selectedCartItemIds.length > 0) {
@@ -50,13 +67,94 @@ export function useCheckoutPage() {
     () => items.reduce((s, i) => s + (i.subtotal ?? i.price * i.quantity), 0),
     [items],
   );
+  const discountAmount = appliedPromo?.discountAmount ?? 0;
+  const finalAmount = Math.max(0, totalAmount - discountAmount);
   const isEmptyCart = items.length === 0;
 
-  const [address, setAddress] = useState<CheckoutShippingForm>(initialAddress);
-  const [addressSearch, setAddressSearch] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodUI>("COD");
-  const [submitting, setSubmitting] = useState(false);
-  const [snackbar, setSnackbar] = useState<CheckoutSnackbarState>(initialSnackbar);
+  const itemPrescriptions = useMemo(
+    () =>
+      getCartItemPrescriptions(
+        items.map((i) => ({ id: i.id, productVariantId: i.productVariantId })),
+      ),
+    [items],
+  );
+
+  // Prefill form with default address when it loads (only first time)
+  useEffect(() => {
+    if (!defaultAddress) return;
+    setAddress((prev) => {
+      // avoid overriding if user already typed something meaningful
+      if (prev.recipientName || prev.recipientPhone || prev.venue) return prev;
+      return {
+        recipientName: defaultAddress.recipientName,
+        recipientPhone: defaultAddress.recipientPhone,
+        venue: defaultAddress.venue,
+        ward: defaultAddress.ward,
+        district: defaultAddress.district,
+        city: defaultAddress.city,
+        postalCode: defaultAddress.postalCode ?? "",
+        orderNote: prev.orderNote ?? "",
+      };
+    });
+  }, [defaultAddress]);
+
+  // Public promotion (from /promotions/active) — client-side calculation only
+  const handleApplyActivePromo = (promo: ActivePromotionDto) => {
+    if (totalAmount <= 0) {
+      setSnackbar({ open: true, message: "Your cart is empty.", severity: "info" });
+      return;
+    }
+
+    // If this promo is already applied, clicking again will remove it
+    if (appliedPromo?.promoCode === promo.promoCode) {
+      setAppliedPromo(null);
+      return;
+    }
+
+    let discount = 0;
+    if (promo.promotionType === "FixedAmount") {
+      discount = Math.min(totalAmount, promo.discountValue);
+    } else if (promo.promotionType === "Percentage") {
+      const raw = (totalAmount * promo.discountValue) / 100;
+      const cap = promo.maxDiscountValue != null ? promo.maxDiscountValue : raw;
+      discount = Math.min(raw, cap);
+    }
+
+    setAppliedPromo({ promoCode: promo.promoCode, discountAmount: discount });
+  };
+
+  // Private promotion (user-entered code) — validate via API
+  const handleApplyPrivatePromo = async (code: string) => {
+    if (!code.trim() || totalAmount <= 0) {
+      setSnackbar({ open: true, message: "Your cart is empty.", severity: "info" });
+      return;
+    }
+    try {
+      const data = await validatePromotion.mutateAsync({
+        promoCode: code.trim(),
+        orderTotal: totalAmount,
+        shippingFee: 0,
+      });
+      const discount = typeof data?.discountApplied === "number" ? data.discountApplied : 0;
+      setAppliedPromo({ promoCode: code.trim(), discountAmount: discount });
+      setSnackbar({
+        open: true,
+        message:
+          discount > 0
+            ? `Promo applied. Discount ${discount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
+            : "Applied.",
+        severity: "success",
+      });
+    } catch {
+      setAppliedPromo(null);
+      setSnackbar({ open: true, message: "Invalid or expired promo code.", severity: "error" });
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPrivatePromoInput("");
+  };
 
   useEffect(() => {
     if (isEmptyCart) {
@@ -100,15 +198,40 @@ export function useCheckoutPage() {
         district: address.district,
         city: address.city,
         postalCode: address.postalCode || null,
-        isDefault: false,
+        isDefault: setAsDefault,
       });
+
+      const hasPrescriptionItems = Object.keys(itemPrescriptions).length > 0;
+      
+      // Build prescriptions array: each cart item with prescription becomes an OrderItemPrescriptionDto
+      const prescriptionsArray = hasPrescriptionItems
+        ? Object.entries(itemPrescriptions)
+            .filter(([_, prescription]) => prescription.details?.length > 0)
+            .map(([cartItemId, prescription]) => ({
+              cartItemId,
+              prescription: toPrescriptionInputDto(prescription),
+            }))
+        : [];
+
+      if (hasPrescriptionItems && prescriptionsArray.length === 0) {
+        setSnackbar({
+          open: true,
+          message: "Prescription details are required for prescription items. Please go back and re-enter prescription for your lens selection.",
+          severity: "error",
+        });
+        setSubmitting(false);
+        return;
+      }
 
       const createdOrder = await createOrder.mutateAsync({
         addressId: createdAddress.id,
         paymentMethod: toApiPaymentMethod(paymentMethod),
         orderNote: address.orderNote || null,
-        orderType: "ReadyStock",
+        orderType: isPreOrder ? "PreOrder" : hasPrescriptionItems ? "Prescription" : "ReadyStock",
         selectedCartItemIds: items.map((item) => item.id),
+        promoCode: appliedPromo?.promoCode ?? undefined,
+        prescription: undefined, // Don't use old single-prescription payload
+        prescriptions: prescriptionsArray.length > 0 ? prescriptionsArray : undefined,
       });
 
       queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -157,15 +280,18 @@ export function useCheckoutPage() {
       });
       setOrderItemImages(orderForState.id, variantToImage);
       setOrderShippingAddress(orderForState.id, shippingAddr);
-      const prescriptionsByCartItem = getCartItemPrescriptions(
-        items.map((i) => ({ id: i.id, productVariantId: i.productVariantId }))
-      );
-      const prescriptionsByVariant: Record<string, PrescriptionData> = {};
-      items.forEach((cartItem) => {
-        const prescription = prescriptionsByCartItem[cartItem.id];
-        if (prescription) prescriptionsByVariant[cartItem.productVariantId] = prescription;
+      
+      // Map prescriptions from cart items to order items
+      // Important: items array is in same order as orderForState.items after creation
+      const prescriptionsByOrderItem: Record<string, PrescriptionData> = {};
+      items.forEach((cartItem, index) => {
+        const orderItem = orderForState.items[index];
+        const prescription = itemPrescriptions[cartItem.id];
+        if (orderItem && prescription) {
+          prescriptionsByOrderItem[orderItem.id] = prescription;
+        }
       });
-      setOrderPrescriptions(orderForState.id, prescriptionsByVariant);
+      setOrderPrescriptions(orderForState.id, prescriptionsByOrderItem);
       const orderItemsWithImage = orderForState.items.map((oItem) => ({
         ...oItem,
         imageUrl: variantToImage[oItem.productVariantId] ?? undefined,
@@ -185,26 +311,32 @@ export function useCheckoutPage() {
     }
   };
 
-  const itemPrescriptions = useMemo(
-    () =>
-      getCartItemPrescriptions(
-        items.map((i) => ({ id: i.id, productVariantId: i.productVariantId }))
-      ),
-    [items],
-  );
-
   return {
     items,
     totalAmount,
+    finalAmount,
+    discountAmount,
+    appliedPromo,
     isEmptyCart,
     itemPrescriptions,
     cartLoading,
+    savedAddresses,
+    defaultAddress,
     address,
     setAddress,
     addressSearch,
     setAddressSearch,
     paymentMethod,
     setPaymentMethod,
+    activePromotions,
+    privatePromoInput,
+    setPrivatePromoInput,
+    setAsDefault,
+    setSetAsDefault,
+    handleApplyActivePromo,
+    handleApplyPrivatePromo,
+    handleRemovePromo,
+    isApplyingPromo: validatePromotion.isPending,
     submitting,
     snackbar,
     setSnackbar,

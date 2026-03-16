@@ -2,6 +2,8 @@
  * Types for Customer Orders API: POST/GET /api/me/orders, GET /api/me/orders/:id
  */
 
+import type { ShipmentInfoDto, StaffOrderPrescriptionDto } from "./staffOrders";
+
 /** Order type: use values from GET /api/lookups (orderType array) */
 export type OrderTypeLookup = "ReadyStock" | "PreOrder" | "Prescription";
 
@@ -17,6 +19,33 @@ export interface CreateOrderPayload {
   orderType?: OrderTypeLookup;
   /** IDs of cart items to checkout (matches CartItemDto.id) */
   selectedCartItemIds: string[];
+  /** Optional promo code (validated via POST /api/promotions/validate) */
+  promoCode?: string | null;
+  /** Deprecated: Use prescriptions array instead */
+  prescription?: PrescriptionInputDto | null;
+  /** Array of prescriptions linked to specific cart items */
+  prescriptions?: OrderItemPrescriptionPayload[];
+}
+
+/** Single prescription linked to a cart item in POST /api/me/orders */
+export interface OrderItemPrescriptionPayload {
+  cartItemId: string;
+  prescription: PrescriptionInputDto;
+}
+
+/** Prescription request shape for POST /api/me/orders (PascalCase for API) */
+export interface PrescriptionInputDto {
+  Details: PrescriptionDetailInputDto[];
+}
+
+/** One eye detail for prescription (PascalCase for API). Eye: 1 = Left, 2 = Right. */
+export interface PrescriptionDetailInputDto {
+  Eye: 1 | 2;
+  SPH?: number | null;
+  CYL?: number | null;
+  AXIS?: number | null;
+  PD?: number | null;
+  ADD?: number | null;
 }
 
 /** Line item in order (from API response) */
@@ -69,6 +98,8 @@ export interface MyOrderSummaryDto {
   finalAmount: number;
   itemCount: number;
   createdAt: string;
+  prescriptionStatus?: string | null;
+  prescriptions?: StaffOrderPrescriptionDto[];
 }
 
 /** Paged response for GET /api/me/orders */
@@ -144,8 +175,8 @@ export interface CustomerOrderDetailDto {
   shippingAddress?: string | OrderShippingAddressShape;
   trackingNumber?: string;
   carrier?: string;
-  prescription?: unknown;
-  shipment?: unknown;
+  prescription?: StaffOrderPrescriptionDto | null;
+  shipment?: ShipmentInfoDto | null;
   payment: CustomerOrderPaymentDto | null;
   statusHistories: CustomerOrderStatusHistoryDto[];
   items: CustomerOrderItemDto[];

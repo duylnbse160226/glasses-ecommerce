@@ -4,7 +4,10 @@ using Application.Addresses.DTOs;
 using Application.AfterSales.DTOs;
 using Application.Carts.DTOs;
 using Application.Categories.DTOs;
+using Application.FeatureToggles.DTOs;
 using Application.Orders.DTOs;
+using Application.Policies.DTOs;
+using Application.Prescriptions.DTOs;
 using Application.Products.DTOs;
 using Application.Profiles.DTOs;
 using Application.Promotions.DTOs;
@@ -84,6 +87,7 @@ public sealed class MappingProfiles : Profile
                 s.ProductVariant != null && s.ProductVariant.Stock != null ? s.ProductVariant.Stock.QuantityAvailable : 0))
             .ForMember(d => d.IsInStock, o => o.MapFrom(s =>
                 s.ProductVariant != null && s.ProductVariant.Stock != null && s.ProductVariant.Stock.QuantityAvailable > 0))
+            .ForMember(d => d.IsPreOrder, o => o.MapFrom(s => s.ProductVariant != null && s.ProductVariant.IsPreOrder))
             .ForMember(d => d.ProductId, o => o.MapFrom(s => s.ProductVariant != null ? s.ProductVariant.ProductId : Guid.Empty))
             .ForMember(d => d.ProductName, o => o.MapFrom(s => s.ProductVariant != null && s.ProductVariant.Product != null ? s.ProductVariant.Product.ProductName : null))
             .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
@@ -114,6 +118,7 @@ public sealed class MappingProfiles : Profile
 
         // Order mappings
         CreateMap<Order, StaffOrderListDto>()
+            .ForMember(d => d.OrderNumber, o => o.MapFrom(s => "ORD-" + s.Id.ToString().Substring(0, 8).ToUpper()))
             .ForMember(d => d.OrderSource, o => o.MapFrom(s => s.OrderSource.ToString()))
             .ForMember(d => d.OrderType, o => o.MapFrom(s => s.OrderType.ToString()))
             .ForMember(d => d.OrderStatus, o => o.MapFrom(s => s.OrderStatus.ToString()))
@@ -121,9 +126,19 @@ public sealed class MappingProfiles : Profile
                 s.TotalAmount + s.ShippingFee - s.PromoUsageLogs.Sum(p => p.DiscountApplied)))
             .ForMember(d => d.CustomerName, o => o.MapFrom(s => s.Address != null ? s.Address.RecipientName : s.WalkInCustomerName))
             .ForMember(d => d.CustomerPhone, o => o.MapFrom(s => s.Address != null ? s.Address.RecipientPhone : s.WalkInCustomerPhone))
+            .ForMember(d => d.CustomerEmail, o => o.MapFrom(s => s.User != null ? s.User.Email : null))
+            .ForMember(d => d.ShippingAddress, o => o.MapFrom(s =>
+                s.Address != null ? $"{s.Address.Venue}, {s.Address.Ward}, {s.Address.District}, {s.Address.City}" : null))
             .ForMember(d => d.SalesStaffName, o => o.MapFrom(s =>
                 s.SalesStaff != null ? s.SalesStaff.DisplayName : null))
-            .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count));
+            .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count))
+            .ForMember(d => d.ExpectedStockDate, o => o.Ignore())
+            .ForMember(d => d.PrescriptionStatus, o => o.MapFrom(s => s.Prescriptions.Any() ? "lens_ordered" : null))
+            .ForMember(d => d.Prescriptions, o => o.MapFrom(s => s.Prescriptions))
+            .ForMember(d => d.ShipmentId, o => o.Ignore())
+            .ForMember(d => d.TrackingNumber, o => o.Ignore())
+            .ForMember(d => d.Carrier, o => o.Ignore())
+            .ForMember(d => d.Items, o => o.Ignore());
 
         CreateMap<Order, StaffOrderDto>()
             .ForMember(d => d.OrderSource, o => o.MapFrom(s => s.OrderSource.ToString()))
@@ -144,7 +159,7 @@ public sealed class MappingProfiles : Profile
                 s.SalesStaff != null ? s.SalesStaff.DisplayName : null))
             .ForMember(d => d.Items, o => o.MapFrom(s => s.OrderItems))
             .ForMember(d => d.Payment, o => o.MapFrom(s => s.Payments.FirstOrDefault()))
-            .ForMember(d => d.Prescription, o => o.MapFrom(s => s.Prescription))
+            .ForMember(d => d.Prescriptions, o => o.MapFrom(s => s.Prescriptions))
             .ForMember(d => d.Shipment, o => o.MapFrom(s => s.ShipmentInfo))
             .ForMember(d => d.StatusHistories, o => o.MapFrom(s =>
                 s.StatusHistories.OrderBy(h => h.CreatedAt)));
@@ -158,6 +173,7 @@ public sealed class MappingProfiles : Profile
                 s.ProductVariant != null && s.ProductVariant.Product != null
                     ? s.ProductVariant.Product.ProductName : null))
             .ForMember(d => d.TotalPrice, o => o.MapFrom(s => s.Quantity * s.UnitPrice))
+            .ForMember(d => d.PrescriptionId, o => o.MapFrom(s => s.PrescriptionId))
             .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
                 s.ProductVariant != null
                     ? (s.ProductVariant.Images
@@ -206,7 +222,7 @@ public sealed class MappingProfiles : Profile
             .ForMember(d => d.ShippingAddress, o => o.MapFrom(s => s.Address))
             .ForMember(d => d.Items, o => o.MapFrom(s => s.OrderItems))
             .ForMember(d => d.Payment, o => o.MapFrom(s => s.Payments.FirstOrDefault()))
-            .ForMember(d => d.Prescription, o => o.MapFrom(s => s.Prescription))
+            .ForMember(d => d.Prescriptions, o => o.MapFrom(s => s.Prescriptions))
             .ForMember(d => d.Shipment, o => o.MapFrom(s => s.ShipmentInfo))
             .ForMember(d => d.StatusHistories, o => o.MapFrom(s =>
                 s.StatusHistories.OrderBy(h => h.CreatedAt)));
@@ -235,7 +251,9 @@ public sealed class MappingProfiles : Profile
                                     .FirstOrDefault()
                                 : null))
                         : null
-                ).FirstOrDefault()));
+                ).FirstOrDefault()))
+            .ForMember(d => d.PrescriptionStatus, o => o.MapFrom(s => s.Prescriptions.Any() ? "lens_ordered" : null))
+            .ForMember(d => d.Prescriptions, o => o.MapFrom(s => s.Prescriptions));
 
         // Inventory transaction mappings
         CreateMap<InventoryTransaction, Application.Inventory.DTOs.InventoryTransactionDto>()
@@ -290,5 +308,43 @@ public sealed class MappingProfiles : Profile
             .ForMember(d => d.UsedCount, o => o.MapFrom(s => s.UsageLogs.Count));
 
         CreateMap<Promotion, ActivePromotionDto>();
+
+        //=== POLICIES ===
+        CreateMap<PolicyConfiguration, PolicyConfigurationDto>();
+        CreateMap<PolicyConfiguration, ActivePolicyDto>();
+
+        //=== FEATURE TOGGLES ===
+        CreateMap<FeatureToggle, FeatureToggleDto>()
+            .ForMember(d => d.IsEffectivelyActive, o => o.MapFrom(s =>
+                s.IsEnabled
+                && (s.EffectiveFrom == null || s.EffectiveFrom <= DateTime.UtcNow)
+                && (s.EffectiveTo == null || s.EffectiveTo > DateTime.UtcNow)));
+
+        //=== PRESCRIPTIONS ===
+        CreateMap<Prescription, PrescriptionListItemDto>()
+            .ForMember(d => d.OrderType, o => o.MapFrom(s => s.Order.OrderType.ToString()))
+            .ForMember(d => d.DetailCount, o => o.MapFrom(s => s.Details.Count));
+
+        CreateMap<Prescription, MyPrescriptionDto>()
+            .ForMember(d => d.OrderType, o => o.MapFrom(s => s.Order.OrderType.ToString()));
+
+        CreateMap<Prescription, StaffPrescriptionListDto>()
+            .ForMember(d => d.OrderType, o => o.MapFrom(s => s.Order.OrderType.ToString()))
+            .ForMember(d => d.OrderStatus, o => o.MapFrom(s => s.Order.OrderStatus.ToString()))
+            .ForMember(d => d.CustomerName, o => o.MapFrom(s =>
+                s.Order.Address != null ? s.Order.Address.RecipientName : s.Order.WalkInCustomerName))
+            .ForMember(d => d.CustomerPhone, o => o.MapFrom(s =>
+                s.Order.Address != null ? s.Order.Address.RecipientPhone : s.Order.WalkInCustomerPhone))
+            .ForMember(d => d.DetailCount, o => o.MapFrom(s => s.Details.Count));
+
+        CreateMap<Prescription, StaffPrescriptionDto>()
+            .ForMember(d => d.OrderType, o => o.MapFrom(s => s.Order.OrderType.ToString()))
+            .ForMember(d => d.OrderStatus, o => o.MapFrom(s => s.Order.OrderStatus.ToString()))
+            .ForMember(d => d.CustomerName, o => o.MapFrom(s =>
+                s.Order.Address != null ? s.Order.Address.RecipientName : s.Order.WalkInCustomerName))
+            .ForMember(d => d.CustomerPhone, o => o.MapFrom(s =>
+                s.Order.Address != null ? s.Order.Address.RecipientPhone : s.Order.WalkInCustomerPhone))
+            .ForMember(d => d.VerifiedByName, o => o.MapFrom(s =>
+                s.Verifier != null ? s.Verifier.DisplayName : null));
     }
 }

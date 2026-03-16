@@ -29,6 +29,7 @@ function CartItemRow({
     onToggle,
     onIncrease,
     onDecrease,
+    onRemove,
     formatMoney: fmt,
 }: {
     item: CartItemDto;
@@ -37,6 +38,7 @@ function CartItemRow({
     onToggle: () => void;
     onIncrease: () => void;
     onDecrease: () => void;
+    onRemove?: () => void;
     formatMoney: (n: number) => string;
 }) {
     return (
@@ -44,72 +46,160 @@ function CartItemRow({
             sx={{
                 display: "flex",
                 gap: 2,
-                alignItems: "flex-start",
-                py: 2,
+                alignItems: "center",
+                py: 1.75,
+                px: 1,
+                borderBottom: "1px solid #F1F1F1",
+                transition: "background-color 180ms ease",
+                "&:last-of-type": {
+                    borderBottom: "none",
+                },
+                "&:hover": {
+                    bgcolor: "#FAFAFA",
+                },
             }}
         >
-            <Checkbox checked={selected} onChange={onToggle} />
+            <Checkbox checked={selected} onChange={onToggle} color="default" />
             <Box
-                component="img"
-                src={item.productImageUrl ?? ""}
                 sx={{
-                    width: 120,
-                    height: 90,
-                    objectFit: "cover",
-                    bgcolor: "#f3f4f6",
-                    borderRadius: 2,
+                    width: 80,
+                    height: 80,
+                    borderRadius: 3,
+                    bgcolor: "#F7F7F7",
+                    overflow: "hidden",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                 }}
-            />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography fontWeight={800}>{item.productName}</Typography>
-                {prescription && (
-                    <Typography
-                        component="span"
-                        fontSize={12}
-                        fontWeight={700}
-                        color="primary"
-                        sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mt: 0.5 }}
-                    >
-                        Prescription
-                    </Typography>
+            >
+                {item.productImageUrl && (
+                    <Box
+                        component="img"
+                        src={item.productImageUrl}
+                        alt={item.productName}
+                        sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                        }}
+                    />
                 )}
-                <Typography fontSize={14} fontWeight={700} mt={0.5}>
-                    {fmt(item.price)}
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                    sx={{
+                        fontWeight: 600,
+                        fontSize: 14,
+                        color: "#171717",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                    }}
+                >
+                    {item.productName}
+                </Typography>
+                <Typography
+                    sx={{
+                        mt: 0.25,
+                        fontSize: 13,
+                        color: "#8A8A8A",
+                    }}
+                >
+                    Unit price · {fmt(item.price)}
                 </Typography>
                 {prescription && (
                     <PrescriptionDisplay prescription={prescription} variant="inline" />
                 )}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-                    <IconButton
+            </Box>
+            {/* quantity pill */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    borderRadius: 999,
+                    border: "1px solid #ECECEC",
+                    height: 36,
+                    px: 0.5,
+                    gap: 0.5,
+                    flexShrink: 0,
+                }}
+            >
+                <IconButton
+                    size="small"
+                    onClick={onDecrease}
+                    sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "999px",
+                        color: "#171717",
+                        "&:hover": { bgcolor: "#FAFAFA" },
+                    }}
+                >
+                    <RemoveIcon fontSize="small" />
+                </IconButton>
+                <Typography
+                    sx={{
+                        minWidth: 24,
+                        textAlign: "center",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#171717",
+                    }}
+                >
+                    {item.quantity}
+                </Typography>
+                <IconButton
+                    size="small"
+                    onClick={onIncrease}
+                    sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "999px",
+                        color: "#171717",
+                        "&:hover": { bgcolor: "#FAFAFA" },
+                    }}
+                >
+                    <AddIcon fontSize="small" />
+                </IconButton>
+            </Box>
+            {/* line total + remove */}
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    gap: 0.5,
+                    flexShrink: 0,
+                    minWidth: 80,
+                }}
+            >
+                <Typography
+                    sx={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#171717",
+                    }}
+                >
+                    {fmt(item.subtotal ?? item.price * item.quantity)}
+                </Typography>
+                {onRemove && (
+                    <Button
+                        onClick={onRemove}
                         size="small"
-                        onClick={onDecrease}
+                        variant="text"
                         sx={{
-                            border: "1px solid rgba(17,24,39,0.15)",
-                            width: 28,
-                            height: 28,
+                            p: 0,
+                            minWidth: "auto",
+                            fontSize: 11,
+                            textTransform: "none",
+                            color: "#8A8A8A",
+                            "&:hover": { color: "#B68C5A", backgroundColor: "transparent" },
                         }}
                     >
-                        <RemoveIcon fontSize="small" />
-                    </IconButton>
-                    <Typography
-                        fontSize={14}
-                        fontWeight={700}
-                        sx={{ minWidth: 24, textAlign: "center" }}
-                    >
-                        {item.quantity}
-                    </Typography>
-                    <IconButton
-                        size="small"
-                        onClick={onIncrease}
-                        sx={{
-                            border: "1px solid rgba(17,24,39,0.15)",
-                            width: 28,
-                            height: 28,
-                        }}
-                    >
-                        <AddIcon fontSize="small" />
-                    </IconButton>
-                </Box>
+                        Remove
+                    </Button>
+                )}
             </Box>
         </Box>
     );
@@ -122,7 +212,7 @@ export default function CartPage() {
     const items = cart?.items ?? [];
     const itemIds = useMemo(() => items.map((i) => i.id), [items]);
 
-    /** Split items: ones with prescription (from prescriptionCache) are prescription orders, others are standard orders. */
+    /** Split items: pre-order takes priority, then prescription, then standard. */
     const itemPrescriptions = useMemo(
         () => getCartItemPrescriptions(items),
         [items],
@@ -131,13 +221,39 @@ export default function CartPage() {
         () => new Set(Object.keys(itemPrescriptions)),
         [itemPrescriptions],
     );
-    const normalItems = useMemo(
-        () => items.filter((i) => !prescriptionItemIds.has(i.id)),
+    
+    // Pre-order items (regardless of whether they have prescriptions)
+    const preOrderItemIds = useMemo(
+        () => new Set(items.filter((i) => i.isPreOrder).map((i) => i.id)),
+        [items],
+    );
+    
+    // Prescription items (only if NOT pre-order)
+    const prescriptionOnlyItemIds = useMemo(
+        () => new Set(
+            items
+                .filter((i) => !i.isPreOrder && prescriptionItemIds.has(i.id))
+                .map((i) => i.id)
+        ),
         [items, prescriptionItemIds],
     );
+    
+    // Normal items are neither pre-order nor have prescriptions
+    const normalItems = useMemo(
+        () => items.filter((i) => !preOrderItemIds.has(i.id) && !prescriptionOnlyItemIds.has(i.id)),
+        [items, preOrderItemIds, prescriptionOnlyItemIds],
+    );
+    
+    // Prescription items (only non-pre-order items with prescriptions)
     const prescriptionItems = useMemo(
-        () => items.filter((i) => prescriptionItemIds.has(i.id)),
-        [items, prescriptionItemIds],
+        () => items.filter((i) => prescriptionOnlyItemIds.has(i.id)),
+        [items, prescriptionOnlyItemIds],
+    );
+    
+    // Pre-order items (includes pre-order items even if they have prescriptions)
+    const preOrderItems = useMemo(
+        () => items.filter((i) => preOrderItemIds.has(i.id)),
+        [items, preOrderItemIds],
     );
 
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(itemIds));
@@ -197,6 +313,25 @@ export default function CartPage() {
             });
         }
     };
+    const allPreOrderSelected =
+        preOrderItems.length > 0 &&
+        preOrderItems.every((i) => selectedIds.has(i.id));
+    const handleSelectAllPreOrder = () => {
+        const preOrderIds = preOrderItems.map((i) => i.id);
+        if (allPreOrderSelected) {
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                preOrderIds.forEach((id) => next.delete(id));
+                return next;
+            });
+        } else {
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                preOrderIds.forEach((id) => next.add(id));
+                return next;
+            });
+        }
+    };
     const handleToggleItem = (id: string) => {
         setSelectedIds((prev) => {
             const next = new Set(prev);
@@ -236,9 +371,30 @@ export default function CartPage() {
             }}
         >
             {/* ===== PAGE TITLE ===== */}
-            <Typography fontWeight={900} fontSize={26} mb={3}>
-                Shopping Cart
-            </Typography>
+            <Box sx={{ mb: 3 }}>
+                <Typography
+                    sx={{
+                        fontWeight: 900,
+                        fontSize: 30,
+                        color: "#171717",
+                        lineHeight: 1.1,
+                    }}
+                >
+                    Shopping cart
+                </Typography>
+                <Typography sx={{ fontSize: 14, color: "#6B6B6B", mt: 0.5 }}>
+                    Review your pieces before checkout.
+                </Typography>
+                <Box
+                    sx={{
+                        mt: 1.5,
+                        width: 72,
+                        height: 2,
+                        borderRadius: 999,
+                        bgcolor: "rgba(182,140,90,0.35)",
+                    }}
+                />
+            </Box>
 
             {/* ===== LOADING ===== */}
             {isLoading ? (
@@ -306,9 +462,10 @@ export default function CartPage() {
                         <Paper
                             elevation={0}
                             sx={{
-                                border: "1px solid rgba(17,24,39,0.1)",
-                                borderRadius: 3,
+                                border: "1px solid #ECECEC",
+                                borderRadius: 2.5,
                                 p: 3,
+                                boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
                             }}
                         >
                             {/* --- Standard orders --- */}
@@ -317,7 +474,7 @@ export default function CartPage() {
                                     <Box
                                         sx={{
                                             pb: 2,
-                                            borderBottom: "1px solid rgba(17,24,39,0.08)",
+                                            borderBottom: "1px solid #F1F1F1",
                                         }}
                                     >
                                         <Typography
@@ -331,6 +488,7 @@ export default function CartPage() {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                    color="default"
                                                     checked={allNormalSelected}
                                                     indeterminate={
                                                         normalItems.some((i) =>
@@ -357,6 +515,7 @@ export default function CartPage() {
                                             onDecrease={() =>
                                                 handleDecrease(item.id, item.quantity)
                                             }
+                                            onRemove={() => removeItem(item.id)}
                                             formatMoney={formatMoney}
                                         />
                                     ))}
@@ -372,7 +531,7 @@ export default function CartPage() {
                                     <Box
                                         sx={{
                                             pb: 2,
-                                            borderBottom: "1px solid rgba(17,24,39,0.08)",
+                                            borderBottom: "1px solid #F1F1F1",
                                         }}
                                     >
                                         <Typography
@@ -386,6 +545,7 @@ export default function CartPage() {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                    color="default"
                                                     checked={allPrescriptionSelected}
                                                     indeterminate={
                                                         prescriptionItems.some((i) =>
@@ -413,6 +573,64 @@ export default function CartPage() {
                                             onDecrease={() =>
                                                 handleDecrease(item.id, item.quantity)
                                             }
+                                            onRemove={() => removeItem(item.id)}
+                                            formatMoney={formatMoney}
+                                        />
+                                    ))}
+                                </>
+                            )}
+
+                            {/* --- Pre-order orders --- */}
+                            {preOrderItems.length > 0 && (
+                                <>
+                                    {(normalItems.length > 0 || prescriptionItems.length > 0) && (
+                                        <Divider sx={{ my: 3 }} />
+                                    )}
+                                    <Box
+                                        sx={{
+                                            pb: 2,
+                                            borderBottom: "1px solid rgba(17,24,39,0.08)",
+                                        }}
+                                    >
+                                        <Typography
+                                            fontWeight={800}
+                                            fontSize={16}
+                                            color="text.secondary"
+                                            sx={{ mb: 1 }}
+                                        >
+                                            Pre-Order orders
+                                        </Typography>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={allPreOrderSelected}
+                                                    indeterminate={
+                                                        preOrderItems.some((i) =>
+                                                            selectedIds.has(i.id),
+                                                        ) &&
+                                                        !allPreOrderSelected
+                                                    }
+                                                    onChange={handleSelectAllPreOrder}
+                                                />
+                                            }
+                                            label="Select all pre-order orders"
+                                            sx={{ fontWeight: 600 }}
+                                        />
+                                    </Box>
+                                    {preOrderItems.map((item) => (
+                                        <CartItemRow
+                                            key={item.id}
+                                            item={item}
+                                            selected={selectedIds.has(item.id)}
+                                            prescription={itemPrescriptions[item.id]}
+                                            onToggle={() => handleToggleItem(item.id)}
+                                            onIncrease={() =>
+                                                handleIncrease(item.id, item.quantity)
+                                            }
+                                            onDecrease={() =>
+                                                handleDecrease(item.id, item.quantity)
+                                            }
+                                            onRemove={() => removeItem(item.id)}
                                             formatMoney={formatMoney}
                                         />
                                     ))}
@@ -423,73 +641,148 @@ export default function CartPage() {
 
                     {/* ===== RIGHT: SUMMARY ===== */}
                     <Grid item xs={12} md={4}>
-                        <Paper
-                            elevation={0}
+                        <Box
                             sx={{
-                                border: "1px solid rgba(17,24,39,0.1)",
-                                borderRadius: 3,
-                                p: 3,
+                                position: { md: "sticky" },
+                                top: { md: 96 },
                             }}
                         >
-                            <Typography fontWeight={900} fontSize={18}>
-                                Order Summary
-                            </Typography>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <Box
+                            <Paper
+                                elevation={0}
                                 sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    mb: 1,
+                                    border: "1px solid #ECECEC",
+                                    borderRadius: 2.5,
+                                    p: 3,
+                                    boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
+                                    bgcolor: "#FFFFFF",
                                 }}
                             >
-                                <Typography fontSize={14}>Selected</Typography>
-                                <Typography fontWeight={700}>
-                                    {selectedItems.length} item(s) · {totalQuantity} pcs
-                                </Typography>
-                            </Box>
+                                <Box
+                                    sx={{
+                                        pb: 1.5,
+                                        mb: 1.5,
+                                        borderBottom: "1px solid #F1F1F1",
+                                    }}
+                                >
+                                    <Typography
+                                        sx={{
+                                            fontWeight: 800,
+                                            fontSize: 17,
+                                            color: "#171717",
+                                        }}
+                                    >
+                                        Order summary
+                                    </Typography>
+                                </Box>
 
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    mb: 2,
-                                }}
-                            >
-                                <Typography fontSize={14}>Subtotal</Typography>
-                                <Typography fontWeight={700}>
-                                    {formatMoney(totalAmount)}
-                                </Typography>
-                            </Box>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        mb: 1,
+                                    }}
+                                >
+                                    <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+                                        Selected
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            color: "#171717",
+                                        }}
+                                    >
+                                        {selectedItems.length} item(s) · {totalQuantity} pcs
+                                    </Typography>
+                                </Box>
 
-                            <Divider sx={{ my: 2 }} />
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        mb: 1.5,
+                                    }}
+                                >
+                                    <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+                                        Subtotal
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            color: "#171717",
+                                        }}
+                                    >
+                                        {formatMoney(totalAmount)}
+                                    </Typography>
+                                </Box>
 
-                            <Typography
-                                fontWeight={900}
-                                fontSize={20}
-                                mb={2}
-                            >
-                                Total: {formatMoney(totalAmount)}
-                            </Typography>
+                                <Divider sx={{ my: 1.5, borderColor: "#F1F1F1" }} />
 
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                disabled={selectedItems.length === 0}
-                                onClick={handleProceedToCheckout}
-                                sx={{
-                                    bgcolor: "#111827",
-                                    fontWeight: 900,
-                                    py: 1.2,
-                                    "&:hover": {
-                                        bgcolor: "#0b1220",
-                                    },
-                                }}
-                            >
-                                Proceed to checkout
-                            </Button>
-                        </Paper>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        mb: 2,
+                                    }}
+                                >
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                        <Box
+                                            sx={{
+                                                width: 6,
+                                                height: 6,
+                                                borderRadius: "50%",
+                                                bgcolor: "#B68C5A",
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{ fontSize: 14, color: "#6B6B6B" }}
+                                        >
+                                            Total
+                                        </Typography>
+                                    </Box>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 20,
+                                            fontWeight: 800,
+                                            color: "#171717",
+                                        }}
+                                    >
+                                        {formatMoney(totalAmount)}
+                                    </Typography>
+                                </Box>
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    disabled={selectedItems.length === 0}
+                                    onClick={handleProceedToCheckout}
+                                    sx={{
+                                        mt: 0.5,
+                                        height: 48,
+                                        borderRadius: 1.75,
+                                        bgcolor: "#111827",
+                                        fontWeight: 800,
+                                        fontSize: 13,
+                                        letterSpacing: "0.12em",
+                                        textTransform: "uppercase",
+                                        boxShadow: "0 8px 22px rgba(0,0,0,0.16)",
+                                        "&:hover": {
+                                            bgcolor: "#151826",
+                                            boxShadow: "0 10px 26px rgba(0,0,0,0.18)",
+                                            border: "1px solid #B68C5A",
+                                        },
+                                        "&:focus-visible": {
+                                            outline: "2px solid rgba(182,140,90,0.5)",
+                                            outlineOffset: 3,
+                                        },
+                                    }}
+                                >
+                                    Proceed to checkout
+                                </Button>
+                            </Paper>
+                        </Box>
                     </Grid>
                 </Grid>
             )}

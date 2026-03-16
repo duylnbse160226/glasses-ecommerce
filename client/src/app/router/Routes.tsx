@@ -29,7 +29,7 @@ import RequireRole from "./RequireRole";
 import SalesLayout from "../../features/Sales/SalesLayout";
 import { OverviewScreen as SalesOverviewScreen } from "../../features/Sales/screens/OverviewScreen";
 import { OrdersScreen as SalesOrdersScreen } from "../../features/Sales/screens/OrdersScreen";
-import { OrderDetailScreen as SalesOrderDetailScreen } from "../../features/Sales/screens/OrderDetailScreen";
+import { TicketsScreen as SalesTicketsScreen } from "../../features/Sales/screens/TicketsScreen";
 import OperationsLayout from "../../features/Operations/OperationsLayout";
 import {
   PackScreen,
@@ -37,17 +37,37 @@ import {
   TrackingScreen,
   PreOrderScreen,
   PrescriptionScreen,
+  StandardScreen,
+  OrderTypeAllScreen,
+  InboundInventoryScreen,
+  OutboundInventoryScreen,
+  InventoryTransactionsScreen,
+  StockInventoryScreen,
+  OperationsAfterSalesTicketsScreen,
 } from "../../features/Operations/screens";
+import ManagerLayout from "../../features/Manager/ManagerLayout";
 import ManagerDashboard from "../../features/Manager/ManagerDashboard";
+import ProductsList from "../../features/Manager/ProductsList";
+import ManagerProductEdit from "../../features/Manager/ProductDetail";
+import {
+  InboundRecordsScreen,
+  InboundRecordDetailScreen,
+  PromotionsScreen,
+  PreOrderSummaryScreen,
+} from "../../features/Manager/screens";
+import { ManagerProductCreateWizardScreen } from "../../features/Manager/screens";
 import AdminDashboard from "../../features/Admin/AdminDashboard";
+import AdminLayout from "../../features/Admin/AdminLayout";
 import RoleManagement from "../../features/Admin/RoleManagement";
+import AdminPolicies from "../../features/Admin/AdminPolicies";
+import ChatbotWidget from "../../features/chatbot/ChatbotWidget";
 export const router = createBrowserRouter([
   // ======================
   // HOME (NO NAVBAR)
   // ======================
   {
     path: "/",
-    element: <HomePage />,
+    element: <><HomePage /><ChatbotWidget /></>,
   },
 
   // ======================
@@ -89,7 +109,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <SalesOverviewScreen /> },
               { path: "orders", element: <SalesOrdersScreen /> },
-              { path: "orders/:id", element: <SalesOrderDetailScreen /> },
+              { path: "tickets", element: <SalesTicketsScreen /> },
             ],
           },
         ],
@@ -105,25 +125,49 @@ export const router = createBrowserRouter([
               { path: "pack", element: <PackScreen /> },
               { path: "create-shipment", element: <CreateShipmentScreen /> },
               { path: "tracking", element: <TrackingScreen /> },
+              { path: "order-types", element: <OrderTypeAllScreen /> },
+              { path: "standard", element: <StandardScreen /> },
               { path: "pre-order", element: <PreOrderScreen /> },
               { path: "prescription", element: <PrescriptionScreen /> },
+              { path: "tickets", element: <OperationsAfterSalesTicketsScreen /> },
+              { path: "stock", element: <StockInventoryScreen /> },
+              { path: "inbound", element: <InboundInventoryScreen /> },
+              { path: "outbound", element: <OutboundInventoryScreen /> },
+              { path: "inventory-transactions", element: <InventoryTransactionsScreen /> },
             ],
           },
         ],
       },
       {
         element: <RequireRole allowedRoles={["Manager"]} />,
-        children: [{ path: "manager", element: <ManagerDashboard /> }],
+        children: [
+          {
+            path: "manager",
+            element: <ManagerLayout />,
+            children: [
+              { index: true, element: <ManagerDashboard /> },
+              { path: "products", element: <ProductsList /> },
+              { path: "products/create", element: <ManagerProductCreateWizardScreen /> },
+              { path: "products/:id", element: <ProductDetailPage /> },
+              { path: "products/:id/edit", element: <ManagerProductEdit /> },
+              { path: "inbound", element: <InboundRecordsScreen /> },
+              { path: "inbound/:id", element: <InboundRecordDetailScreen /> },
+              { path: "promotions", element: <PromotionsScreen /> },
+              { path: "preorder-summary", element: <PreOrderSummaryScreen /> },
+            ],
+          },
+        ],
       },
       {
         element: <RequireRole allowedRoles={["Admin"]} />,
         children: [
           {
             path: "admin",
-            element: <Outlet />,
+            element: <AdminLayout />,
             children: [
               { index: true, element: <AdminDashboard /> },
               { path: "roles", element: <RoleManagement /> },
+              { path: "policies", element: <AdminPolicies /> },
             ],
           },
         ],

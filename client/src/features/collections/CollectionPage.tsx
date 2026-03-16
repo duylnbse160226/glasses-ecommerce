@@ -1,9 +1,4 @@
-import {
-  Box,
-  Drawer,
-  Button,
-  CircularProgress,
-} from "@mui/material";
+import { Box, CircularProgress, Drawer, Button, Typography } from "@mui/material";
 
 import { useCollectionPage } from "./hooks/useCollectionPage";
 
@@ -52,63 +47,141 @@ export default function CollectionPage() {
         ml: "-50vw",
         mr: "-50vw",
         width: "100vw",
-        bgcolor: "#fff",
+        background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
         pt: `calc(${NAV_H}px + ${GAP_TOP}px)`,
         pb: `calc(${FOOT_H}px + ${GAP_BOTTOM}px)`,
         minHeight: `calc(100vh - ${NAV_H}px - ${FOOT_H}px)`,
-        px: { xs: 2, md: 4, lg: 6 },
+        px: { xs: 2, md: 3 },
       }}
     >
       <Box ref={topRef} />
 
+      {/* Top utility bar */}
       <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        gap={2}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          flexWrap: "wrap",
+          pb: 1.5,
+          borderBottom: "1px solid #F1F1F1",
+        }}
       >
-        <CollectionTopBar sort={sort} setSort={setSort} />
-
-        <Button
-          variant="outlined"
+        <Typography
           sx={{
-            color: "black",
-            borderColor: "black",
-            "&:hover": {
-              borderColor: "black",
-              color: "black",
-            },
-            borderRadius: 4,
+            fontSize: 14,
+            color: "#5B5B5B",
           }}
-          onClick={() => setOpenFilter(true)}
         >
-          Filter{activeFilterCount > 0 && ` (${activeFilterCount})`}
-        </Button>
+          {effectiveTotal} results
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: "wrap",
+          }}
+        >
+          <CollectionTopBar sort={sort} setSort={setSort} />
+
+          {/* Mobile filter toggle */}
+          <Button
+            variant="outlined"
+            sx={{
+              display: { xs: "flex", md: "none" },
+              height: 38,
+              borderRadius: 999,
+              px: 2,
+              borderColor: "rgba(0,0,0,0.08)",
+              color: "#121212",
+              textTransform: "none",
+              fontSize: 14,
+              fontWeight: 500,
+              bgcolor: "#FFFFFF",
+              alignItems: "center",
+              gap: 1,
+              "&:hover": {
+                borderColor: "#B68C5A",
+                bgcolor: "#FAFAFA",
+              },
+            }}
+            onClick={() => setOpenFilter(true)}
+          >
+            <Box component="span">Filter</Box>
+            {activeFilterCount > 0 && (
+              <Box
+                component="span"
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 999,
+                  bgcolor: "#F7F7F7",
+                  fontSize: 12,
+                  color: "#5B5B5B",
+                }}
+              >
+                {activeFilterCount}
+              </Box>
+            )}
+          </Button>
+        </Box>
       </Box>
 
-      <Box sx={{ mt: 3 }}>
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" py={6}>
-            <CircularProgress />
+      {/* Main two-column layout */}
+      <Box
+        sx={{
+          mt: 3,
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "320px minmax(0,1fr)" },
+          gap: { xs: 3, md: 4 },
+          alignItems: "flex-start",
+        }}
+      >
+        {/* Left: filters sidebar (desktop) */}
+        <Box sx={{ display: { xs: "none", md: "block" }, alignSelf: "flex-start" }}>
+          <FiltersSidebar
+            filters={filters}
+            setFilters={setFilters}
+            onReset={() => {
+              setFilters(defaultFilters(initialKeyword));
+            }}
+            categories={categoriesList}
+            brands={brandsList}
+            stickyTop={NAV_H + GAP_TOP + 16}
+          />
+        </Box>
+
+        {/* Right: grid + pagination */}
+        <Box>
+          <Box>
+            {isLoading ? (
+              <Box display="flex" justifyContent="center" py={6}>
+                <CircularProgress />
+              </Box>
+            ) : productsToShow.length ? (
+              <ProductGrid products={productsToShow} />
+            ) : (
+              <EmptyState />
+            )}
           </Box>
-        ) : productsToShow.length ? (
-          <ProductGrid products={productsToShow} />
-        ) : (
-          <EmptyState />
-        )}
+
+          {showPagination && (
+            <PaginationBar
+              page={Math.min(page, totalPages)}
+              totalPages={totalPages}
+              totalItems={effectiveTotal}
+              pageSize={PAGE_SIZE}
+              displayedCount={productsToShow.length}
+              onChange={handleChangePage}
+            />
+          )}
+        </Box>
       </Box>
 
-      {showPagination && (
-        <PaginationBar
-          page={Math.min(page, totalPages)}
-          totalPages={totalPages}
-          totalItems={effectiveTotal}
-          pageSize={PAGE_SIZE}
-          displayedCount={productsToShow.length}
-          onChange={handleChangePage}
-        />
-      )}
-
+      {/* Filters drawer (mobile) */}
       <Drawer
         variant="temporary"
         anchor="left"
@@ -116,6 +189,7 @@ export default function CollectionPage() {
         onClose={() => setOpenFilter(false)}
         ModalProps={{ disableScrollLock: true }}
         sx={{
+          display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
             top: `${NAV_H}px`,
             height: `calc(100vh - ${NAV_H}px)`,
