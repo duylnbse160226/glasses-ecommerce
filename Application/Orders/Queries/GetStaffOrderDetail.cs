@@ -25,9 +25,9 @@ public sealed class GetStaffOrderDetail
             Guid staffUserId = userAccessor.GetUserId();
 
             StaffOrderDto? order = await context.Orders
+                .AsNoTracking()
                 .Where(o => o.Id == request.Id && (o.CreatedBySalesStaff == staffUserId ||
-                           (o.OrderSource == OrderSource.Online &&
-                            (o.OrderStatus == OrderStatus.Pending || o.OrderStatus == OrderStatus.Confirmed || o.OrderStatus == OrderStatus.Cancelled))))
+                           o.OrderSource == OrderSource.Online))  // Sales staff can view all online orders
                 .ProjectTo<StaffOrderDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);
 

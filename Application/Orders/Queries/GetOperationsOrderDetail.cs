@@ -21,6 +21,7 @@ public sealed class GetOperationsOrderDetail
         public async Task<Result<StaffOrderDto>> Handle(Query request, CancellationToken ct)
         {
             StaffOrderDto? order = await context.Orders
+                .AsNoTracking()
                 .Where(o => o.Id == request.Id)
                 .ProjectTo<StaffOrderDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);

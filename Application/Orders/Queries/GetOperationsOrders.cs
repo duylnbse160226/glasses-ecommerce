@@ -1,5 +1,7 @@
 using Application.Core;
 using Application.Orders.DTOs;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +20,7 @@ public sealed class GetOperationsOrders
         public OrderSource? OrderSource { get; set; }
     }
 
-    internal sealed class Handler(AppDbContext context)
+    internal sealed class Handler(AppDbContext context, IMapper mapper)
         : IRequestHandler<Query, Result<PagedResult<StaffOrderListDto>>>
     {
         public async Task<Result<PagedResult<StaffOrderListDto>>> Handle(Query request, CancellationToken ct)
@@ -40,55 +42,54 @@ public sealed class GetOperationsOrders
 
             int totalCount = await query.CountAsync(ct);
 
-            // Pre-compute on the app side — DateTime.ToString("O") cannot be translated to SQL.
+            // Pre-compute expected stock date on the app side — cannot be translated to SQL.
             string expectedStockDate = DateTime.UtcNow.AddDays(14).ToString("O");
 
-            // Project directly to DTO in SQL — no full entity load, no cartesian-product joins.
-            // Prescriptions.Any() → EXISTS subquery (much cheaper than Include + load all rows).
-            List<StaffOrderListDto> mappedOrders = await query
+            // Load with Include chains before ProjectTo to ensure all navigation properties are loaded.
+            List<Order> orders = await query
+                .Include(o => o.PromoUsageLogs)
+                .Include(o => o.Address)
+                .Include(o => o.User)
+                .Include(o => o.SalesStaff)
+                .Include(o => o.OrderItems)
+                  .ThenInclude(oi => oi.ProductVariant)
+                  .ThenInclude(pv => pv.Product)
+                .Include(o => o.Prescriptions)
+                .Include(o => o.ShipmentInfo)
+                .AsSplitQuery()
                 .OrderByDescending(o => o.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .Select(o => new StaffOrderListDto
-                {
-                    Id = o.Id,
-                    OrderNumber = "ORD-" + o.Id.ToString().Substring(0, 8).ToUpper(),
-                    OrderSource = o.OrderSource.ToString(),
-                    OrderType = o.OrderType.ToString(),
-                    OrderStatus = o.OrderStatus.ToString(),
-                    TotalAmount = o.TotalAmount,
-                    FinalAmount = o.TotalAmount + o.ShippingFee - o.PromoUsageLogs.Sum(p => p.DiscountApplied),
-                    WalkInCustomerName = o.WalkInCustomerName,
-                    WalkInCustomerPhone = o.WalkInCustomerPhone,
-                    CustomerName = o.Address != null ? o.Address.RecipientName : o.WalkInCustomerName,
-                    CustomerPhone = o.Address != null ? o.Address.RecipientPhone : o.WalkInCustomerPhone,
-                    CustomerEmail = o.User != null ? o.User.Email : null,
-                    ShippingAddress = o.Address != null
-                        ? $"{o.Address.Venue}, {o.Address.Ward}, {o.Address.District}, {o.Address.City}"
-                        : null,
-                    CreatedBySalesStaff = o.CreatedBySalesStaff,
-                    SalesStaffName = o.SalesStaff != null ? o.SalesStaff.DisplayName : null,
-                    ItemCount = o.OrderItems.Count,
-                    CreatedAt = o.CreatedAt,
-                    ExpectedStockDate = o.OrderType == OrderType.PreOrder ? expectedStockDate : null,
-                    PrescriptionStatus = o.Prescriptions.Any() ? "lens_ordered" : null,
-                    ShipmentId = o.ShipmentInfo != null ? o.ShipmentInfo.Id : (Guid?)null,
-                    TrackingNumber = o.ShipmentInfo != null ? o.ShipmentInfo.TrackingCode : null,
-                    Carrier = o.ShipmentInfo != null ? o.ShipmentInfo.CarrierName.ToString() : null,
-                    Items = o.OrderItems.Select(oi => new StaffOrderItemDto
-                    {
-                        Id = oi.Id,
-                        ProductVariantId = oi.ProductVariantId,
-                        ProductName = oi.ProductVariant != null && oi.ProductVariant.Product != null
-                            ? oi.ProductVariant.Product.ProductName
-                            : "Unknown",
-                        Sku = oi.ProductVariant != null ? oi.ProductVariant.SKU : "N/A",
-                        Quantity = oi.Quantity,
-                        Price = oi.UnitPrice,
-                        PrescriptionId = oi.PrescriptionId == null ? null : oi.PrescriptionId.Value.ToString()
-                    }).ToList()
-                })
                 .ToListAsync(ct);
+
+            // Map to DTO using AutoMapper for computed/complex fields, then post-process ignored fields.
+            List<StaffOrderListDto> mappedOrders = orders
+                .AsQueryable()
+                .ProjectTo<StaffOrderListDto>(mapper.ConfigurationProvider)
+                .ToList();
+
+            // Populate ignored fields that cannot be translated to SQL/mapping.
+            foreach (StaffOrderListDto dto in mappedOrders)
+            {
+                Order order = orders.First(o => o.Id == dto.Id);
+                dto.ExpectedStockDate = order.OrderType == OrderType.PreOrder ? expectedStockDate : null;
+                dto.PrescriptionStatus = order.Prescriptions.Any() ? "lens_ordered" : null;
+                dto.ShipmentId = order.ShipmentInfo != null ? order.ShipmentInfo.Id : null;
+                dto.TrackingNumber = order.ShipmentInfo != null ? order.ShipmentInfo.TrackingCode : null;
+                dto.Carrier = order.ShipmentInfo != null ? order.ShipmentInfo.CarrierName.ToString() : null;
+                dto.Items = order.OrderItems.Select(oi => new StaffOrderItemDto
+                {
+                    Id = oi.Id,
+                    ProductVariantId = oi.ProductVariantId,
+                    ProductName = oi.ProductVariant != null && oi.ProductVariant.Product != null
+                        ? oi.ProductVariant.Product.ProductName
+                        : "Unknown",
+                    Sku = oi.ProductVariant != null ? oi.ProductVariant.SKU : "N/A",
+                    Quantity = oi.Quantity,
+                    Price = oi.UnitPrice,
+                    PrescriptionId = oi.PrescriptionId == null ? null : oi.PrescriptionId.Value.ToString()
+                }).ToList();
+            }
 
             PagedResult<StaffOrderListDto> result = new()
             {

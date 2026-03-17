@@ -20,17 +20,28 @@ public sealed class GetStaffTicketDetail
         AppDbContext context,
         IMapper mapper) : IRequestHandler<Query, Result<TicketDetailDto>>
     {
-        public async Task<Result<TicketDetailDto>> Handle(Query request, CancellationToken ct)
+        public async Task<Result<TicketDetailDto>> Handle(Query request, CancellationToken cancellationToken)
         {
-            TicketDetailDto? dto = await context.AfterSalesTickets
+            AfterSalesTicket? ticket = await context.AfterSalesTickets
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Where(t => t.Id == request.Id)
-                .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync(ct);
+                .Include(t => t.Order)
+                .ThenInclude(o => o.OrderItems)
+                .ThenInclude(oi => oi.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                .ThenInclude(p => p.Images)
+                .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                .ThenInclude(p => p.Images)
+                .Include(t => t.Attachments)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (dto == null)
+            if (ticket == null)
                 return Result<TicketDetailDto>.Failure("Ticket not found.", 404);
 
+            TicketDetailDto dto = mapper.Map<TicketDetailDto>(ticket);
             return Result<TicketDetailDto>.Success(dto);
         }
     }

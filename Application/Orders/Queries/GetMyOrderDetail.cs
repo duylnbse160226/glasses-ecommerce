@@ -24,6 +24,7 @@ public sealed class GetMyOrderDetail
             Guid userId = userAccessor.GetUserId();
 
             CustomerOrderDto? order = await context.Orders
+                .AsNoTracking()
                 .Where(o => o.Id == request.Id && o.UserId == userId)
                 .ProjectTo<CustomerOrderDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);

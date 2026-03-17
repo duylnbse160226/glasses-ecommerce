@@ -397,6 +397,7 @@ public sealed class CreateStaffOrder
             // 14. Re-query with ProjectTo for consistent response (outside retry delegate).
             // If this fails it does NOT retry the transaction.
             StaffOrderDto result = await context.Orders
+                .AsNoTracking()
                 .Where(o => o.Id == transactionResult.Value)
                 .ProjectTo<StaffOrderDto>(mapper.ConfigurationProvider)
                 .FirstAsync(ct);

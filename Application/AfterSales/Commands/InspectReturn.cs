@@ -29,7 +29,7 @@ public sealed class InspectReturn
         {
             Guid staffId = userAccessor.GetUserId();
 
-            return await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+            Result<Guid> strategyResult = await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
                 context.ChangeTracker.Clear();
 
@@ -43,22 +43,22 @@ public sealed class InspectReturn
                     .FirstOrDefaultAsync(t => t.Id == request.TicketId, ct);
 
                 if (ticket == null)
-                    return Result<TicketDetailDto>.Failure("Ticket not found.", 404);
+                    return Result<Guid>.Failure("Ticket not found.", 404);
 
                 if (ticket.TicketStatus != AfterSalesTicketStatus.InProgress)
-                    return Result<TicketDetailDto>.Failure(
+                    return Result<Guid>.Failure(
                         $"Cannot inspect a ticket with status '{ticket.TicketStatus}'.", 400);
 
                 if (!ticket.ReceivedAt.HasValue)
-                    return Result<TicketDetailDto>.Failure(
+                    return Result<Guid>.Failure(
                         "Goods must be marked as received before inspection.", 400);
 
                 if (ticket.ResolutionType == null ||
                     ticket.ResolutionType == TicketResolutionType.RefundOnly)
-                    return Result<TicketDetailDto>.Failure(
+                    return Result<Guid>.Failure(
                         "This ticket does not require physical inspection.", 400);
 
-                // If rejected by Ops: close the ticket change status to rejected without stock changes
+                // If rejected by Ops: close the ticket, change status to Rejected without stock changes
                 if (!request.Dto.IsAccepted)
                 {
                     ticket.TicketStatus = AfterSalesTicketStatus.Rejected;
@@ -69,19 +69,11 @@ public sealed class InspectReturn
 
                     bool saved = await context.SaveChangesAsync(ct) > 0;
                     if (!saved)
-                        return Result<TicketDetailDto>.Failure("Failed to update ticket.", 500);
+                        return Result<Guid>.Failure("Failed to update ticket.", 500);
 
                     await transaction.CommitAsync(ct);
 
-                    TicketDetailDto? rejectedDto = await context.AfterSalesTickets
-                        .AsNoTracking()
-                        .Where(t => t.Id == ticket.Id)
-                        .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
-                        .FirstOrDefaultAsync(ct);
-
-                    return rejectedDto != null
-                        ? Result<TicketDetailDto>.Success(rejectedDto)
-                        : Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
+                    return Result<Guid>.Success(ticket.Id);
                 }
 
                 // Determine which order items are in scope
@@ -90,7 +82,7 @@ public sealed class InspectReturn
                     : ticket.Order.OrderItems.ToList();
 
                 if (scopedItems.Count == 0)
-                    return Result<TicketDetailDto>.Failure("No order items found for this ticket.", 400);
+                    return Result<Guid>.Failure("No order items found for this ticket.", 400);
 
                 // CASE B: ReturnAndRefund — restore stock + create Refund
                 // CASE D: WarrantyReplace  — deduct stock for replacement unit
@@ -105,7 +97,7 @@ public sealed class InspectReturn
                     foreach (OrderItem item in scopedItems)
                     {
                         if (!stockByVariant.TryGetValue(item.ProductVariantId, out Stock? stock))
-                            return Result<TicketDetailDto>.Failure(
+                            return Result<Guid>.Failure(
                                 $"Stock record not found for variant '{item.ProductVariantId}'.", 409);
 
                         if (ticket.ResolutionType == TicketResolutionType.ReturnAndRefund)
@@ -133,7 +125,7 @@ public sealed class InspectReturn
                         else // WarrantyReplace — send out a replacement unit
                         {
                             if (stock.QuantityAvailable < item.Quantity)
-                                return Result<TicketDetailDto>.Failure(
+                                return Result<Guid>.Failure(
                                     $"Insufficient stock to fulfill warranty replacement for variant '{item.ProductVariantId}'. " +
                                     $"Available: {stock.QuantityAvailable}, Required: {item.Quantity}.", 409);
 
@@ -169,7 +161,7 @@ public sealed class InspectReturn
                             .FirstOrDefaultAsync(ct);
 
                         if (payment == null)
-                            return Result<TicketDetailDto>.Failure(
+                            return Result<Guid>.Failure(
                                 "No completed payment found for this order. Cannot process refund.", 400);
 
                         decimal refundAmount = ticket.RefundAmount
@@ -180,7 +172,7 @@ public sealed class InspectReturn
                             .SumAsync(r => r.Amount, ct);
 
                         if (existingRefunds + refundAmount > payment.Amount)
-                            return Result<TicketDetailDto>.Failure(
+                            return Result<Guid>.Failure(
                                 $"Cumulative refund amount ({(existingRefunds + refundAmount):C}) exceeds original payment ({payment.Amount:C}).", 400);
 
                         context.Refunds.Add(new Refund
@@ -205,21 +197,39 @@ public sealed class InspectReturn
                 bool isSuccess = await context.SaveChangesAsync(ct) > 0;
 
                 if (!isSuccess)
-                    return Result<TicketDetailDto>.Failure("Failed to process inspection.", 500);
+                    return Result<Guid>.Failure("Failed to process inspection.", 500);
 
                 await transaction.CommitAsync(ct);
 
-                TicketDetailDto? dto = await context.AfterSalesTickets
-                    .AsNoTracking()
-                    .Where(t => t.Id == ticket.Id)
-                    .ProjectTo<TicketDetailDto>(mapper.ConfigurationProvider)
-                    .FirstOrDefaultAsync(ct);
-
-                if (dto == null)
-                    return Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
-
-                return Result<TicketDetailDto>.Success(dto);
+                return Result<Guid>.Success(ticket.Id);
             });
+
+            if (!strategyResult.IsSuccess)
+                return Result<TicketDetailDto>.Failure(strategyResult.Error!, strategyResult.Code);
+
+            // Read-back query runs outside the execution strategy so that a transient
+            // error here does not cause the strategy to retry the already-committed transaction.
+            AfterSalesTicket? updatedTicket = await context.AfterSalesTickets
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Where(t => t.Id == strategyResult.Value)
+                .Include(t => t.Order)
+                .ThenInclude(o => o.OrderItems)
+                .ThenInclude(oi => oi.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                .ThenInclude(p => p.Images)
+                .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                .ThenInclude(p => p.Images)
+                .Include(t => t.Attachments)
+                .FirstOrDefaultAsync(ct);
+
+            if (updatedTicket == null)
+                return Result<TicketDetailDto>.Failure("Failed to retrieve updated ticket.", 500);
+
+            TicketDetailDto dto = mapper.Map<TicketDetailDto>(updatedTicket);
+            return Result<TicketDetailDto>.Success(dto);
         }
     }
 }
