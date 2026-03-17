@@ -43,6 +43,17 @@ export function OrderDetailScreen() {
 
   const order = data;
 
+  const handleStatusUpdate = (newStatus: number) => {
+    updateStatus.mutate(
+      { id: order.id, newStatus },
+      {
+        onSuccess: () => {
+          navigate("/sales/orders");
+        },
+      }
+    );
+  };
+
   return (
     <Box sx={{ px: { xs: 2, md: 4, lg: 6 }, py: 4 }}>
       <Button
@@ -84,14 +95,9 @@ export function OrderDetailScreen() {
               bgcolor: "#16a34a",
               "&:hover": { bgcolor: "#15803d" },
             }}
-            onClick={() =>
-              updateStatus.mutate({
-                id: order.id,
-                newStatus: 1,
-              })
-            }
+            onClick={() => handleStatusUpdate(1)}
           >
-            Confirm
+            {updateStatus.isPending ? "Confirming..." : "Confirm"}
           </Button>
           <Button
             variant="outlined"
@@ -105,14 +111,9 @@ export function OrderDetailScreen() {
               color: "#dc2626",
               "&:hover": { borderColor: "#b91c1c", bgcolor: "rgba(220,38,38,0.04)" },
             }}
-            onClick={() =>
-              updateStatus.mutate({
-                id: order.id,
-                newStatus: 6,
-              })
-            }
+            onClick={() => handleStatusUpdate(6)}
           >
-            Reject
+            {updateStatus.isPending ? "Rejecting..." : "Reject"}
           </Button>
         </Stack>
       </Box>

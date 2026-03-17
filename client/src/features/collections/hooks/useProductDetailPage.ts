@@ -44,7 +44,7 @@ export function useProductDetailPage(initialVariantId?: string | null) {
       variantId,
       productId: product.id,
       name: product.name,
-      image: images[0],
+      image: images[0]?.url ?? "",
       price: currentVariant?.price ?? product.price,
     };
   }, [product, currentVariant, images]);

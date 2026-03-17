@@ -47,7 +47,7 @@ export default function SelectLensesPage() {
             onLogoClick={() => navigate("/collections")}
             productName={product.name}
             variantLabel={currentVariant?.variantName ?? currentVariant?.color ?? product.sku ?? ""}
-            productImageUrl={images[0] ?? ""}
+            productImageUrl={images[0]?.url ?? ""}
             price={currentVariant?.price ?? product.price}
             onPrescriptionConfirm={handleAddWithPrescription}
         />

@@ -441,7 +441,21 @@ public sealed class Checkout
             // 15. Re-query with ProjectTo (outside retry delegate).
             // If this fails it does NOT retry the transaction.
             CustomerOrderDto result = await context.Orders
+                .AsNoTracking()
                 .Where(o => o.Id == transactionResult.Value)
+                .Include(o => o.Address)
+                .Include(o => o.PromoUsageLogs)
+                  .ThenInclude(p => p.Promotion)
+                .Include(o => o.OrderItems)
+                  .ThenInclude(oi => oi.ProductVariant)
+                  .ThenInclude(pv => pv.Product)
+                  .ThenInclude(p => p.Images)
+                .Include(o => o.Payments)
+                .Include(o => o.Prescriptions)
+                .Include(o => o.ShipmentInfo)
+                .Include(o => o.StatusHistories)
+                .Include(o => o.User)
+                .AsSplitQuery()
                 .ProjectTo<CustomerOrderDto>(mapper.ConfigurationProvider)
                 .FirstAsync(ct);
 

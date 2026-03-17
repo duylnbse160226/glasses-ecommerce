@@ -1,5 +1,7 @@
 using Application.Core;
 using Application.Orders.DTOs;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +20,7 @@ public sealed class GetOperationsOrders
         public OrderSource? OrderSource { get; set; }
     }
 
-    internal sealed class Handler(AppDbContext context)
+    internal sealed class Handler(AppDbContext context, IMapper mapper)
         : IRequestHandler<Query, Result<PagedResult<StaffOrderListDto>>>
     {
         public async Task<Result<PagedResult<StaffOrderListDto>>> Handle(Query request, CancellationToken ct)
@@ -40,9 +42,10 @@ public sealed class GetOperationsOrders
 
             int totalCount = await query.CountAsync(ct);
 
-            // Pre-compute on the app side — DateTime.ToString("O") cannot be translated to SQL.
+            // Pre-compute expected stock date on the app side — cannot be translated to SQL.
             string expectedStockDate = DateTime.UtcNow.AddDays(14).ToString("O");
 
+<<<<<<< Duy
             // Execute query first to load orders, then map in-memory to avoid complex SQL translation
             // of nested collection projections (which EF Core struggles with).
             List<Order> orders = await query
@@ -55,12 +58,25 @@ public sealed class GetOperationsOrders
                 .Include(o => o.User)
                 .Include(o => o.SalesStaff)
                 .Include(o => o.PromoUsageLogs)
+=======
+            // Load with Include chains before ProjectTo to ensure all navigation properties are loaded.
+            List<Order> orders = await query
+                .Include(o => o.PromoUsageLogs)
+                .Include(o => o.Address)
+                .Include(o => o.User)
+                .Include(o => o.SalesStaff)
+                .Include(o => o.OrderItems)
+                  .ThenInclude(oi => oi.ProductVariant)
+                  .ThenInclude(pv => pv.Product)
+                .Include(o => o.Prescriptions)
+>>>>>>> main
                 .Include(o => o.ShipmentInfo)
                 .AsSplitQuery()
                 .OrderByDescending(o => o.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(ct);
+<<<<<<< Duy
             // Map to DTO in memory
             List<StaffOrderListDto> mappedOrders = orders.Select(o => new StaffOrderListDto
             {
@@ -89,6 +105,25 @@ public sealed class GetOperationsOrders
                 TrackingNumber = o.ShipmentInfo != null ? o.ShipmentInfo.TrackingCode : null,
                 Carrier = o.ShipmentInfo != null ? o.ShipmentInfo.CarrierName.ToString() : null,
                 Items = o.OrderItems.Select(oi => new StaffOrderItemDto
+=======
+
+            // Map to DTO using AutoMapper for computed/complex fields, then post-process ignored fields.
+            List<StaffOrderListDto> mappedOrders = orders
+                .AsQueryable()
+                .ProjectTo<StaffOrderListDto>(mapper.ConfigurationProvider)
+                .ToList();
+
+            // Populate ignored fields that cannot be translated to SQL/mapping.
+            foreach (StaffOrderListDto dto in mappedOrders)
+            {
+                Order order = orders.First(o => o.Id == dto.Id);
+                dto.ExpectedStockDate = order.OrderType == OrderType.PreOrder ? expectedStockDate : null;
+                dto.PrescriptionStatus = order.Prescriptions.Any() ? "lens_ordered" : null;
+                dto.ShipmentId = order.ShipmentInfo != null ? order.ShipmentInfo.Id : null;
+                dto.TrackingNumber = order.ShipmentInfo != null ? order.ShipmentInfo.TrackingCode : null;
+                dto.Carrier = order.ShipmentInfo != null ? order.ShipmentInfo.CarrierName.ToString() : null;
+                dto.Items = order.OrderItems.Select(oi => new StaffOrderItemDto
+>>>>>>> main
                 {
                     Id = oi.Id,
                     ProductVariantId = oi.ProductVariantId,
@@ -99,6 +134,7 @@ public sealed class GetOperationsOrders
                     Quantity = oi.Quantity,
                     Price = oi.UnitPrice,
                     PrescriptionId = oi.PrescriptionId == null ? null : oi.PrescriptionId.Value.ToString()
+<<<<<<< Duy
                 }).ToList(),
                 Prescriptions = o.Prescriptions.Select(p => new OrderPrescriptionDto
                 {
@@ -118,6 +154,11 @@ public sealed class GetOperationsOrders
                     }).ToList()
                 }).ToList()
             }).ToList();
+=======
+                }).ToList();
+            }
+
+>>>>>>> main
             PagedResult<StaffOrderListDto> result = new()
             {
                 Items = mappedOrders,

@@ -9,15 +9,14 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-import { useOperationsOrders, useUpdateOrderStatus } from "../../../lib/hooks/useOperationsOrders";
+import { useOperationsOrders } from "../../../lib/hooks/useOperationsOrders";
 import { AppPagination } from "../../../app/shared/components/AppPagination";
 import type { StaffOrderDto } from "../../../lib/types/staffOrders";
-import type { OrderStatus } from "../../../lib/types/operations";
 import { OperationsPageHeader } from "../components/OperationsPageHeader";
 import { OrdersTabs } from "../components/OrdersTabs";
 import { OrderListCard } from "../components/OrderListCard";
 
-export function TrackingScreen() {
+export function CompletedOrdersScreen() {
   const [pageNumber, setPageNumber] = useState(1);
   const [orderIdFilter, setOrderIdFilter] = useState("");
   const pageSize = 5;
@@ -25,10 +24,8 @@ export function TrackingScreen() {
   const { data, isLoading } = useOperationsOrders({
     pageNumber,
     pageSize,
-    status: "Shipped",
+    status: "Completed",
   });
-
-  const updateStatus = useUpdateOrderStatus();
 
   const safeOrders: StaffOrderDto[] = Array.isArray(data?.items)
     ? (data!.items as unknown as StaffOrderDto[])
@@ -46,12 +43,12 @@ export function TrackingScreen() {
     <>
       <OperationsPageHeader
         eyebrow="OPERATIONS CENTER"
-        title="Shipped orders"
-        subtitle="Orders that have been marked as shipped."
+        title="Completed orders"
+        subtitle="Orders that have been completed and fulfilled."
         count={totalCount}
         countLabel="orders"
       />
-      <OrdersTabs active="in-transit" />
+      <OrdersTabs active="completed" />
 
       <Box
         sx={{
@@ -81,7 +78,7 @@ export function TrackingScreen() {
           {isLoading ? (
             <LinearProgress sx={{ borderRadius: 1 }} />
           ) : safeOrders.length === 0 ? (
-            <Typography sx={{ color: "#6B6B6B" }}>No shipped orders yet.</Typography>
+            <Typography sx={{ color: "#6B6B6B" }}>No completed orders yet.</Typography>
           ) : (
             <>
               <Box
@@ -138,14 +135,8 @@ export function TrackingScreen() {
                 {filteredOrders.map((o) => (
                   <OrderListCard 
                     key={o.id} 
-                    mode="in-transit" 
+                    mode="completed" 
                     summary={o}
-                    onMarkDeliveredClick={(orderId) =>
-                      updateStatus.mutate({
-                        orderId,
-                        status: "Delivered" as OrderStatus,
-                      })
-                    }
                   />
                 ))}
                 {filteredOrders.length === 0 && orderIdFilter.trim() && (

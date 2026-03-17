@@ -17,7 +17,7 @@ import { OperationsPageHeader } from "../components/OperationsPageHeader";
 import { OrdersTabs } from "../components/OrdersTabs";
 import { OrderListCard } from "../components/OrderListCard";
 
-export function TrackingScreen() {
+export function InTransitScreen() {
   const [pageNumber, setPageNumber] = useState(1);
   const [orderIdFilter, setOrderIdFilter] = useState("");
   const pageSize = 5;
@@ -46,8 +46,8 @@ export function TrackingScreen() {
     <>
       <OperationsPageHeader
         eyebrow="OPERATIONS CENTER"
-        title="Shipped orders"
-        subtitle="Orders that have been marked as shipped."
+        title="In-transit orders"
+        subtitle="Orders that are currently in transit to customers."
         count={totalCount}
         countLabel="orders"
       />
@@ -81,7 +81,7 @@ export function TrackingScreen() {
           {isLoading ? (
             <LinearProgress sx={{ borderRadius: 1 }} />
           ) : safeOrders.length === 0 ? (
-            <Typography sx={{ color: "#6B6B6B" }}>No shipped orders yet.</Typography>
+            <Typography sx={{ color: "#6B6B6B" }}>No in-transit orders yet.</Typography>
           ) : (
             <>
               <Box
