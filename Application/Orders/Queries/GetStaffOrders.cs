@@ -49,12 +49,6 @@ public sealed class GetStaffOrders
             int totalCount = await query.CountAsync(ct);
 
             List<StaffOrderListDto> orders = await query
-                .Include(o => o.PromoUsageLogs)
-                .Include(o => o.Address)
-                .Include(o => o.User)
-                .Include(o => o.SalesStaff)
-                .Include(o => o.OrderItems)
-                .AsSplitQuery()
                 .OrderByDescending(o => o.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)

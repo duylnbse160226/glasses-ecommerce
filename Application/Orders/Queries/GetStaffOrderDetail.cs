@@ -28,19 +28,6 @@ public sealed class GetStaffOrderDetail
                 .AsNoTracking()
                 .Where(o => o.Id == request.Id && (o.CreatedBySalesStaff == staffUserId ||
                            o.OrderSource == OrderSource.Online))  // Sales staff can view all online orders
-                .Include(o => o.Address)
-                .Include(o => o.PromoUsageLogs)
-                  .ThenInclude(p => p.Promotion)
-                .Include(o => o.SalesStaff)
-                .Include(o => o.OrderItems)
-                  .ThenInclude(oi => oi.ProductVariant)
-                  .ThenInclude(pv => pv.Product)
-                  .ThenInclude(p => p.Images)
-                .Include(o => o.Payments)
-                .Include(o => o.Prescriptions)
-                .Include(o => o.ShipmentInfo)
-                .Include(o => o.StatusHistories)
-                .AsSplitQuery()
                 .ProjectTo<StaffOrderDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);
 
