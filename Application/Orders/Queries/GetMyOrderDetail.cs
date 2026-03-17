@@ -24,7 +24,21 @@ public sealed class GetMyOrderDetail
             Guid userId = userAccessor.GetUserId();
 
             CustomerOrderDto? order = await context.Orders
+                .AsNoTracking()
                 .Where(o => o.Id == request.Id && o.UserId == userId)
+                .Include(o => o.Address)
+                .Include(o => o.PromoUsageLogs)
+                  .ThenInclude(p => p.Promotion)
+                .Include(o => o.OrderItems)
+                  .ThenInclude(oi => oi.ProductVariant)
+                  .ThenInclude(pv => pv.Product)
+                  .ThenInclude(p => p.Images)
+                .Include(o => o.Payments)
+                .Include(o => o.Prescriptions)
+                .Include(o => o.ShipmentInfo)
+                .Include(o => o.StatusHistories)
+                .Include(o => o.User)
+                .AsSplitQuery()
                 .ProjectTo<CustomerOrderDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);
 

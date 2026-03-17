@@ -12,7 +12,7 @@ namespace API.Controllers;
 public sealed class OperationsAfterSalesController : BaseApiController
 {
     /// <summary>
-    /// List all InProgress tickets requiring physical handling (excludes RefundOnly).
+    /// List all InProgress, Resolved, and Rejected tickets requiring physical handling (excludes RefundOnly).
     /// Sorted so unrecorded receipts appear first.
     /// </summary>
     [HttpGet]
@@ -33,7 +33,7 @@ public sealed class OperationsAfterSalesController : BaseApiController
 
     /// <summary>
     /// Get full detail of a specific ticket.
-    /// Only returns InProgress tickets that require physical handling (excludes RefundOnly).
+    /// Returns tickets in InProgress, Resolved, or Rejected status that require physical handling (excludes RefundOnly).
     /// </summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTicketDetail(Guid id, CancellationToken ct)
