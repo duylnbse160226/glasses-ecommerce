@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import {
     Accordion,
     AccordionDetails,
@@ -14,6 +14,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { useProductDetailPage } from "./hooks/useProductDetailPage";
@@ -21,6 +22,7 @@ import { RelatedProductsCarousel } from "./components/ProductDetailPageComponent
 import { usePreOrderButton } from "./components/ProductDetailPageComponents/PreOrderDialog";
 
 const VirtualTryOn = lazy(() => import("../Manager/components/VirtualTryOn"));
+const ModelViewer3D = lazy(() => import("./components/ModelViewer3D"));
 
 const NAV_H = 56;
 const GAP_TOP = 24;
@@ -43,6 +45,23 @@ export default function ProductDetailPage() {
         isEyeglasses,
     } = useProductDetailPage();
     const [tryOnOpen, setTryOnOpen] = useState(false);
+    const [viewer3DOpen, setViewer3DOpen] = useState(false);
+
+    // Find the first available modelUrl from all product + variant images
+    const modelUrl = useMemo(() => {
+        if (!product) return null;
+        // Check product-level images first
+        for (const img of product.images) {
+            if (img.modelUrl) return img.modelUrl;
+        }
+        // Then check all variant images
+        for (const v of product.variants ?? []) {
+            for (const img of v.images) {
+                if (img.modelUrl) return img.modelUrl;
+            }
+        }
+        return null;
+    }, [product]);
 
     if (isLoading) {
         return (
@@ -198,7 +217,7 @@ export default function ProductDetailPage() {
                         >
                             <Box
                                 component="img"
-                                src={images[activeImg]}
+                                src={images[activeImg]?.url}
                                 alt={product.name}
                                 sx={{
                                     maxWidth: "100%",
@@ -208,29 +227,60 @@ export default function ProductDetailPage() {
                             />
                         </Box>
 
-                        {/* Virtual Try-On button */}
-                        <Button
-                            variant="contained"
-                            startIcon={<CameraAltIcon />}
-                            onClick={() => setTryOnOpen(true)}
+                        {/* Virtual Try-On + View in 3D buttons */}
+                        <Box
                             sx={{
                                 position: "absolute",
                                 bottom: 14,
-                                left: 14,
-                                borderRadius: 999,
-                                textTransform: "none",
-                                fontWeight: 800,
-                                fontSize: 13,
-                                bgcolor: "rgba(17,24,39,0.85)",
-                                backdropFilter: "blur(6px)",
-                                "&:hover": { bgcolor: "rgba(17,24,39,0.95)" },
-                                px: 2.5,
-                                py: 1,
-                                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                display: "flex",
+                                gap: 1,
                             }}
                         >
-                            Virtual Try-On
-                        </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<CameraAltIcon sx={{ fontSize: 18 }} />}
+                                onClick={() => setTryOnOpen(true)}
+                                sx={{
+                                    borderRadius: 999,
+                                    textTransform: "none",
+                                    fontWeight: 800,
+                                    fontSize: 13,
+                                    bgcolor: "rgba(17,24,39,0.85)",
+                                    backdropFilter: "blur(6px)",
+                                    "&:hover": { bgcolor: "rgba(17,24,39,0.95)" },
+                                    px: 2.5,
+                                    py: 1,
+                                    boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                Try On
+                            </Button>
+                            {modelUrl && (
+                                <Button
+                                    variant="contained"
+                                    startIcon={<ViewInArIcon sx={{ fontSize: 18 }} />}
+                                    onClick={() => setViewer3DOpen(true)}
+                                    sx={{
+                                        borderRadius: 999,
+                                        textTransform: "none",
+                                        fontWeight: 800,
+                                        fontSize: 13,
+                                        bgcolor: "rgba(17,24,39,0.85)",
+                                        backdropFilter: "blur(6px)",
+                                        "&:hover": { bgcolor: "rgba(17,24,39,0.95)" },
+                                        px: 2.5,
+                                        py: 1,
+                                        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                                        whiteSpace: "nowrap",
+                                    }}
+                                >
+                                    View in 3D
+                                </Button>
+                            )}
+                        </Box>
 
                     <Box
                         sx={{
@@ -240,11 +290,11 @@ export default function ProductDetailPage() {
                             flexWrap: "wrap",
                         }}
                     >
-                        {images.map((src, idx) => {
+                        {images.map((img, idx) => {
                                 const isActive = idx === activeImg;
                                 return (
                                     <Box
-                                        key={src}
+                                        key={img.url}
                                         onClick={() => setActiveImg(idx)}
                                         sx={{
                                             width: 70,
@@ -268,7 +318,7 @@ export default function ProductDetailPage() {
                                     >
                                         <Box
                                             component="img"
-                                            src={src}
+                                            src={img.url}
                                             sx={{
                                                 width: "100%",
                                                 height: "100%",
@@ -711,9 +761,21 @@ export default function ProductDetailPage() {
                                     id: v.id,
                                     variantName: v.variantName ?? undefined,
                                     color: v.color ?? undefined,
-                                    imageUrl: v.images[0],
+                                    imageUrl: v.images[0]?.url ?? "",
                                 }))
                         }
+                    />
+                </Suspense>
+            )}
+
+            {/* 3D Model Viewer overlay */}
+            {viewer3DOpen && modelUrl && (
+                <Suspense fallback={null}>
+                    <ModelViewer3D
+                        open={viewer3DOpen}
+                        onClose={() => setViewer3DOpen(false)}
+                        modelUrl={modelUrl}
+                        productName={product?.name}
                     />
                 </Suspense>
             )}

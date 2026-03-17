@@ -79,6 +79,8 @@ export default function ProductDetail() {
     isReorderingProductImages,
     reorderVariantImages,
     isReorderingVariantImages,
+    patchImageModelUrl,
+    isPatchingModelUrl,
   } = useManagerProducts();
 
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
@@ -125,6 +127,9 @@ export default function ProductDetail() {
 
   const [preorderUpdatingVariantId, setPreorderUpdatingVariantId] = useState<string | null>(null);
   const [expandedVariantImagesId, setExpandedVariantImagesId] = useState<string | null>(null);
+
+  const [editingModelUrlImageId, setEditingModelUrlImageId] = useState<string | null>(null);
+  const [editingModelUrlValue, setEditingModelUrlValue] = useState<string>("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -179,6 +184,24 @@ export default function ProductDetail() {
       return res.data;
     },
   });
+
+  const uploadGlbMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await agent.post<{ url: string; publicId: string }>("/uploads/glb", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const validateGlbFile = (file: File) => {
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".glb")) return "Only .glb files are supported";
+    if (file.size > 50 * 1024 * 1024) return "GLB file too large (max 50MB)";
+    return null;
+  };
 
   if (isLoading) {
     return (
@@ -439,6 +462,103 @@ export default function ProductDetail() {
                       onClick={() => handleMediaClick(image.imageUrl)}
                       isDeletingImage={isDeletingImage}
                     />
+                    {/* GLB model-url controls */}
+                    <Box sx={{ mt: 0.5, px: 0.5 }}>
+                      {image.modelUrl ? (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                          <Typography sx={{ fontSize: 10, fontWeight: 700, color: "success.main" }}>3D ✓</Typography>
+                          <Button
+                            size="small"
+                            sx={{ fontSize: 10, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                            color="error"
+                            disabled={isPatchingModelUrl}
+                            onClick={async () => {
+                              if (!id) return;
+                              try {
+                                await patchImageModelUrl({ productId: id, imageId: image.id, modelUrl: null });
+                                toast.success("Model URL removed");
+                              } catch { toast.error("Failed to remove model URL"); }
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                          <Button
+                            size="small"
+                            component="label"
+                            disabled={isPatchingModelUrl || uploadGlbMutation.isPending}
+                            sx={{ fontSize: 10, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                          >
+                            {uploadGlbMutation.isPending ? "Uploading…" : "Upload .glb"}
+                            <input
+                              type="file"
+                              accept=".glb,model/gltf-binary"
+                              hidden
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0] ?? null;
+                                (e.target as HTMLInputElement).value = "";
+                                if (!file || !id) return;
+                                const errMsg = validateGlbFile(file);
+                                if (errMsg) { toast.error(errMsg); return; }
+                                try {
+                                  const uploaded = await uploadGlbMutation.mutateAsync(file);
+                                  await patchImageModelUrl({ productId: id, imageId: image.id, modelUrl: uploaded.url });
+                                  toast.success("3D model attached");
+                                } catch (err) {
+                                  if (axios.isAxiosError(err)) {
+                                    const data = err.response?.data as any;
+                                    toast.error((typeof data === "string" && data) || data?.detail || data?.title || "Failed to upload model");
+                                  } else { toast.error("Failed to upload model"); }
+                                }
+                              }}
+                            />
+                          </Button>
+                          <Button
+                            size="small"
+                            sx={{ fontSize: 10, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                            onClick={() => { setEditingModelUrlImageId(image.id); setEditingModelUrlValue(""); }}
+                          >
+                            or URL
+                          </Button>
+                        </Box>
+                      )}
+                      {editingModelUrlImageId === image.id && !image.modelUrl && (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                          <input
+                            type="text"
+                            placeholder="Paste .glb URL"
+                            value={editingModelUrlValue}
+                            onChange={(e) => setEditingModelUrlValue(e.target.value)}
+                            style={{ fontSize: 10, padding: "2px 4px", border: "1px solid #ccc", borderRadius: 4, width: "100%" }}
+                          />
+                          <Button
+                            size="small"
+                            sx={{ fontSize: 10, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                            disabled={isPatchingModelUrl || !editingModelUrlValue.trim()}
+                            onClick={async () => {
+                              if (!id) return;
+                              try {
+                                await patchImageModelUrl({ productId: id, imageId: image.id, modelUrl: editingModelUrlValue.trim() });
+                                toast.success("Model URL saved");
+                                setEditingModelUrlImageId(null);
+                                setEditingModelUrlValue("");
+                              } catch { toast.error("Failed to save model URL"); }
+                            }}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="small"
+                            sx={{ fontSize: 10, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                            onClick={() => { setEditingModelUrlImageId(null); setEditingModelUrlValue(""); }}
+                          >
+                            ✕
+                          </Button>
+                        </Box>
+                      )}
+                    </Box>
                   </Grid>
                 ))}
               </Grid>
@@ -751,6 +871,60 @@ export default function ProductDetail() {
                                       altText={img.altText || "Untitled"}
                                       index={idx}
                                     />
+                                    {/* Variant image GLB controls */}
+                                    <Box sx={{ mt: 0.5, px: 0.5 }}>
+                                      {img.modelUrl ? (
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                                          <Typography sx={{ fontSize: 9, fontWeight: 700, color: "success.main" }}>3D ✓</Typography>
+                                          <Button
+                                            size="small"
+                                            sx={{ fontSize: 9, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                                            color="error"
+                                            disabled={isPatchingModelUrl}
+                                            onClick={async () => {
+                                              if (!id) return;
+                                              try {
+                                                await patchImageModelUrl({ productId: id, imageId: img.id, modelUrl: null });
+                                                toast.success("Model URL removed");
+                                              } catch { toast.error("Failed to remove model URL"); }
+                                            }}
+                                          >
+                                            Remove
+                                          </Button>
+                                        </Box>
+                                      ) : (
+                                        <Button
+                                          size="small"
+                                          component="label"
+                                          disabled={isPatchingModelUrl || uploadGlbMutation.isPending}
+                                          sx={{ fontSize: 9, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                                        >
+                                          {uploadGlbMutation.isPending ? "…" : ".glb"}
+                                          <input
+                                            type="file"
+                                            accept=".glb,model/gltf-binary"
+                                            hidden
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0] ?? null;
+                                              (e.target as HTMLInputElement).value = "";
+                                              if (!file || !id) return;
+                                              const errMsg = validateGlbFile(file);
+                                              if (errMsg) { toast.error(errMsg); return; }
+                                              try {
+                                                const uploaded = await uploadGlbMutation.mutateAsync(file);
+                                                await patchImageModelUrl({ productId: id, imageId: img.id, modelUrl: uploaded.url });
+                                                toast.success("3D model attached");
+                                              } catch (err) {
+                                                if (axios.isAxiosError(err)) {
+                                                  const data = err.response?.data as any;
+                                                  toast.error((typeof data === "string" && data) || data?.detail || data?.title || "Failed");
+                                                } else { toast.error("Failed to upload model"); }
+                                              }
+                                            }}
+                                          />
+                                        </Button>
+                                      )}
+                                    </Box>
                                   </Grid>
                                 ))}
                               </Grid>
@@ -780,6 +954,8 @@ export default function ProductDetail() {
           isUpdatingVariantPreorder={isUpdatingVariantPreorder}
           reorderVariantImages={reorderVariantImages}
           isReorderingVariantImages={isReorderingVariantImages}
+          patchImageModelUrl={patchImageModelUrl}
+          isPatchingModelUrl={isPatchingModelUrl}
         />
       )}
 
@@ -1072,11 +1248,47 @@ export default function ProductDetail() {
               <TextField
                 size="small"
                 fullWidth
-                label="Model URL"
+                label="Model URL (.glb)"
                 value={newModelUrl}
                 onChange={(e) => setNewModelUrl(e.target.value)}
-                helperText="Optional"
+                helperText="Optional — paste a .glb URL or upload below"
               />
+              <Box sx={{ mt: 1, display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component="label"
+                  disabled={uploadGlbMutation.isPending}
+                  sx={{ textTransform: "none", fontWeight: 700 }}
+                >
+                  {uploadGlbMutation.isPending ? "Uploading…" : "Upload .glb"}
+                  <input
+                    type="file"
+                    accept=".glb,model/gltf-binary"
+                    hidden
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      (e.target as HTMLInputElement).value = "";
+                      if (!file) return;
+                      const errMsg = validateGlbFile(file);
+                      if (errMsg) { toast.error(errMsg); return; }
+                      try {
+                        const uploaded = await uploadGlbMutation.mutateAsync(file);
+                        setNewModelUrl(uploaded.url);
+                        toast.success("Model uploaded");
+                      } catch (err) {
+                        if (axios.isAxiosError(err)) {
+                          const data = err.response?.data as any;
+                          toast.error((typeof data === "string" && data) || data?.detail || data?.title || "Failed to upload model");
+                        } else { toast.error("Failed to upload model"); }
+                      }
+                    }}
+                  />
+                </Button>
+                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                  Upload a .glb file to auto-fill Model URL
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>
@@ -1626,11 +1838,47 @@ export default function ProductDetail() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Model URL"
+                label="Model URL (.glb)"
                 value={newVariantModelUrl}
                 onChange={(e) => setNewVariantModelUrl(e.target.value)}
-                helperText="Optional"
+                helperText="Optional — paste a .glb URL or upload below"
               />
+              <Box sx={{ mt: 1, display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component="label"
+                  disabled={uploadGlbMutation.isPending}
+                  sx={{ textTransform: "none", fontWeight: 700 }}
+                >
+                  {uploadGlbMutation.isPending ? "Uploading…" : "Upload .glb"}
+                  <input
+                    type="file"
+                    accept=".glb,model/gltf-binary"
+                    hidden
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      (e.target as HTMLInputElement).value = "";
+                      if (!file) return;
+                      const errMsg = validateGlbFile(file);
+                      if (errMsg) { toast.error(errMsg); return; }
+                      try {
+                        const uploaded = await uploadGlbMutation.mutateAsync(file);
+                        setNewVariantModelUrl(uploaded.url);
+                        toast.success("Model uploaded");
+                      } catch (err) {
+                        if (axios.isAxiosError(err)) {
+                          const data = err.response?.data as any;
+                          toast.error((typeof data === "string" && data) || data?.detail || data?.title || "Failed to upload model");
+                        } else { toast.error("Failed to upload model"); }
+                      }
+                    }}
+                  />
+                </Button>
+                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                  Upload a .glb file to auto-fill Model URL
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>
@@ -1951,6 +2199,8 @@ function VariantEditDialog({
   isUpdatingVariantPreorder,
   reorderVariantImages,
   isReorderingVariantImages,
+  patchImageModelUrl,
+  isPatchingModelUrl,
 }: {
   productId: string | undefined;
   variant: any;
@@ -1965,6 +2215,8 @@ function VariantEditDialog({
   isUpdatingVariantPreorder: boolean;
   reorderVariantImages: (data: { productId: string; variantId: string; imageIds: string[] }) => Promise<void>;
   isReorderingVariantImages: boolean;
+  patchImageModelUrl: (data: { productId: string; imageId: string; modelUrl: string | null }) => Promise<void>;
+  isPatchingModelUrl: boolean;
 }) {
   const [sku, setSku] = useState<string>(variant?.sku ?? "");
   const [variantName, setVariantName] = useState<string>(variant?.variantName ?? "");
@@ -1994,6 +2246,24 @@ function VariantEditDialog({
     const n = Number(raw);
     if (!Number.isFinite(n) || n <= 0) throw new Error(`${label} must be > 0`);
     return n;
+  };
+
+  const dialogUploadGlbMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await agent.post<{ url: string; publicId: string }>("/uploads/glb", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const dialogValidateGlbFile = (file: File) => {
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".glb")) return "Only .glb files are supported";
+    if (file.size > 50 * 1024 * 1024) return "GLB file too large (max 50MB)";
+    return null;
   };
 
   const dialogSensors = useSensors(
@@ -2073,6 +2343,60 @@ function VariantEditDialog({
                         altText={img.altText || "Untitled"}
                         index={idx}
                       />
+                      {/* Dialog variant image GLB controls */}
+                      <Box sx={{ mt: 0.5, px: 0.5 }}>
+                        {img.modelUrl ? (
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                            <Typography sx={{ fontSize: 9, fontWeight: 700, color: "success.main" }}>3D ✓</Typography>
+                            <Button
+                              size="small"
+                              sx={{ fontSize: 9, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                              color="error"
+                              disabled={isPatchingModelUrl}
+                              onClick={async () => {
+                                if (!productId) return;
+                                try {
+                                  await patchImageModelUrl({ productId, imageId: img.id, modelUrl: null });
+                                  toast.success("Model URL removed");
+                                } catch { toast.error("Failed to remove model URL"); }
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </Box>
+                        ) : (
+                          <Button
+                            size="small"
+                            component="label"
+                            disabled={isPatchingModelUrl || dialogUploadGlbMutation.isPending}
+                            sx={{ fontSize: 9, textTransform: "none", minWidth: 0, px: 0.5, py: 0 }}
+                          >
+                            {dialogUploadGlbMutation.isPending ? "…" : ".glb"}
+                            <input
+                              type="file"
+                              accept=".glb,model/gltf-binary"
+                              hidden
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0] ?? null;
+                                (e.target as HTMLInputElement).value = "";
+                                if (!file || !productId) return;
+                                const errMsg = dialogValidateGlbFile(file);
+                                if (errMsg) { toast.error(errMsg); return; }
+                                try {
+                                  const uploaded = await dialogUploadGlbMutation.mutateAsync(file);
+                                  await patchImageModelUrl({ productId, imageId: img.id, modelUrl: uploaded.url });
+                                  toast.success("3D model attached");
+                                } catch (err) {
+                                  if (axios.isAxiosError(err)) {
+                                    const data = err.response?.data as any;
+                                    toast.error((typeof data === "string" && data) || data?.detail || data?.title || "Failed");
+                                  } else { toast.error("Failed to upload model"); }
+                                }
+                              }}
+                            />
+                          </Button>
+                        )}
+                      </Box>
                     </Grid>
                   ))}
                 </Grid>
