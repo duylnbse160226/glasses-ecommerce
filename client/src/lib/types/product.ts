@@ -139,7 +139,7 @@ export type ProductDetailView = {
   templeLength: number | null;
   quantityAvailable: number;
   isPreOrder: boolean;
-  images: string[];
+  images: Array<{ url: string; modelUrl: string | null }>;
   variants: Array<{
     id: string;
     sku: string;
@@ -155,6 +155,6 @@ export type ProductDetailView = {
     compareAtPrice: number | null;
     quantityAvailable: number;
     isPreOrder: boolean;
-    images: string[];
+    images: Array<{ url: string; modelUrl: string | null }>;
   }>;
 };

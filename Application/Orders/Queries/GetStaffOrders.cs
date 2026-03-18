@@ -17,6 +17,7 @@ public sealed class GetStaffOrders
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public OrderStatus? Status { get; set; }
+        public OrderType? OrderType { get; set; }
     }
 
     internal sealed class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor)
@@ -28,17 +29,25 @@ public sealed class GetStaffOrders
                 return Result<PagedResult<StaffOrderListDto>>
                     .Failure("Invalid pagination parameters.", 400);
 
+            if (request.OrderType.HasValue && !Enum.IsDefined(typeof(OrderType), request.OrderType.Value))
+                return Result<PagedResult<StaffOrderListDto>>
+                    .Failure("Invalid order type.", 400);
+
             Guid staffUserId = userAccessor.GetUserId();
 
             IQueryable<Order> query = context.Orders
                 .AsNoTracking()
                 .Where(o => o.CreatedBySalesStaff == staffUserId ||
-                           (o.OrderSource == OrderSource.Online &&
-                            (o.OrderStatus == OrderStatus.Pending || o.OrderStatus == OrderStatus.Confirmed || o.OrderStatus == OrderStatus.Cancelled)));
+                           (o.OrderSource == OrderSource.Online));  // Sales staff can see all online orders regardless of status
 
             if (request.Status.HasValue)
             {
                 query = query.Where(o => o.OrderStatus == request.Status.Value);
+            }
+
+            if (request.OrderType.HasValue)
+            {
+                query = query.Where(o => o.OrderType == request.OrderType.Value);
             }
 
             int totalCount = await query.CountAsync(ct);

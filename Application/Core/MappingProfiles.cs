@@ -133,7 +133,8 @@ public sealed class MappingProfiles : Profile
                 s.SalesStaff != null ? s.SalesStaff.DisplayName : null))
             .ForMember(d => d.ItemCount, o => o.MapFrom(s => s.OrderItems.Count))
             .ForMember(d => d.ExpectedStockDate, o => o.Ignore())
-            .ForMember(d => d.PrescriptionStatus, o => o.Ignore())
+            .ForMember(d => d.PrescriptionStatus, o => o.MapFrom(s => s.Prescriptions.Any() ? "lens_ordered" : null))
+            .ForMember(d => d.Prescriptions, o => o.MapFrom(s => s.Prescriptions))
             .ForMember(d => d.ShipmentId, o => o.Ignore())
             .ForMember(d => d.TrackingNumber, o => o.Ignore())
             .ForMember(d => d.Carrier, o => o.Ignore())
@@ -172,6 +173,7 @@ public sealed class MappingProfiles : Profile
                 s.ProductVariant != null && s.ProductVariant.Product != null
                     ? s.ProductVariant.Product.ProductName : null))
             .ForMember(d => d.TotalPrice, o => o.MapFrom(s => s.Quantity * s.UnitPrice))
+            .ForMember(d => d.PrescriptionId, o => o.MapFrom(s => s.PrescriptionId))
             .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
                 s.ProductVariant != null
                     ? (s.ProductVariant.Images
@@ -249,7 +251,9 @@ public sealed class MappingProfiles : Profile
                                     .FirstOrDefault()
                                 : null))
                         : null
-                ).FirstOrDefault()));
+                ).FirstOrDefault()))
+            .ForMember(d => d.PrescriptionStatus, o => o.MapFrom(s => s.Prescriptions.Any() ? "lens_ordered" : null))
+            .ForMember(d => d.Prescriptions, o => o.MapFrom(s => s.Prescriptions));
 
         // Inventory transaction mappings
         CreateMap<InventoryTransaction, Application.Inventory.DTOs.InventoryTransactionDto>()
@@ -290,11 +294,65 @@ public sealed class MappingProfiles : Profile
         // AfterSales mappings
         CreateMap<TicketAttachment, TicketAttachmentDto>();
 
-        CreateMap<AfterSalesTicket, TicketListDto>();
+        CreateMap<AfterSalesTicket, TicketListDto>()
+            .ForMember(d => d.OrderType, o => o.MapFrom(s => s.Order.OrderType.ToString()));
 
         CreateMap<AfterSalesTicket, TicketDetailDto>()
+            .ForMember(d => d.OrderType, o => o.MapFrom(s => s.Order.OrderType.ToString()))
             .ForMember(d => d.Attachments, o => o.MapFrom(s =>
-                s.Attachments.Where(a => a.DeletedAt == null).OrderBy(a => a.CreatedAt)));
+                s.Attachments.Where(a => a.DeletedAt == null).OrderBy(a => a.CreatedAt)))
+            .ForMember(d => d.Items, o => o.Ignore())
+            .AfterMap((src, dest) =>
+            {
+                // Populate Items after standard mapping
+                List<OrderItemOutputDto> items = [];
+                
+                if (src.OrderItemId.HasValue && src.OrderItem != null && 
+                    src.OrderItem.ProductVariant != null && 
+                    src.OrderItem.ProductVariant.Product != null)
+                {
+                    // Ticket is for a specific item
+                    items.Add(new OrderItemOutputDto
+                    {
+                        Id = src.OrderItem.Id,
+                        ProductVariantId = src.OrderItem.ProductVariantId,
+                        Sku = src.OrderItem.ProductVariant.SKU,
+                        VariantName = src.OrderItem.ProductVariant.VariantName,
+                        ProductName = src.OrderItem.ProductVariant.Product.ProductName,
+                        Quantity = src.OrderItem.Quantity,
+                        UnitPrice = src.OrderItem.UnitPrice,
+                        TotalPrice = src.OrderItem.Quantity * src.OrderItem.UnitPrice,
+                        ProductImageUrl = src.OrderItem.ProductVariant.Product.Images
+                            ?.OrderBy(pi => pi.DisplayOrder)
+                            .Select(pi => pi.ImageUrl)
+                            .FirstOrDefault()
+                    });
+                }
+                else if (src.Order != null && src.Order.OrderItems != null && src.Order.OrderItems.Count > 0)
+                {
+                    // Ticket is for the whole order
+                    items = src.Order.OrderItems
+                        .Where(oi => oi.ProductVariant != null && oi.ProductVariant.Product != null)
+                        .Select(oi => new OrderItemOutputDto
+                        {
+                            Id = oi.Id,
+                            ProductVariantId = oi.ProductVariantId,
+                            Sku = oi.ProductVariant.SKU,
+                            VariantName = oi.ProductVariant.VariantName,
+                            ProductName = oi.ProductVariant.Product.ProductName,
+                            Quantity = oi.Quantity,
+                            UnitPrice = oi.UnitPrice,
+                            TotalPrice = oi.Quantity * oi.UnitPrice,
+                            ProductImageUrl = oi.ProductVariant.Product.Images
+                                ?.OrderBy(pi => pi.DisplayOrder)
+                                .Select(pi => pi.ImageUrl)
+                                .FirstOrDefault()
+                        })
+                        .ToList();
+                }
+                
+                dest.Items = items ?? [];
+            });
 
         //=== PROMOTIONS ===
         CreateMap<Promotion, PromotionListDto>()

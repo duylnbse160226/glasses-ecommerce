@@ -8,6 +8,7 @@ public sealed class TicketListDto
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
+    public string? OrderType { get; set; }
     public Guid? OrderItemId { get; set; }
     public AfterSalesTicketType TicketType { get; set; }
     public AfterSalesTicketStatus TicketStatus { get; set; }
@@ -16,4 +17,5 @@ public sealed class TicketListDto
     public bool IsRequiredEvidence { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
+    public DateTime? ReceivedAt { get; set; }
 }

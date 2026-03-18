@@ -1,14 +1,16 @@
+using Application.Orders.DTOs;
 using Domain;
 using System.Collections.Generic;
 
 namespace Application.AfterSales.DTOs;
 /// <summary>
-/// Dto output chi tiết ticket bao gồm attachments
+/// Dto output chi tiết ticket bao gồm attachments và order items
 /// </summary>
 public sealed class TicketDetailDto
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
+    public string? OrderType { get; set; }
     public Guid? OrderItemId { get; set; }
     public Guid CustomerId { get; set; }
     public AfterSalesTicketType TicketType { get; set; }
@@ -27,4 +29,5 @@ public sealed class TicketDetailDto
     public DateTime? ReceivedAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
     public List<TicketAttachmentDto> Attachments { get; set; } = [];
+    public List<OrderItemOutputDto> Items { get; set; } = [];
 }

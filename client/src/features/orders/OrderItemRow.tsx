@@ -54,7 +54,8 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
   const hasImage = imageFromItem ?? cachedImage;
   // Chỉ gọi GET /products/:id khi có productId — API không nhận productVariantId, gọi với variantId sẽ 404
   const { product } = useProductDetail(hasImage ? undefined : productId ?? undefined);
-  const imageUrl = imageFromItem ?? cachedImage ?? (product?.images?.[0] ?? "");
+  const firstProductImage = product?.images?.[0];
+  const imageUrl = imageFromItem ?? cachedImage ?? (typeof firstProductImage === "string" ? firstProductImage : firstProductImage?.url) ?? "";
 
   const name =
     (item as { productName?: string }).productName ??
@@ -65,7 +66,7 @@ export function OrderItemRow({ item, compact, orderId, showPrescriptionDetails }
   const price = getItemPrice(item as Parameters<typeof getItemPrice>[0]);
 
   const prescription =
-    orderId && productVariantId ? getOrderPrescription(orderId, productVariantId) : undefined;
+    orderId && item.id ? getOrderPrescription(orderId, item.id) : undefined;
 
   const thumbSize = compact ? 40 : 56;
 

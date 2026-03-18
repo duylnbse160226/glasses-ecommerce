@@ -26,6 +26,7 @@ public sealed class UploadsController : BaseApiController
         return HandleResult(await Mediator.Send(new UploadImage.Command { File = file }));
     }
 
+
     /// <summary>
     /// Generic endpoint for uploading a GLB (3D model) file to the cloud provider.
     /// Does NOT save any record to the database. Returns the Cloud URL directly.

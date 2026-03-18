@@ -40,55 +40,128 @@ public sealed class GetOperationsOrders
 
             int totalCount = await query.CountAsync(ct);
 
-            // Pre-compute on the app side — DateTime.ToString("O") cannot be translated to SQL.
+            // Pre-compute expected stock date on the app side — cannot be translated to SQL.
             string expectedStockDate = DateTime.UtcNow.AddDays(14).ToString("O");
-
-            // Project directly to DTO in SQL — no full entity load, no cartesian-product joins.
-            // Prescriptions.Any() → EXISTS subquery (much cheaper than Include + load all rows).
-            List<StaffOrderListDto> mappedOrders = await query
+            // 1. Server-Side Projection (Select only required columns)
+            // This prevents fetching unnecessary columns and limits DB payload using SQL,
+            // while taking advantage of AsSplitQuery() for related collections.
+            var rawOrders = await query
                 .OrderByDescending(o => o.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .Select(o => new StaffOrderListDto
+                .Select(o => new
                 {
-                    Id = o.Id,
-                    OrderNumber = "ORD-" + o.Id.ToString().Substring(0, 8).ToUpper(),
-                    OrderSource = o.OrderSource.ToString(),
-                    OrderType = o.OrderType.ToString(),
-                    OrderStatus = o.OrderStatus.ToString(),
-                    TotalAmount = o.TotalAmount,
-                    FinalAmount = o.TotalAmount + o.ShippingFee - o.PromoUsageLogs.Sum(p => p.DiscountApplied),
-                    WalkInCustomerName = o.WalkInCustomerName,
-                    WalkInCustomerPhone = o.WalkInCustomerPhone,
-                    CustomerName = o.Address != null ? o.Address.RecipientName : o.WalkInCustomerName,
-                    CustomerPhone = o.Address != null ? o.Address.RecipientPhone : o.WalkInCustomerPhone,
-                    CustomerEmail = o.User != null ? o.User.Email : null,
-                    ShippingAddress = o.Address != null
-                        ? $"{o.Address.Venue}, {o.Address.Ward}, {o.Address.District}, {o.Address.City}"
-                        : null,
-                    CreatedBySalesStaff = o.CreatedBySalesStaff,
+                    o.Id,
+                    o.OrderSource,
+                    o.OrderType,
+                    o.OrderStatus,
+                    o.TotalAmount,
+                    o.ShippingFee,
+                    DiscountApplied = o.PromoUsageLogs.Sum(p => p.DiscountApplied),
+                    o.WalkInCustomerName,
+                    o.WalkInCustomerPhone,
+                    AddressVenue = o.Address != null ? o.Address.Venue : null,
+                    AddressWard = o.Address != null ? o.Address.Ward : null,
+                    AddressDistrict = o.Address != null ? o.Address.District : null,
+                    AddressCity = o.Address != null ? o.Address.City : null,
+                    RecipientName = o.Address != null ? o.Address.RecipientName : null,
+                    RecipientPhone = o.Address != null ? o.Address.RecipientPhone : null,
+                    UserEmail = o.User != null ? o.User.Email : null,
+                    o.CreatedBySalesStaff,
                     SalesStaffName = o.SalesStaff != null ? o.SalesStaff.DisplayName : null,
-                    ItemCount = o.OrderItems.Count,
-                    CreatedAt = o.CreatedAt,
-                    ExpectedStockDate = o.OrderType == OrderType.PreOrder ? expectedStockDate : null,
-                    PrescriptionStatus = o.Prescriptions.Any() ? "lens_ordered" : null,
+                    o.CreatedAt,
+                    HasPrescriptions = o.Prescriptions.Any(),
                     ShipmentId = o.ShipmentInfo != null ? o.ShipmentInfo.Id : (Guid?)null,
-                    TrackingNumber = o.ShipmentInfo != null ? o.ShipmentInfo.TrackingCode : null,
-                    Carrier = o.ShipmentInfo != null ? o.ShipmentInfo.CarrierName.ToString() : null,
-                    Items = o.OrderItems.Select(oi => new StaffOrderItemDto
+                    TrackingCode = o.ShipmentInfo != null ? o.ShipmentInfo.TrackingCode : null,
+                    o.ShipmentInfo, // Easiest way to safely capture Enum CarrierName if not null
+                    Items = o.OrderItems.Select(oi => new
                     {
-                        Id = oi.Id,
-                        ProductVariantId = oi.ProductVariantId,
-                        ProductName = oi.ProductVariant != null && oi.ProductVariant.Product != null
-                            ? oi.ProductVariant.Product.ProductName
-                            : "Unknown",
+                        oi.Id,
+                        oi.ProductVariantId,
+                        ProductName = oi.ProductVariant != null && oi.ProductVariant.Product != null ? oi.ProductVariant.Product.ProductName : "Unknown",
                         Sku = oi.ProductVariant != null ? oi.ProductVariant.SKU : "N/A",
-                        Quantity = oi.Quantity,
-                        Price = oi.UnitPrice,
-                        PrescriptionId = oi.PrescriptionId == null ? null : oi.PrescriptionId.Value.ToString()
-                    }).ToList()
+                        oi.Quantity,
+                        oi.UnitPrice,
+                        oi.PrescriptionId
+                    }),
+                    Prescriptions = o.Prescriptions.Select(p => new
+                    {
+                        p.Id,
+                        p.IsVerified,
+                        p.VerifiedAt,
+                        p.VerificationNotes,
+                        Details = p.Details.Select(d => new
+                        {
+                            d.Id,
+                            d.Eye,
+                            d.SPH,
+                            d.CYL,
+                            d.AXIS,
+                            d.PD,
+                            d.ADD
+                        })
+                    })
                 })
+                .AsSplitQuery()
                 .ToListAsync(ct);
+
+            // 2. In-Memory DTO Construction
+            // We map the raw dataset to StaffOrderListDto in memory since EF Core struggles
+            // with complex scalar String manipulations (e.g. Substring, ToUpperInvariant) and Enum.ToString() mapping.
+            List<StaffOrderListDto> mappedOrders = [.. rawOrders.Select(o => new StaffOrderListDto
+            {
+                Id = o.Id,
+                OrderNumber = "ORD-" + o.Id.ToString().Substring(0, 8).ToUpperInvariant(),
+                OrderSource = o.OrderSource.ToString(),
+                OrderType = o.OrderType.ToString(),
+                OrderStatus = o.OrderStatus.ToString(),
+                TotalAmount = o.TotalAmount,
+                FinalAmount = o.TotalAmount + o.ShippingFee - o.DiscountApplied,
+                WalkInCustomerName = o.WalkInCustomerName,
+                WalkInCustomerPhone = o.WalkInCustomerPhone,
+                CustomerName = o.RecipientName ?? o.WalkInCustomerName,
+                CustomerPhone = o.RecipientPhone ?? o.WalkInCustomerPhone,
+                CustomerEmail = o.UserEmail,
+                ShippingAddress = o.AddressVenue != null
+                    ? $"{o.AddressVenue}, {o.AddressWard}, {o.AddressDistrict}, {o.AddressCity}"
+                    : null,
+                CreatedBySalesStaff = o.CreatedBySalesStaff,
+                SalesStaffName = o.SalesStaffName,
+                ItemCount = o.Items.Count(),
+                CreatedAt = o.CreatedAt,
+                ExpectedStockDate = o.OrderType == OrderType.PreOrder ? expectedStockDate : null,
+                PrescriptionStatus = o.HasPrescriptions ? "lens_ordered" : null,
+                ShipmentId = o.ShipmentId,
+                TrackingNumber = o.TrackingCode,
+                Carrier = o.ShipmentInfo != null ? o.ShipmentInfo.CarrierName.ToString() : null,
+                Items = [.. o.Items.Select(oi => new StaffOrderItemDto
+                {
+                    Id = oi.Id,
+                    ProductVariantId = oi.ProductVariantId,
+                    ProductName = oi.ProductName,
+                    Sku = oi.Sku,
+                    Quantity = oi.Quantity,
+                    Price = oi.UnitPrice,
+                    PrescriptionId = oi.PrescriptionId?.ToString()
+                })],
+                Prescriptions = [.. o.Prescriptions.Select(p => new OrderPrescriptionDto
+                {
+                    Id = p.Id,
+                    IsVerified = p.IsVerified,
+                    VerifiedAt = p.VerifiedAt,
+                    VerificationNotes = p.VerificationNotes,
+                    Details = [.. p.Details.Select(d => new PrescriptionDetailOutputDto
+                    {
+                        Id = d.Id,
+                        Eye = d.Eye.ToString(),
+                        SPH = d.SPH,
+                        CYL = d.CYL,
+                        AXIS = d.AXIS,
+                        PD = d.PD,
+                        ADD = d.ADD,
+                    })]
+                })]
+            })];
 
             PagedResult<StaffOrderListDto> result = new()
             {
