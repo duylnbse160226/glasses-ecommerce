@@ -81,7 +81,7 @@ public sealed class GetOperationsOrders
             List<StaffOrderListDto> mappedOrders = orders.Select(o => new StaffOrderListDto
             {
                 Id = o.Id,
-                OrderNumber = "ORD-" + o.Id.ToString().Substring(0, 8).ToUpperInvariant(),
+                OrderNumber = "ORD-" + o.Id.ToString().Substring(0, 8).ToUpper(),
                 OrderSource = o.OrderSource.ToString(),
                 OrderType = o.OrderType.ToString(),
                 OrderStatus = o.OrderStatus.ToString(),
