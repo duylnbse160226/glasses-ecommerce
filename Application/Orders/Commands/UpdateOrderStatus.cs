@@ -65,7 +65,7 @@ public sealed class UpdateOrderStatus
                 // Auto-verify prescriptions when order transitions from Pending → Confirmed
                 // Applies to both Prescription and PreOrder orders that have prescriptions
                 if ((order.OrderType == OrderType.Prescription || order.OrderType == OrderType.PreOrder)
-                    && oldStatus == OrderStatus.Pending 
+                    && oldStatus == OrderStatus.Pending
                     && newStatus == OrderStatus.Confirmed)
                 {
                     List<Prescription> unverifiedPrescriptions = await context.Prescriptions
@@ -247,6 +247,37 @@ public sealed class UpdateOrderStatus
 
                 order.OrderStatus = newStatus;
                 order.UpdatedAt = DateTime.UtcNow;
+
+                // When order is cancelled, automatically mark completed payments as refunded
+                // and create a Completed Refund record to satisfy accounting.
+                if (newStatus == OrderStatus.Cancelled && order.Payments.Count > 0)
+                {
+                    List<Guid> paymentIds = order.Payments.Select(p => p.Id).ToList();
+                    List<Guid> existingRefundPaymentIds = await context.Set<Refund>()
+                        .Where(r => paymentIds.Contains(r.PaymentId) && r.RefundStatus != RefundStatus.Rejected)
+                        .Select(r => r.PaymentId)
+                        .ToListAsync(ct);
+                    foreach (Payment payment in order.Payments)
+                    {
+                        if (payment.PaymentStatus == PaymentStatus.Completed)
+                        {
+                            if (existingRefundPaymentIds.Contains(payment.Id))
+                                return Result<Unit>.Failure(
+                                    $"Refund already exists for payment '{payment.Id}'.", 409);
+
+                            payment.PaymentStatus = PaymentStatus.Refunded;
+
+                            context.Set<Refund>().Add(new Refund
+                            {
+                                PaymentId = payment.Id,
+                                Amount = payment.Amount,
+                                RefundStatus = RefundStatus.Completed,
+                                RefundAt = DateTime.UtcNow,
+                                RefundReason = $"Order Cancelled by System (Staff ID {staffUserId})"
+                            });
+                        }
+                    }
+                }
 
                 // When order is delivered, set payment status to Completed
                 if (newStatus == OrderStatus.Delivered && order.Payments.Count > 0)

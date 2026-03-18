@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Photos;
 
-public class PhotoService : IPhotoService
+public sealed class PhotoService : IPhotoService
 {
 
     private readonly Cloudinary _cloudinary;
@@ -55,7 +55,7 @@ public class PhotoService : IPhotoService
                 Folder = "glasses"
             };
 
-            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            RawUploadResult uploadResult = await _cloudinary.UploadAsync(uploadParams);
 
             if (uploadResult.Error != null)
             {
@@ -68,7 +68,7 @@ public class PhotoService : IPhotoService
                 Url = uploadResult.SecureUrl.AbsoluteUri
             };
         }
-        
+
         return null;
     }
 

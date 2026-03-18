@@ -5,6 +5,6 @@ namespace Application.Interfaces;
 
 public interface IVnPayService
 {
-    string CreatePaymentUrl(PaymentInformationModel model, HttpContext context);
-    PaymentResponseModel PaymentExecute(IQueryCollection collections);
+    string CreatePaymentUrl(PaymentInformationDto model, string ipAddress);
+    PaymentResponseDto PaymentExecute(IQueryCollection collections);
 }
