@@ -35,6 +35,7 @@ public sealed class HandleVnPayIpn
             if (payment.PaymentStatus != PaymentStatus.Pending)
                 return Result<Unit>.Failure("Payment already processed.", 409);
 
+            //The expression Math.Round(payment.Amount * 100, 0, MidpointRounding.AwayFromZero) / 100m rounds payment.Amount to 2 decimal places.
             decimal expectedAmount = Math.Round(payment.Amount * 100, 0, MidpointRounding.AwayFromZero) / 100m;
             if (response.Amount != expectedAmount)
                 return Result<Unit>.Failure("Invalid payment amount.", 400);

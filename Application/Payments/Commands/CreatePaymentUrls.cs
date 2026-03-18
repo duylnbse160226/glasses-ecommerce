@@ -29,6 +29,7 @@ public sealed class CreatePaymentUrls
             Guid userId = userAccessor.GetUserId();
 
             Order? order = await context.Orders
+                .AsNoTracking()
                 .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == request.Model.OrderId && o.UserId == userId, ct);
 
@@ -36,6 +37,7 @@ public sealed class CreatePaymentUrls
                 return Result<string>.Failure("Order not found.", 404);
 
             Payment? payment = await context.Payments
+                .AsNoTracking()
                 .FirstOrDefaultAsync(p =>
                     p.OrderId == request.Model.OrderId &&
                     p.PaymentMethod == PaymentMethod.BankTransfer &&
