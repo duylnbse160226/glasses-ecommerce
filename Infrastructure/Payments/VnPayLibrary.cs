@@ -98,10 +98,7 @@ internal sealed class VnPayLibrary
             signData = signData.Remove(signData.Length - 1, 1);
         }
 
-        Console.WriteLine("\n\n====== VNPAY DEBUG START ======");
-        string partialSecret = !string.IsNullOrEmpty(vnpHashSecret) && vnpHashSecret.Length > 4 ? vnpHashSecret.Substring(0, 4) : "NULL";
-        Console.WriteLine($"[1] ACTIVE HashSecret starts with: {partialSecret}...");
-        Console.WriteLine($"[2] signData Payload: {signData}");
+
 
         string vnpSecureHash = HmacSha512(vnpHashSecret, signData);
         baseUrl += "vnp_SecureHash=" + vnpSecureHash;

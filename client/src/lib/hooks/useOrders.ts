@@ -19,10 +19,7 @@ export interface CreatePaymentUrlPayload {
 export function useCreatePaymentUrl() {
   return useMutation({
     mutationFn: async (payload: CreatePaymentUrlPayload) => {
-      const res = await agent.post<{ value: string }>("/me/payments/create-url", payload);
-      // The API returns Result<string>, so res.data should be the URL string or { value: string }
-      // Wait, HandleResult usually returns the unwrapped data, which could be a plain string if it's text/plain
-      // but if it's JSON it might just be the string. Let's return res.data.
+      const res = await agent.post<string>("/me/payments/create-url", payload);
       return res.data;
     },
   });

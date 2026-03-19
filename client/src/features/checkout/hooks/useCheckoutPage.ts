@@ -310,6 +310,13 @@ export function useCheckoutPage() {
         if (urlString) {
           window.location.href = urlString;
           return; // Stop execution, browser will redirect
+        } else {
+          setSnackbar({
+            open: true,
+            message: "Failed to generate payment URL. Please try again.",
+            severity: "error",
+          });
+          return;
         }
       }
 
