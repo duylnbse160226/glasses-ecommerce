@@ -7,9 +7,27 @@ import Footer from "./Footer";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import ChatbotWidget from "../../features/chatbot/ChatbotWidget";
 import { useEffect, useRef, useState } from "react";
+import agent from "../../lib/api/agent";
 
 function App() {
   const location = useLocation();
+  const [isChatbotEnabled, setIsChatbotEnabled] = useState(true);
+
+  // Check feature toggle for chatbot on mount
+  useEffect(() => {
+    const checkChatbotToggle = async () => {
+      try {
+        const response = await agent.get<boolean>(
+          "/feature-toggles/check/Chatbot"
+        );
+        setIsChatbotEnabled(response.data);
+      } catch {
+        setIsChatbotEnabled(true); // Fail-open: show feature by default
+      }
+    };
+
+    checkChatbotToggle();
+  }, []);
 
   const isHome = location.pathname === "/";
   const isCollectionsPage = location.pathname.startsWith("/collections");
@@ -95,7 +113,7 @@ function App() {
             <Footer />
           </Box>
           <ScrollToTopButton />
-          <ChatbotWidget />
+          {isChatbotEnabled && <ChatbotWidget />}
         </>
       )}
     </Box>
