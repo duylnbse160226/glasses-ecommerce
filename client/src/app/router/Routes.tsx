@@ -62,11 +62,11 @@ import AdminDashboard from "../../features/Admin/AdminDashboard";
 import AdminLayout from "../../features/Admin/AdminLayout";
 import RoleManagement from "../../features/Admin/RoleManagement";
 import AdminPolicies from "../../features/Admin/AdminPolicies";
-import AdminFeatureToggles from "../../features/Admin/AdminFeatureToggles";
 import {
   PoliciesGuaranteePage,
   PoliciesLensReplacementPage,
 } from "../../features/policies/PoliciesListPage";
+import AdminFeatureToggles from "../../features/Admin/AdminFeatureToggles";
 export const router = createBrowserRouter([
   // ======================
   // AUTH (NO NAVBAR)
