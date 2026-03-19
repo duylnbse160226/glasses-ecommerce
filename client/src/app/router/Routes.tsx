@@ -62,6 +62,10 @@ import AdminDashboard from "../../features/Admin/AdminDashboard";
 import AdminLayout from "../../features/Admin/AdminLayout";
 import RoleManagement from "../../features/Admin/RoleManagement";
 import AdminPolicies from "../../features/Admin/AdminPolicies";
+import {
+  PoliciesGuaranteePage,
+  PoliciesLensReplacementPage,
+} from "../../features/policies/PoliciesListPage";
 export const router = createBrowserRouter([
   // ======================
   // AUTH (NO NAVBAR)
@@ -180,6 +184,10 @@ export const router = createBrowserRouter([
           { path: ":category", element: <CollectionPage /> }, // /collections/glasses
         ],
       },
+
+      // Policies (customer-facing pages)
+      { path: "policies/guarantee", element: <PoliciesGuaranteePage /> },
+      { path: "policies/lens-replacement", element: <PoliciesLensReplacementPage /> },
 
       // ✅ Product detail
       { path: "product/:id", element: <ProductDetailPage /> }, // /product/g1

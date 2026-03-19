@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 
 import { usePolicy } from "../../../../lib/hooks/usePolicy";
 import { getPolicyTypeLabel } from "../../../../lib/types";
@@ -409,19 +409,19 @@ function toFriendlyPolicy(p: {
 
 const POLICY_VISUALS: Record<string, { img: string }> = {
   Return: {
-    img: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=1200&q=80",
+    img: "https://images.unsplash.com/photo-1687092084146-a2893f0b896a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fGV5ZWdsYXNzZXMlMjBmYXNoaW9ufGVufDB8fDB8fHww",
   },
   Warranty: {
-    img: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1200&q=80",
+    img: "https://images.unsplash.com/photo-1750390200298-3d5f30f670a1?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzV8fGV5ZWdsYXNzZXMlMjBmYXNoaW9ufGVufDB8fDB8fHww",
   },
   Refund: {
-    img: "https://images.unsplash.com/photo-1515041467952-2221a2be2f02?auto=format&fit=crop&w=1200&q=80",
+    img: "https://images.unsplash.com/photo-1613081641874-351b794cefdc?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 };
 
 export default function PolicySection() {
-  const navigate = useNavigate();
   const { policies, isPoliciesLoading } = usePolicy();
+  const navigate = useNavigate();
 
   const ordered = useMemo(
     () =>

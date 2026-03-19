@@ -48,7 +48,7 @@ const SLIDES: StorySlide[] = [
   },
   {
     id: "03",
-    image: "https://images.unsplash.com/photo-1646083774155-2a40b675641d?auto=format&fit=crop&w=2200&q=80",
+    image: "https://images.unsplash.com/photo-1760337741510-1a4661e036fa?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     eyebrow: "MATERIALS WITH INTENT",
     title: "Lightweight metals.\nPlant‑based acetate.",
     description:
