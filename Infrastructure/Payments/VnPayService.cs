@@ -1,10 +1,10 @@
 using System;
+using System.Globalization;
 using Application.Interfaces;
 using Application.Payments.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using System.Globalization;
 
 namespace Infrastructure.Payments;
 
@@ -25,10 +25,10 @@ public sealed class VnPayService(IOptions<VnpaySettings> config) : IVnPayService
         pay.AddRequestData("vnp_CurrCode", config.Value.CurrCode);
         pay.AddRequestData("vnp_IpAddr", ipAddress);
         pay.AddRequestData("vnp_Locale", config.Value.Locale);
-        pay.AddRequestData("vnp_OrderInfo", $"{model.Name} {model.OrderDescription} {model.Amount}");
-        pay.AddRequestData("vnp_OrderType", model.OrderType);
+        pay.AddRequestData("vnp_OrderInfo", $"{model.Name} {model.OrderDescription} {model.Amount.ToString("0", CultureInfo.InvariantCulture)}");
+        pay.AddRequestData("vnp_OrderType", "other");
         pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
-        pay.AddRequestData("vnp_NotifyUrl", config.Value.IpnUrl);
+        //Thêm vnp_NotifyUrl sẽ bị lỗi invalid signature
         pay.AddRequestData("vnp_TxnRef", model.VnPayTxnRef);
 
         string paymentUrl = pay.CreateRequestUrl(config.Value.BaseUrl, config.Value.HashSecret);

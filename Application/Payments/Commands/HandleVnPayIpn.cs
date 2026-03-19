@@ -20,7 +20,10 @@ public sealed class HandleVnPayIpn
         {
             PaymentResponseDto response = request.Response;
 
-            if (!Guid.TryParse(response.OrderId, out Guid orderId))
+            string txnRef = response.OrderId ?? string.Empty;
+            string actualOrderIdStr = txnRef.Contains('_') ? txnRef.Split('_')[0] : txnRef;
+
+            if (!Guid.TryParse(actualOrderIdStr, out Guid orderId))
                 return Result<Unit>.Failure("Invalid transaction reference format in IPN.", 404);
 
             Payment? payment = await context.Payments
@@ -35,6 +38,7 @@ public sealed class HandleVnPayIpn
             if (payment.PaymentStatus != PaymentStatus.Pending)
                 return Result<Unit>.Failure("Payment already processed.", 409);
 
+            //The expression Math.Round(payment.Amount * 100, 0, MidpointRounding.AwayFromZero) / 100m rounds payment.Amount to 2 decimal places.
             decimal expectedAmount = Math.Round(payment.Amount * 100, 0, MidpointRounding.AwayFromZero) / 100m;
             if (response.Amount != expectedAmount)
                 return Result<Unit>.Failure("Invalid payment amount.", 400);
