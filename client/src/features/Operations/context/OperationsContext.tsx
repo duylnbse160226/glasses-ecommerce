@@ -239,7 +239,6 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         onSubmit={handleCreateShipment}
         isPending={updateStatus.isPending}
         error={createShipError}
-        onClearError={() => setCreateShipError(null)}
       />
     </OperationsContext.Provider>
   );

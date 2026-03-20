@@ -24,7 +24,6 @@ type CreateShipmentDialogProps = {
   onSubmit: () => void;
   isPending: boolean;
   error?: string | null;
-  onClearError?: () => void;
 };
 
 export function CreateShipmentDialog({
@@ -45,7 +44,6 @@ export function CreateShipmentDialog({
   onSubmit,
   isPending,
   error,
-  onClearError,
 }: CreateShipmentDialogProps) {
   const items = order?.items || [];
   const visibleItems = items.slice(0, 2);
