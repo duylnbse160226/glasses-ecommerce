@@ -472,19 +472,27 @@ public sealed class Checkout
             {
                 _ = Task.Run(async () =>
                 {
-                    List<(string ProductName, int Quantity, decimal Price)> items = orderForEmail.OrderItems
+                    List<(string ProductName, int Quantity, decimal Price)> items = result.Items
                         .Select(oi => (
-                            ProductName: oi.ProductVariant?.Product?.ProductName ?? "Unknown Product",
+                            ProductName: oi.ProductName ?? "Unknown Product",
                             Quantity: oi.Quantity,
                             Price: oi.UnitPrice))
                         .ToList();
 
+                    OrderEmailBreakdownDto breakdown = new()
+                    {
+                        SubtotalAmount = result.TotalAmount,
+                        DiscountAmount = result.DiscountApplied ?? 0m,
+                        ShippingFee = result.ShippingFee,
+                        FinalAmount = result.FinalAmount
+                    };
+
                     await emailService.SendOrderConfirmationEmailAsync(
                         orderForEmail.User.Email,
-                        orderForEmail.Id.ToString(),
+                        result.Id.ToString(),
                         orderForEmail.User.DisplayName ?? orderForEmail.User.Email,
-                        orderForEmail.TotalAmount,
                         items,
+                        breakdown,
                         CancellationToken.None);
                 }, ct);
             }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using Application.Interfaces;
+using Application.Orders.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -51,12 +52,13 @@ public sealed class EmailService(
         string toEmail,
         string orderNumber,
         string customerName,
-        decimal totalAmount,
         List<(string ProductName, int Quantity, decimal Price)> items,
+        OrderEmailBreakdownDto breakdown,
         CancellationToken cancellationToken = default)
     {
         string itemsHtml = GenerateItemsTable(items);
-        string htmlContent = GenerateOrderConfirmationTemplate(orderNumber, customerName, itemsHtml, totalAmount);
+        string priceBreakdownHtml = GeneratePriceBreakdown(breakdown);
+        string htmlContent = GenerateOrderConfirmationTemplate(orderNumber, customerName, itemsHtml, priceBreakdownHtml);
         return await SendEmailAsync(toEmail, $"Order Confirmation - {orderNumber}", htmlContent, cancellationToken);
     }
 
@@ -68,7 +70,7 @@ public sealed class EmailService(
             return $@"
                 <tr>
                     <td style='border: 1px solid #ddd; padding: 12px;'>{index + 1}</td>
-                    <td style='border: 1px solid #ddd; padding: 12px;'>{item.ProductName}</td>
+                    <td style='border: 1px solid #ddd; padding: 12px;'>{System.Net.WebUtility.HtmlEncode(item.ProductName)}</td>
                     <td style='border: 1px solid #ddd; padding: 12px; text-align: center;'>{item.Quantity}</td>
                     <td style='border: 1px solid #ddd; padding: 12px; text-align: right;'>${item.Price:F2}</td>
                     <td style='border: 1px solid #ddd; padding: 12px; text-align: right;'>${subtotal:F2}</td>
@@ -92,11 +94,46 @@ public sealed class EmailService(
             </table>";
     }
 
+    private static string GeneratePriceBreakdown(OrderEmailBreakdownDto breakdown)
+    {
+        string discountRow = breakdown.DiscountAmount > 0
+            ? $@"
+                <tr>
+                    <td style='padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;'><strong>Discount:</strong></td>
+                    <td style='padding: 10px 15px; text-align: right; border-bottom: 1px solid #eee; color: #27ae60;'>-${breakdown.DiscountAmount:F2}</td>
+                </tr>"
+            : "";
+
+        string shippingRow = breakdown.ShippingFee > 0
+            ? $@"
+                <tr>
+                    <td style='padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;'><strong>Shipping Fee:</strong></td>
+                    <td style='padding: 10px 15px; text-align: right; border-bottom: 1px solid #eee;'>${breakdown.ShippingFee:F2}</td>
+                </tr>"
+            : "";
+
+        return $@"
+            <div style='background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;'>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;'><strong>Subtotal:</strong></td>
+                        <td style='padding: 10px 15px; text-align: right; border-bottom: 1px solid #eee;'>${breakdown.SubtotalAmount:F2}</td>
+                    </tr>
+                    {discountRow}
+                    {shippingRow}
+                    <tr>
+                        <td style='padding: 15px 0; text-align: right;'><strong style='font-size: 16px;'>Total Amount:</strong></td>
+                        <td style='padding: 15px; text-align: right; background-color: #4CAF50; color: white; border-radius: 3px;'><strong style='font-size: 16px;'>${breakdown.FinalAmount:F2}</strong></td>
+                    </tr>
+                </table>
+            </div>";
+    }
+
     private static string GenerateOrderConfirmationTemplate(
         string orderNumber,
         string customerName,
         string itemsHtml,
-        decimal totalAmount)
+        string priceBreakdownHtml)
     {
         return $@"
             <!DOCTYPE html>
@@ -111,7 +148,6 @@ public sealed class EmailService(
                     .content {{ margin: 20px 0; }}
                     .order-details {{ background-color: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; }}
                     .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center; }}
-                    .total {{ font-size: 18px; font-weight: bold; text-align: right; margin: 20px 0; }}
                 </style>
             </head>
             <body>
@@ -132,9 +168,8 @@ public sealed class EmailService(
                         <h3>Order Items:</h3>
                         {itemsHtml}
                         
-                        <div class='total'>
-                            Total Amount: <span style='color: #4CAF50;'>${totalAmount:F2}</span>
-                        </div>
+                        <h3>Price Summary:</h3>
+                        {priceBreakdownHtml}
                         
                         <p>You can track your order status at any time by logging into your account on our website.</p>
                         
