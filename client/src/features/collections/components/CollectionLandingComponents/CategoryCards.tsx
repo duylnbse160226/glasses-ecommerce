@@ -13,13 +13,13 @@ const CATEGORIES: Category[] = [
         title: "SUNGLASSES",
         to: "/collections/sunglasses",
         image:
-            "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1773945384/z7638183073516_8f172ac67a72d1e6ba0665b642541143_rfenec.jpg",
+            "https://images.unsplash.com/photo-1760446032400-506ec8963e6a?q=80&w=1448&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     },
     {
         title: "EYEGLASSES",
         to: "/collections/eyeglasses",
         image:
-            "https://res.cloudinary.com/ds0b8jtbr/image/upload/v1773944649/amir-seilsepour-wdtRhmwDFig-unsplash_szkmur.jpg",
+            "https://images.unsplash.com/photo-1760446031723-e03702a3386d?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     },
     {
         title: "ALL MY SHOP PRODUCT",
