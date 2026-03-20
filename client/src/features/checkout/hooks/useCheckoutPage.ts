@@ -125,7 +125,7 @@ export function useCheckoutPage() {
   };
 
   // Private promotion (user-entered code) — validate via API
-  const handleApplyPrivatePromo = async (code: string) => {
+  const handleApplyPrivatePromo = async (code: string, shippingFee: number = 0) => {
     if (!code.trim() || totalAmount <= 0) {
       setSnackbar({ open: true, message: "Your cart is empty.", severity: "info" });
       return;
@@ -134,7 +134,7 @@ export function useCheckoutPage() {
       const data = await validatePromotion.mutateAsync({
         promoCode: code.trim(),
         orderTotal: totalAmount,
-        shippingFee: 0,
+        shippingFee,
       });
       const discount = typeof data?.discountApplied === "number" ? data.discountApplied : 0;
       setAppliedPromo({ promoCode: code.trim(), discountAmount: discount });
@@ -302,7 +302,7 @@ export function useCheckoutPage() {
         const urlReq = await createPaymentUrl.mutateAsync({
           orderId: orderForState.id,
           orderType: orderForState.orderType,
-          amount: finalAmount, // backend uses exact amount from pending payment
+          amount: orderForState.finalAmount,
           name: address.recipientName,
         });
 

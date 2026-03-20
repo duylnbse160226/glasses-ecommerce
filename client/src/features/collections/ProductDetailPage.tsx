@@ -11,7 +11,6 @@ import {
     Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import ViewInArIcon from "@mui/icons-material/ViewInAr";
@@ -544,24 +543,50 @@ export default function ProductDetailPage() {
                             <>
                                 {isEyeglasses ? (
                                     <>
-                                        <Button
-                                            variant="contained"
-                                            onClick={() =>
-                                                nav(`/product/${product.id}/lenses`, {
-                                                    state: { variantId: currentVariant?.id ?? null },
-                                                })
-                                            }
-                                            sx={{
-                                                bgcolor: "#111827",
-                                                borderRadius: 1.75,
-                                                height: 46,
-                                                px: 3,
-                                                fontWeight: 900,
-                                                "&:hover": { bgcolor: "#0b1220", boxShadow: "0 14px 36px rgba(0,0,0,0.2)" },
-                                            }}
-                                        >
-                                            Select lenses
-                                        </Button>
+                                        <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap", width: "100%" }}>
+                                            <Button
+                                                variant="contained"
+                                                onClick={() =>
+                                                    nav(`/product/${product.id}/lenses`, {
+                                                        state: { variantId: currentVariant?.id ?? null },
+                                                    })
+                                                }
+                                                sx={{
+                                                    bgcolor: "#111827",
+                                                    borderRadius: 1.75,
+                                                    height: 46,
+                                                    px: 3,
+                                                    fontWeight: 900,
+                                                    "&:hover": {
+                                                        bgcolor: "#0b1220",
+                                                        boxShadow: "0 14px 36px rgba(0,0,0,0.2)",
+                                                    },
+                                                }}
+                                            >
+                                                Select lenses
+                                            </Button>
+
+                                            <Button
+                                                variant="outlined"
+                                                onClick={handleAddToCart}
+                                                sx={{
+                                                    borderRadius: 1.75,
+                                                    height: 46,
+                                                    px: 3,
+                                                    fontWeight: 800,
+                                                    textTransform: "none",
+                                                    borderColor: "rgba(0,0,0,0.16)",
+                                                    color: "#121212",
+                                                    bgcolor: "#FFFFFF",
+                                                    "&:hover": {
+                                                        bgcolor: "#FAFAFA",
+                                                        borderColor: ACCENT,
+                                                    },
+                                                }}
+                                            >
+                                                Non-prescription
+                                            </Button>
+                                        </Box>
                                     </>
                                 ) : (
                                     <Button
@@ -620,26 +645,7 @@ export default function ProductDetailPage() {
                             </Button>
                         )}
 
-                        <Button
-                            variant="outlined"
-                            startIcon={<FavoriteBorderIcon />}
-                            sx={{
-                                borderRadius: 1.75,
-                                height: 46,
-                                px: 2.2,
-                                fontWeight: 600,
-                                textTransform: "none",
-                                borderColor: "rgba(0,0,0,0.16)",
-                                color: "#121212",
-                                bgcolor: "#FFFFFF",
-                                "&:hover": {
-                                    bgcolor: "#FAFAFA",
-                                    borderColor: ACCENT,
-                                },
-                            }}
-                        >
-                            Wishlist
-                        </Button>
+                        {/* Wishlist button removed (not used). */}
                         </Box>
                         <Typography sx={{ mt: 1.5, fontSize: 12, color: "#8A8A8A" }}>
                             Free returns • Secure checkout • 2-year warranty
