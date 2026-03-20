@@ -124,7 +124,7 @@ public sealed class EmailService(
                     {shippingRow}
                     <tr>
                         <td style='padding: 15px 0; text-align: right;'><strong style='font-size: 16px;'>Total Amount:</strong></td>
-                        <td style='padding: 15px; text-align: right; background-color: #4CAF50; color: white; border-radius: 3px;'><strong style='font-size: 16px;'>${breakdown.FinalAmount:F2}</strong></td>
+                        <td style='padding: 15px; text-align: right;'><strong style='font-size: 16px;'>${breakdown.FinalAmount:F2}</strong></td>
                     </tr>
                 </table>
             </div>";
