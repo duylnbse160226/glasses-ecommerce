@@ -69,7 +69,6 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [salesOrdersOpen, setSalesOrdersOpen] = useState(true);
   const [salesTicketsOpen, setSalesTicketsOpen] = useState(true);
-  const [operationsOpen, setOperationsOpen] = useState(true);
   const [adminOpen, setAdminOpen] = useState(true);
   const { currentUser, logoutUser } = useAccount();
   const roles = Array.isArray(currentUser?.roles) ? currentUser.roles : [];
@@ -426,31 +425,8 @@ export default function DashboardLayout() {
                     Operations
                   </Typography>
 
-                  {/* Parent Orders group for Operations, giống Sales */}
-                  <ListItemButton
-                    onClick={() => setOperationsOpen((open) => !open)}
-                    sx={{
-                      borderRadius: 2,
-                      mb: 0.25,
-                      color: "rgba(0,0,0,0.7)",
-                      "&:hover": {
-                        bgcolor: "rgba(0,0,0,0.04)",
-                        color: "rgba(0,0,0,0.9)",
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
-                      <LocalShippingIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Orders"
-                      primaryTypographyProps={{ fontWeight: 600 }}
-                    />
-                    {operationsOpen ? <ExpandLess /> : <ExpandMore />}
-                  </ListItemButton>
-
-                  <Collapse in={operationsOpen} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding sx={{ pl: 4 }}>
+                  {/* Order type group */}
+                  <List component="div" disablePadding sx={{ pl: 2 }}>
                       {/* Order type group */}
                       <Typography
                         sx={{
@@ -463,7 +439,7 @@ export default function DashboardLayout() {
                           pb: 0.5,
                         }}
                       >
-                        Order type
+                        Orders
                       </Typography>
                       {[
                         { path: "/operations/order-types", label: "All", icon: <DashboardOutlined /> },
@@ -654,7 +630,6 @@ export default function DashboardLayout() {
                         );
                       })}
                     </List>
-                  </Collapse>
                 </Fragment>
               );
             }
