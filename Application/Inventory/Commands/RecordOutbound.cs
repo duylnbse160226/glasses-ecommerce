@@ -145,7 +145,7 @@ public sealed class RecordOutbound
                 {
                     string itemList = string.Join(", ", insufficientStockItems);
                     return Result<Unit>.Failure(
-                        $"Pre-order item(s) ({itemList}) is not fullfilled, cannot create shipment",
+                        $"Pre-order item(s) ({itemList}) is not fulfilled, cannot create shipment",
                         409);
                 }
 
