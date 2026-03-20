@@ -490,7 +490,6 @@ public sealed class Checkout
                         orderForEmail.User.Email,
                         result.Id.ToString(),
                         orderForEmail.User.DisplayName ?? orderForEmail.User.Email,
-                        result.FinalAmount,
                         items,
                         breakdown,
                         CancellationToken.None);
