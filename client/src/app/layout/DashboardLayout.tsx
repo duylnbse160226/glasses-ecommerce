@@ -508,7 +508,7 @@ export default function DashboardLayout() {
                           <>
                             <ListItemButton
                               component={NavLink}
-                              to="/operations/tickets?type=Return&status=Awaiting"
+                              to="/operations/tickets?type=Return&status=All"
                               sx={{
                                 ...baseStyles,
                                 ...(isTicketsRoute && currentTicketType === "Return"
@@ -527,7 +527,7 @@ export default function DashboardLayout() {
 
                             <ListItemButton
                               component={NavLink}
-                              to="/operations/tickets?type=Warranty&status=Awaiting"
+                              to="/operations/tickets?type=Warranty&status=All"
                               sx={{
                                 ...baseStyles,
                                 ...(isTicketsRoute && currentTicketType === "Warranty"

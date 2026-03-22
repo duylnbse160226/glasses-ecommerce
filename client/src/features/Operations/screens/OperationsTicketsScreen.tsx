@@ -14,7 +14,7 @@ export function OperationsTicketsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
   const ticketType = searchParams.get("type") as "Return" | "Warranty" | null;
   const [status, setStatus] = useState<OperationsReturnStatusFilterValue | OperationsWarrantyStatusFilterValue>(
-    (searchParams.get("status") as any) || "Awaiting",
+    (searchParams.get("status") as any) || "All",
   );
   const [pageNumber, setPageNumber] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
