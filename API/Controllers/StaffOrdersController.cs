@@ -65,6 +65,18 @@ public sealed class StaffOrdersController : BaseApiController
             new UpdateOrderStatus.Command { OrderId = id, Dto = dto }, ct));
     }
 
+    [HttpPost("{id}/ghn/create")]
+    public async Task<IActionResult> CreateGHNOrder(Guid id, CreateGHNOrderDto dto, CancellationToken ct)
+    {
+        return HandleResult(await Mediator.Send(new CreateGHNOrder.Command { OrderId = id, Dto = dto }, ct));
+    }
+
+    [HttpGet("{id}/ghn/print")]
+    public async Task<IActionResult> GetGHNPrintUrl(Guid id, CancellationToken ct)
+    {
+        return HandleResult(await Mediator.Send(new GetGHNPrintUrl.Query { OrderId = id }, ct));
+    }
+
     [HttpGet("reports/revenue")]
     public async Task<IActionResult> GetRevenueReport(
         [FromQuery] OrderSource? source,

@@ -24,7 +24,7 @@ public sealed class UpdateOrderStatus
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken ct)
         {
-            Guid staffUserId = userAccessor.GetUserId();
+            Guid? staffUserId = userAccessor.GetUserIdOrDefault();
 
             return await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
@@ -273,7 +273,7 @@ public sealed class UpdateOrderStatus
                                 Amount = payment.Amount,
                                 RefundStatus = RefundStatus.Completed,
                                 RefundAt = DateTime.UtcNow,
-                                RefundReason = $"Order Cancelled by System (Staff ID {staffUserId})"
+                                RefundReason = $"Order Cancelled by System (Staff ID {staffUserId?.ToString() ?? "System"})"
                             });
                         }
                     }
