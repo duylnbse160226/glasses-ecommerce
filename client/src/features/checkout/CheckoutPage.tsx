@@ -413,30 +413,6 @@ export default function CheckoutPage() {
                                         />
                                     </Grid>
 
-                                    <Grid item xs={12}>
-                                        <AddressAutocomplete
-                                            value={address.venue}
-                                            onChange={(value) =>
-                                                setAddress((prev) => ({
-                                                    ...prev,
-                                                    venue: value,
-                                                }))
-                                            }
-                                            onSelectAddress={(a) => {
-                                                setAddress((prev) => ({
-                                                    ...prev,
-                                                    venue: a.venue,
-                                                    ward: a.ward,
-                                                    district: a.district,
-                                                    city: a.city,
-                                                    postalCode: a.postalCode ?? "",
-                                                }));
-                                            }}
-                                            label="Street / Venue"
-                                            placeholder="Enter house number, street, district, city..."
-                                        />
-                                    </Grid>
-
                                     <Grid item xs={12} md={4}>
                                         <TextField
                                             label="Ward"
@@ -570,6 +546,30 @@ export default function CheckoutPage() {
                                                 </MenuItem>
                                             ))}
                                         </TextField>
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <AddressAutocomplete
+                                            value={address.venue}
+                                            onChange={(value) =>
+                                                setAddress((prev) => ({
+                                                    ...prev,
+                                                    venue: value,
+                                                }))
+                                            }
+                                            onSelectAddress={(a) => {
+                                                setAddress((prev) => ({
+                                                    ...prev,
+                                                    venue: a.venue,
+                                                    ward: a.ward,
+                                                    district: a.district,
+                                                    city: a.city,
+                                                    postalCode: a.postalCode ?? "",
+                                                }));
+                                            }}
+                                            label="Street / Venue"
+                                            placeholder="Enter house number, street, district, city..."
+                                        />
                                     </Grid>
 
                                     <Grid item xs={12} md={4}>

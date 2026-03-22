@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useAccount } from "./useAccount";
 import type { SignInForCartDialogProps } from "../types/signInForCartDialog";
 
@@ -25,19 +25,25 @@ export type CartAuthGateApi = {
 export function useRequireAuthForCart(): CartAuthGateApi {
     const { currentUser, userSessionPending, userSessionFetching } = useAccount();
     const navigate = useNavigate();
+    const location = useLocation();
     const [open, setOpen] = useState(false);
 
     const close = useCallback(() => setOpen(false), []);
 
+    const authSearch = useMemo(() => {
+        const from = `${location.pathname}${location.search}${location.hash}`;
+        return `?returnUrl=${encodeURIComponent(from)}`;
+    }, [location.pathname, location.search, location.hash]);
+
     const onLogin = useCallback(() => {
-        navigate("/login");
+        navigate(`/login${authSearch}`);
         setOpen(false);
-    }, [navigate]);
+    }, [navigate, authSearch]);
 
     const onRegister = useCallback(() => {
-        navigate("/register");
+        navigate(`/register${authSearch}`);
         setOpen(false);
-    }, [navigate]);
+    }, [navigate, authSearch]);
 
     const signInForCartDialogProps = useMemo<SignInForCartDialogProps>(
         () => ({

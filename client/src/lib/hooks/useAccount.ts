@@ -6,6 +6,7 @@ import type { User } from "../types/user";
 import { useLocation, useNavigate } from "react-router";
 import type { RegisterSchema } from "../schemas/registerSchema";
 import { toast } from "react-toastify";
+import { buildAuthRedirectPath } from "../utils/sanitizeReturnUrl";
 
 export const useAccount = () => {
   const queryClient = useQueryClient();
@@ -50,10 +51,13 @@ export const useAccount = () => {
           password: variables.password,
         });
         queryClient.invalidateQueries({ queryKey: ["user"] });
-        navigate("/auth/redirect");
+        const params = new URLSearchParams(location.search);
+        navigate(buildAuthRedirectPath(params.get("returnUrl")));
       } catch {
         toast.info("Registration successful. Please sign in.");
-        navigate("/login");
+        const params = new URLSearchParams(location.search);
+        const ru = params.get("returnUrl");
+        navigate(ru ? `/login?returnUrl=${encodeURIComponent(ru)}` : "/login");
       }
     },
   });

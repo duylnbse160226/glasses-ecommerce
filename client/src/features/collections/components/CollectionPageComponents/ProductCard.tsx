@@ -2,9 +2,7 @@ import { Box, Card, CardActionArea, Typography } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import type { Product } from "../../../../lib/types";
 import { formatMoney } from "../../../../lib/utils/format";
-
-const cardInfoFont =
-    '"Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif';
+import { COLLECTION_PRODUCT_FONT } from "../../collectionFonts";
 
 export function ProductCard({ p }: { p: Product }) {
     return (
@@ -91,7 +89,7 @@ export function ProductCard({ p }: { p: Product }) {
                         display: "flex",
                         flexDirection: "column",
                         gap: 1.25,
-                        fontFamily: cardInfoFont,
+                        fontFamily: COLLECTION_PRODUCT_FONT,
                     }}
                 >
                     <Typography

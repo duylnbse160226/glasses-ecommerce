@@ -521,7 +521,7 @@ export default function PolicySection() {
               </Box>
             )}
 
-            <Button onClick={() => navigate("/policies/guarantee")} variant="outlined" sx={CTA_SX}>
+            <Button onClick={() => navigate("/policies")} variant="outlined" sx={CTA_SX}>
               View more policy
             </Button>
           </Box>

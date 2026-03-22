@@ -26,6 +26,7 @@ import { useCategories } from "../../lib/hooks/useProducts";
 import UserMenu from "./UserMenu";
 import CartDropdown from "../components/cart/CartDropdown";
 import { COLORS } from "../theme/colors";
+import { COLLECTION_PRODUCT_FONT } from "../../features/collections/collectionFonts";
 
 // ===== Styles =====
 const ACCENT = COLORS.accentGold;
@@ -41,8 +42,9 @@ function makeNavBtnSx(appearance: NavAppearance) {
 
   return {
     textTransform: "none",
+    fontFamily: COLLECTION_PRODUCT_FONT,
     fontWeight: 600,
-    fontSize: 13.5,
+    fontSize: 16,
     color,
     px: 1.4,
     position: "relative",
@@ -245,9 +247,10 @@ const NavBar = observer(function NavBar({
             >
               <Typography
                 sx={{
+                  fontFamily: COLLECTION_PRODUCT_FONT,
                   fontWeight: 800,
                   letterSpacing: "0.18em",
-                  fontSize: 18,
+                  fontSize: 22,
                   color: logoColor,
                 }}
               >
@@ -256,8 +259,15 @@ const NavBar = observer(function NavBar({
             </Box>
 
             {/* Menu */}
-            <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5 }}>
+            <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5, alignItems: "center" }}>
               {menu}
+              <Button
+                component={NavLink}
+                to="/policies"
+                sx={makeNavBtnSx(computedAppearance)}
+              >
+                Policies
+              </Button>
             </Box>
 
             <Box sx={{ flex: 1 }} />

@@ -3,7 +3,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import {
   Avatar,
   Box,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   Menu,
@@ -24,6 +29,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(menuAnchor);
+  const [removeAvatarDialogOpen, setRemoveAvatarDialogOpen] = useState(false);
 
   const {
     data: profile,
@@ -83,13 +89,17 @@ export default function ProfilePage() {
     }
   };
 
-  const handleRemoveAvatar = async () => {
+  const openRemoveAvatarDialog = () => {
     closeMenu();
     if (!canAttemptRemoveAvatar) {
       toast.info("No profile photo to remove.");
       return;
     }
-    if (!window.confirm("Remove your profile photo?")) return;
+    setRemoveAvatarDialogOpen(true);
+  };
+
+  const handleConfirmRemoveAvatar = async () => {
+    setRemoveAvatarDialogOpen(false);
     try {
       const { data: fresh } = await refetchPhotos();
       const list = Array.isArray(fresh) ? fresh : photoList;
@@ -273,13 +283,87 @@ export default function ProfilePage() {
               Choose avatar
             </MenuItem>
             <MenuItem
-              onClick={() => void handleRemoveAvatar()}
+              onClick={openRemoveAvatarDialog}
               disabled={galleryBusy || !canAttemptRemoveAvatar}
               sx={{ fontWeight: 600, fontSize: 14, color: "error.main" }}
             >
               Remove avatar
             </MenuItem>
           </Menu>
+
+          <Dialog
+            open={removeAvatarDialogOpen}
+            onClose={() => setRemoveAvatarDialogOpen(false)}
+            aria-labelledby="remove-avatar-dialog-title"
+            aria-describedby="remove-avatar-dialog-desc"
+            slotProps={{
+              paper: {
+                elevation: 8,
+                sx: {
+                  borderRadius: 2,
+                  border: "1px solid rgba(15,23,42,0.08)",
+                  boxShadow: "0 18px 48px rgba(15,23,42,0.14)",
+                  maxWidth: 400,
+                  width: "100%",
+                },
+              },
+            }}
+          >
+            <DialogTitle
+              id="remove-avatar-dialog-title"
+              sx={{
+                fontWeight: 800,
+                fontSize: 18,
+                color: "#0f172a",
+                pb: 0.5,
+              }}
+            >
+              Remove profile photo?
+            </DialogTitle>
+            <DialogContent id="remove-avatar-dialog-desc" sx={{ pt: 0.5 }}>
+              <Typography fontSize={14} color="rgba(15,23,42,0.72)" lineHeight={1.55}>
+                This will delete your current profile photo from your gallery. You can upload a new
+                one anytime.
+              </Typography>
+            </DialogContent>
+            <DialogActions
+              sx={{
+                px: 3,
+                pb: 2,
+                pt: 0,
+                gap: 1,
+                justifyContent: "flex-end",
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => setRemoveAvatarDialogOpen(false)}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 700,
+                  borderColor: "rgba(15,23,42,0.2)",
+                  color: "#0f172a",
+                  "&:hover": { borderColor: "rgba(15,23,42,0.35)", bgcolor: "rgba(15,23,42,0.04)" },
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => void handleConfirmRemoveAvatar()}
+                disabled={galleryBusy}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 700,
+                  boxShadow: "none",
+                  "&:hover": { boxShadow: "none" },
+                }}
+              >
+                Remove
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
         <Box>
           <Typography fontWeight={900} fontSize={24}>
