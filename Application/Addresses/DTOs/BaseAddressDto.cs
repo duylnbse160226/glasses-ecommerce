@@ -1,5 +1,7 @@
 namespace Application.Addresses.DTOs;
-
+/// <summary>
+/// Base DTO for address data including GHN IDs       
+/// </summary>
 public class BaseAddressDto
 {
     public required string RecipientName { get; set; }

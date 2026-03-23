@@ -27,7 +27,6 @@ public sealed class GHNService : IGHNService
     public async Task<GHNCreateOrderResponseDto> CreateShippingOrderAsync(GHNCreateOrderRequestDto request)
     {
 
-
         int codAmountVnd = (int)Math.Round(request.CodAmount * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
         int insuranceValueVnd = request.InsuranceValue.HasValue
 
@@ -68,7 +67,7 @@ public sealed class GHNService : IGHNService
             insurance_value = insuranceValueVnd
         };
 
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/create");
+        using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/create");
         requestMessage.Headers.Add("ShopId", _settings.ShopId);
         requestMessage.Content = JsonContent.Create(payload);
 
@@ -89,7 +88,7 @@ public sealed class GHNService : IGHNService
 
         JsonElement data = jsonResponse.GetProperty("data");
 
-        return new GHNCreateOrderResponseDto
+        GHNCreateOrderResponseDto orderResponse = new GHNCreateOrderResponseDto
         {
             OrderCode = data.GetProperty("order_code").GetString() ?? "",
             TotalFee = data.GetProperty("total_fee").GetInt32(),
@@ -97,6 +96,8 @@ public sealed class GHNService : IGHNService
                 ? expectedTime.GetString() ?? ""
                 : ""
         };
+
+        return orderResponse;
     }
 
     public async Task<decimal> CalculateShippingFeeAsync(int toDistrictId, string toWardCode, int weight = 200, decimal insuranceValue = 0)
@@ -118,7 +119,7 @@ public sealed class GHNService : IGHNService
             insurance_value = insuranceValueVnd
         };
 
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/fee");
+        using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/fee");
         requestMessage.Headers.Add("ShopId", _settings.ShopId);
         requestMessage.Content = JsonContent.Create(requestInner);
 
@@ -137,11 +138,11 @@ public sealed class GHNService : IGHNService
             throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
         }
 
-        int totalTotalVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
+        int shippingFeeVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
 
         // Convert VND back to USD for the application to use
 
-        decimal totalUsd = Math.Round((decimal)totalTotalVnd / _vnpaySettings.UsdToVndRate, 2);
+        decimal totalUsd = Math.Round((decimal)shippingFeeVnd / _vnpaySettings.UsdToVndRate, 2);
 
 
         return totalUsd;
@@ -167,10 +168,8 @@ public sealed class GHNService : IGHNService
 
         string? token = jsonResponse.GetProperty("data").GetProperty("token").GetString();
 
-        // Return full URL to print A5
-
-        return $"https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token={token}";
-        // Note: For production use: "https://online-gateway.ghn.vn/a5/public-api/printA5?token="
+        // Return full URL to print A5 using configured base URL
+        return $"{_settings.PrintOrderUrl}?token={token}";
     }
 
     public async Task<IReadOnlyList<GHNProvinceDto>> GetProvincesAsync()
@@ -187,7 +186,7 @@ public sealed class GHNService : IGHNService
 
     public async Task<IReadOnlyList<GHNDistrictDto>> GetDistrictsAsync(int provinceId)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Post, "master-data/district");
+        using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, "master-data/district");
         req.Content = JsonContent.Create(new { province_id = provinceId });
         HttpResponseMessage response = await _httpClient.SendAsync(req);
         JsonElement json = await ReadGhnResponseAsync(response);
@@ -202,7 +201,7 @@ public sealed class GHNService : IGHNService
 
     public async Task<IReadOnlyList<GHNWardDto>> GetWardsAsync(int districtId)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Post, "master-data/ward");
+        using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, "master-data/ward");
         req.Content = JsonContent.Create(new { district_id = districtId });
         HttpResponseMessage response = await _httpClient.SendAsync(req);
         JsonElement json = await ReadGhnResponseAsync(response);
