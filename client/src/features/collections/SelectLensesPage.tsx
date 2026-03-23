@@ -41,11 +41,7 @@ export default function SelectLensesPage() {
     }
 
     const handleDialogClose = () => {
-        if (isPreOrder) {
-            navigate("/checkout", { state: { isPreOrder: true } });
-        } else {
-            navigate(-1);
-        }
+        navigate(-1);
     };
 
     return (

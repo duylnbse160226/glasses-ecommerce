@@ -5,7 +5,10 @@ export interface CreateAddressPayload {
   venue: string;
   ward: string;
   district: string;
-  city: string;
+  province: string;
+  provinceId?: number | null;
+  districtId?: number | null;
+  wardCode?: string | null;
   postalCode?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -20,7 +23,10 @@ export interface AddressDto {
   venue: string;
   ward: string;
   district: string;
-  city: string;
+  province: string;
+  provinceId?: number | null;
+  districtId?: number | null;
+  wardCode?: string | null;
   postalCode?: string | null;
   latitude?: number | null;
   longitude?: number | null;

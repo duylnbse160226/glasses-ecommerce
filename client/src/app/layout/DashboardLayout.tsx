@@ -7,7 +7,6 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  Collapse,
 } from "@mui/material";
 import { NavLink, Outlet, useLocation } from "react-router";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -27,8 +26,6 @@ import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import StorefrontOutlined from "@mui/icons-material/StorefrontOutlined";
 import MoveToInboxOutlined from "@mui/icons-material/MoveToInboxOutlined";
 import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import ShieldIcon from "@mui/icons-material/Shield";
@@ -69,7 +66,6 @@ const ADMIN_SUB_LINKS: { path: string; label: string; icon: React.ReactNode }[] 
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [adminOpen, setAdminOpen] = useState(true);
   const { currentUser, logoutUser } = useAccount();
   const roles = Array.isArray(currentUser?.roles) ? currentUser.roles : [];
   const location = useLocation();
@@ -690,78 +686,52 @@ export default function DashboardLayout() {
                   >
                     Admin
                   </Typography>
-
-                  {/* Parent Administration group for Admin */}
-                  <ListItemButton
-                    onClick={() => setAdminOpen((open) => !open)}
-                    sx={{
-                      borderRadius: 2,
-                      mb: 0.25,
-                      color: "rgba(0,0,0,0.7)",
-                      "&:hover": {
-                        bgcolor: "rgba(0,0,0,0.04)",
-                        color: "rgba(0,0,0,0.9)",
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
-                      <AdminPanelSettingsIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Administration"
-                      primaryTypographyProps={{ fontWeight: 600 }}
-                    />
-                    {adminOpen ? <ExpandLess /> : <ExpandMore />}
-                  </ListItemButton>
-
-                  <Collapse in={adminOpen} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding sx={{ pl: 4 }}>
-                      {ADMIN_SUB_LINKS.map((sub) => {
-                        const isActive = sub.path === "/admin"
-                          ? location.pathname === "/admin"
-                          : location.pathname.startsWith(sub.path);
-                        return (
-                          <ListItemButton
-                            key={sub.path}
-                            component={NavLink}
-                            to={sub.path}
-                            end={sub.path === "/admin"}
+                  <List component="div" disablePadding sx={{ pl: 2 }}>
+                    {ADMIN_SUB_LINKS.map((sub) => {
+                      const isActive = sub.path === "/admin"
+                        ? location.pathname === "/admin"
+                        : location.pathname.startsWith(sub.path);
+                      return (
+                        <ListItemButton
+                          key={sub.path}
+                          component={NavLink}
+                          to={sub.path}
+                          end={sub.path === "/admin"}
+                          sx={{
+                            borderRadius: 2,
+                            mb: 0.25,
+                            color: isActive ? "#171717" : "#8A8A8A",
+                            borderLeft: "3px solid transparent",
+                            pl: 1.5,
+                            ...(isActive
+                              ? {
+                                  bgcolor: "rgba(182,140,90,0.12)",
+                                  color: "#171717",
+                                  borderLeftColor: "#B68C5A",
+                                }
+                              : {}),
+                            "&:hover": {
+                              bgcolor: "rgba(0,0,0,0.04)",
+                              color: "#171717",
+                            },
+                          }}
+                        >
+                          <ListItemIcon
                             sx={{
-                              borderRadius: 2,
-                              mb: 0.25,
-                              color: isActive ? "#171717" : "#8A8A8A",
-                              borderLeft: "3px solid transparent",
-                              pl: 1.5,
-                              ...(isActive
-                                ? {
-                                    bgcolor: "rgba(182,140,90,0.12)",
-                                    color: "#171717",
-                                    borderLeftColor: "#B68C5A",
-                                  }
-                                : {}),
-                              "&:hover": {
-                                bgcolor: "rgba(0,0,0,0.04)",
-                                color: "#171717",
-                              },
+                              minWidth: 32,
+                              color: isActive ? "#B68C5A" : "inherit",
                             }}
                           >
-                            <ListItemIcon
-                              sx={{
-                                minWidth: 32,
-                                color: isActive ? "#B68C5A" : "inherit",
-                              }}
-                            >
-                              {sub.icon}
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={sub.label}
-                              primaryTypographyProps={{ fontWeight: 600 }}
-                            />
-                          </ListItemButton>
-                        );
-                      })}
-                    </List>
-                  </Collapse>
+                            {sub.icon}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={sub.label}
+                            primaryTypographyProps={{ fontWeight: 600 }}
+                          />
+                        </ListItemButton>
+                      );
+                    })}
+                  </List>
                 </Fragment>
               );
             }

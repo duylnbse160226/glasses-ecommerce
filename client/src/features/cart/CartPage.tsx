@@ -613,6 +613,7 @@ export default function CartPage() {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                    color="default"
                                                     checked={allPreOrderSelected}
                                                     indeterminate={
                                                         preOrderItems.some((i) =>

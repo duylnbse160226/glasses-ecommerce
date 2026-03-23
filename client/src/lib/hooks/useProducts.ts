@@ -27,7 +27,7 @@ function mapApiItemToProduct(item: ApiProductItem): Product {
     id: item.id,
     name: item.productName,
     brand: item.brand,
-    price: item.minPrice,
+    price: item.maxPrice,
     image: item.firstImage?.imageUrl ?? "",
     code: item.productName,
     description: item.description ?? undefined,

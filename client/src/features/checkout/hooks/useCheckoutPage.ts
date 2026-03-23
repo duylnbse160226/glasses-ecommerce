@@ -20,7 +20,7 @@ const initialAddress: CheckoutShippingForm = {
   venue: "",
   ward: "",
   district: "",
-  city: "",
+  province: "",
   postalCode: "",
   orderNote: "",
 };
@@ -93,7 +93,7 @@ export function useCheckoutPage() {
         venue: defaultAddress.venue,
         ward: defaultAddress.ward,
         district: defaultAddress.district,
-        city: defaultAddress.city,
+        province: defaultAddress.province,
         postalCode: defaultAddress.postalCode ?? "",
         orderNote: prev.orderNote ?? "",
       };
@@ -169,7 +169,15 @@ export function useCheckoutPage() {
     }
   }, [isEmptyCart]);
 
-  const handlePlaceOrder = async (shippingFee: number = 0) => {
+  const handlePlaceOrder = async (params?: {
+    shippingFee?: number;
+    provinceId?: number | null;
+    districtId?: number | null;
+    wardCode?: string | null;
+  }) => {
+    const provinceId = params?.provinceId ?? null;
+    const districtId = params?.districtId ?? null;
+    const wardCode = params?.wardCode?.trim() ?? "";
     if (isEmptyCart) {
       setSnackbar({ open: true, message: "Your cart is empty.", severity: "error" });
       return;
@@ -190,6 +198,14 @@ export function useCheckoutPage() {
       });
       return;
     }
+    if (!districtId || districtId <= 0 || !wardCode) {
+      setSnackbar({
+        open: true,
+        message: "Please select a valid district and ward before placing order.",
+        severity: "error",
+      });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -206,7 +222,7 @@ export function useCheckoutPage() {
             address.venue === savedAddr.venue &&
             address.ward === savedAddr.ward &&
             address.district === savedAddr.district &&
-            address.city === savedAddr.city &&
+            address.province === savedAddr.province &&
             (address.postalCode || "") === (savedAddr.postalCode || "");
 
           if (formMatchesSavedAddress) {
@@ -224,7 +240,10 @@ export function useCheckoutPage() {
           venue: address.venue,
           ward: address.ward,
           district: address.district,
-          city: address.city,
+          province: address.province,
+          provinceId,
+          districtId,
+          wardCode,
           postalCode: address.postalCode || null,
           isDefault: setAsDefault,
         });
@@ -259,6 +278,8 @@ export function useCheckoutPage() {
         orderNote: address.orderNote || null,
         orderType: isPreOrder ? "PreOrder" : hasPrescriptionItems ? "Prescription" : "ReadyStock",
         selectedCartItemIds: items.map((item) => item.id),
+        districtId,
+        wardCode,
         promoCode: appliedPromo?.promoCode ?? undefined,
         prescription: undefined, // Don't use old single-prescription payload
         prescriptions: prescriptionsArray.length > 0 ? prescriptionsArray : undefined,
@@ -274,7 +295,10 @@ export function useCheckoutPage() {
               venue: (createdOrder.shippingAddress as { venue?: string }).venue ?? address.venue,
               ward: (createdOrder.shippingAddress as { ward?: string }).ward ?? address.ward,
               district: (createdOrder.shippingAddress as { district?: string }).district ?? address.district,
-              city: (createdOrder.shippingAddress as { city?: string }).city ?? address.city,
+              city:
+                (createdOrder.shippingAddress as { city?: string; province?: string }).city ??
+                (createdOrder.shippingAddress as { city?: string; province?: string }).province ??
+                address.province,
               postalCode: (createdOrder.shippingAddress as { postalCode?: string }).postalCode ?? address.postalCode,
             }
           : address;
@@ -329,8 +353,10 @@ export function useCheckoutPage() {
 
       const orderForUi = {
         ...orderForState,
-        shippingFee,
-        finalAmount: Math.max(0, orderForState.finalAmount + shippingFee),
+        // Prefer backend-calculated shipping fee to avoid client/server mismatch.
+        shippingFee: orderForState.shippingFee,
+        // Backend already includes shipping in finalAmount.
+        finalAmount: orderForState.finalAmount,
         items: orderItemsWithImage,
       };
 

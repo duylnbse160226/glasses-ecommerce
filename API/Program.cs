@@ -6,6 +6,7 @@ using Application.Interfaces;
 using Domain;
 using FluentValidation;
 using Infrastructure.Email;
+using Infrastructure.GHN;
 using Infrastructure.Payments;
 using Infrastructure.Photos;
 using Infrastructure.Security;
@@ -87,9 +88,11 @@ builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IGHNService, GHNService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<VnpaySettings>(builder.Configuration.GetSection("VnPay"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHN"));
 
 /*
     Register auto mapper and specify where the assembly - [kết quả biên dịch (compile) của project]
