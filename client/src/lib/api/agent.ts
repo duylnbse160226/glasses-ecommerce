@@ -1,4 +1,6 @@
 import axios from "axios";
+import { showSessionExpiredToast } from "../auth/sessionExpiredToast";
+import { queryClient } from "../queryClient";
 import { store } from "../stores/store";
 import { toast } from "react-toastify";
 import { router } from "../../app/router/Routes";
@@ -40,6 +42,9 @@ agent.interceptors.response.use(
         } else if (data.message) {
           // Handle Result<T>.Failure with message (e.g., policy violations)
           throw new Error(data.message);
+        } else if (typeof data === 'string') {
+          // Handle direct string error responses
+          throw new Error(data);
         } else {
           toast.error(data);
         }
@@ -48,12 +53,24 @@ agent.interceptors.response.use(
         const url: string | undefined = error.config?.url;
         const isLoginRequest = url?.includes("/login");
         const isCartRequest = url?.includes("/carts");
+        const isUserInfoRequest = url?.includes("/account/user-info");
 
         if (isLoginRequest) {
           toast.error("Wrong password or invalid email");
+          break;
+        }
+
+        const hadAuthenticatedUser = Boolean(
+          queryClient.getQueryData<{ id?: string }>(["user"])?.id
+        );
+
+        if (hadAuthenticatedUser) {
+          queryClient.removeQueries({ queryKey: ["user"] });
+          queryClient.removeQueries({ queryKey: ["cart"] });
+          showSessionExpiredToast();
         } else if (isCartRequest) {
           toast.error("Please log in before adding items to your cart.");
-        } else {
+        } else if (!isUserInfoRequest) {
           toast.error("You are not authorized. Please sign in again.");
         }
         break;
@@ -65,6 +82,9 @@ agent.interceptors.response.use(
         // Conflict — duplicate request, validation error, etc.
         if (data.message) {
           throw new Error(data.message);
+        } else if (typeof data === 'string') {
+          // Handle direct string error responses (e.g., from Conflict(errorString))
+          throw new Error(data);
         }
         break;
       case 500:
