@@ -9,12 +9,12 @@ namespace Application.Orders.Commands;
 
 public sealed class ProcessGHNWebhook
 {
-    public class Command : IRequest<Result<Unit>>
+    public sealed class Command : IRequest<Result<Unit>>
     {
         public GHNWebhookPayloadDto Payload { get; set; } = new();
     }
 
-    public class Handler(AppDbContext context, IMediator mediator) : IRequestHandler<Command, Result<Unit>>
+    internal sealed class Handler(AppDbContext context, IMediator mediator) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {

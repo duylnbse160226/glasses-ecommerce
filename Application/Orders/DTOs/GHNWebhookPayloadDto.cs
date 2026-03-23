@@ -2,7 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace Application.Orders.DTOs;
 
-public class GHNWebhookPayloadDto
+/// <summary>
+/// Data transfer object for handling webhook updates pushed by GHN.
+/// </summary>
+public sealed class GHNWebhookPayloadDto
 {
     [JsonPropertyName("OrderCode")]
     public string OrderCode { get; set; } = string.Empty;

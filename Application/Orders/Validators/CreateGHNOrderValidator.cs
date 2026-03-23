@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Application.Orders.Validators;
 
-public class CreateGHNOrderValidator : AbstractValidator<CreateGHNOrder.Command>
+public sealed class CreateGHNOrderValidator : AbstractValidator<CreateGHNOrder.Command>
 {
     public CreateGHNOrderValidator()
     {

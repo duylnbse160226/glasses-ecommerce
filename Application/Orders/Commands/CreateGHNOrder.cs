@@ -10,13 +10,13 @@ namespace Application.Orders.Commands;
 
 public sealed class CreateGHNOrder
 {
-    public class Command : IRequest<Result<string>>
+    public sealed class Command : IRequest<Result<string>>
     {
         public Guid OrderId { get; set; }
         public CreateGHNOrderDto Dto { get; set; } = new();
     }
 
-    public class Handler(AppDbContext context, IGHNService ghnService, IUserAccessor userAccessor) : IRequestHandler<Command, Result<string>>
+    internal sealed class Handler(AppDbContext context, IGHNService ghnService, IUserAccessor userAccessor) : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {

@@ -4,9 +4,9 @@ using MediatR;
 
 namespace Application.Orders.Queries;
 
-public class CalculateShippingFee
+public sealed class CalculateShippingFee
 {
-    public class Query : IRequest<Result<decimal>>
+    public sealed class Query : IRequest<Result<decimal>>
     {
         public int DistrictId { get; set; }
         public string WardCode { get; set; } = string.Empty;
@@ -14,7 +14,7 @@ public class CalculateShippingFee
         public decimal InsuranceValue { get; set; } = 0;
     }
 
-    public class Handler(IGHNService ghnService) : IRequestHandler<Query, Result<decimal>>
+    internal sealed class Handler(IGHNService ghnService) : IRequestHandler<Query, Result<decimal>>
     {
         public async Task<Result<decimal>> Handle(Query request, CancellationToken cancellationToken)
         {
@@ -25,7 +25,7 @@ public class CalculateShippingFee
 
             try
             {
-                var fee = await ghnService.CalculateShippingFeeAsync(
+                decimal fee = await ghnService.CalculateShippingFeeAsync(
                     request.DistrictId, 
                     request.WardCode, 
                     request.Weight, 

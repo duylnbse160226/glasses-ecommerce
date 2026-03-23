@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.GHN;
 
-public sealed class GHNService : IGHNService
+internal sealed class GHNService : IGHNService
 {
     private readonly HttpClient _httpClient;
     private readonly GHNSettings _settings;
@@ -31,7 +31,8 @@ public sealed class GHNService : IGHNService
         _httpClient.DefaultRequestHeaders.Add("ShopId", _settings.ShopId);
 
         int codAmountVnd = (int)Math.Round(request.CodAmount * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
-        int insuranceValueVnd = request.InsuranceValue.HasValue 
+        int insuranceValueVnd = request.InsuranceValue.HasValue
+
             ? (int)Math.Round(request.InsuranceValue.Value * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero)
             : 0;
 
@@ -43,6 +44,11 @@ public sealed class GHNService : IGHNService
             price = (int)Math.Round(i.Price * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero),
             weight = i.Weight
         }).ToList();
+
+        if (insuranceValueVnd > 50000000)
+        {
+            throw new ArgumentException($"Insurance value {insuranceValueVnd} VND exceeds GHN limit of 50,000,000 VND. Requested: {request.InsuranceValue:F2} USD.");
+        }
 
         var payload = new
         {
@@ -61,7 +67,7 @@ public sealed class GHNService : IGHNService
             items = itemsVnd,
             client_order_code = request.ClientOrderCode,
             cod_amount = codAmountVnd,
-            insurance_value = Math.Min(insuranceValueVnd, 50000000)
+            insurance_value = insuranceValueVnd
         };
 
         HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/create", payload);
@@ -98,16 +104,21 @@ public sealed class GHNService : IGHNService
 
         int insuranceValueVnd = (int)Math.Round(insuranceValue * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
 
-        var request = new
+        if (insuranceValueVnd > 50000000)
+        {
+            throw new ArgumentException($"Insurance value {insuranceValueVnd} VND exceeds GHN limit of 50,000,000 VND. Requested: {insuranceValue:F2} USD.");
+        }
+
+        var requestInner = new
         {
             service_type_id = 2,
             to_district_id = toDistrictId,
             to_ward_code = toWardCode,
             weight = weight,
-            insurance_value = Math.Min(insuranceValueVnd, 50000000) // Max allowed by GHN is 50,000,000 VND
+            insurance_value = insuranceValueVnd
         };
 
-        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/fee", request);
+        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/fee", requestInner);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -123,10 +134,12 @@ public sealed class GHNService : IGHNService
         }
 
         int totalTotalVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
-        
+
         // Convert VND back to USD for the application to use
+
         decimal totalUsd = Math.Round((decimal)totalTotalVnd / _vnpaySettings.UsdToVndRate, 2);
-        
+
+
         return totalUsd;
     }
 
@@ -149,8 +162,9 @@ public sealed class GHNService : IGHNService
         }
 
         string? token = jsonResponse.GetProperty("data").GetProperty("token").GetString();
-        
+
         // Return full URL to print A5
+
         return $"https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token={token}";
         // Note: For production use: "https://online-gateway.ghn.vn/a5/public-api/printA5?token="
     }
