@@ -35,6 +35,24 @@ public sealed class Checkout
             // idempotency: generate ID upfront so a post-commit retry does not create a duplicate order.
             Guid orderId = Guid.CreateVersion7(TimeProvider.System.GetUtcNow());
 
+            if (dto.DistrictId <= 0 || string.IsNullOrWhiteSpace(dto.WardCode))
+                return Result<CustomerOrderDto>.Failure("DistrictId and WardCode are required to calculate shipping fee.", 400);
+
+            decimal estimatedTotalAmount = await context.CartItems
+                .Where(ci => ci.Cart.UserId == userId && ci.Cart.Status == CartStatus.Active && dto.SelectedCartItemIds.Contains(ci.Id))
+                .Select(ci => ci.Quantity * ci.ProductVariant.Price)
+                .SumAsync(ct);
+
+            decimal precalculatedShippingFee;
+            try
+            {
+                precalculatedShippingFee = await ghnService.CalculateShippingFeeAsync(dto.DistrictId, dto.WardCode, 200, estimatedTotalAmount);
+            }
+            catch (Exception ex)
+            {
+                return Result<CustomerOrderDto>.Failure(ex.Message, 400);
+            }
+
             // ExecuteAsync returns only the new Order ID after commit.
             // The re-query (ProjectTo) runs OUTSIDE the retry scope so a transient failure
             // there cannot retry the whole transaction and create a duplicate order or
@@ -205,20 +223,8 @@ public sealed class Checkout
                     cartItemOrderItemMap[cartItem.Id] = orderItem;
                 }
 
-                decimal shippingFee = 0;
-                
-                // Calculate real shipping fee from GHN for online delivered orders (assume all here are shipped)
-                if (dto.DistrictId <= 0 || string.IsNullOrWhiteSpace(dto.WardCode))
-                    return Result<Guid>.Failure("DistrictId and WardCode are required to calculate shipping fee.", 400);
-
-                try
-                {
-                    shippingFee = await ghnService.CalculateShippingFeeAsync(dto.DistrictId, dto.WardCode, 200, totalAmount);
-                }
-                catch (Exception ex)
-                {
-                    return Result<Guid>.Failure(ex.Message, 400);
-                }
+                // Use the precalculated shipping fee to avoid external API calls inside Serializable transaction
+                decimal shippingFee = precalculatedShippingFee;
 
                 // 5. Handle promotion
                 Promotion? promotion = null;
