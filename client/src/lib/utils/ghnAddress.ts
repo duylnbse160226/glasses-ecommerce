@@ -113,11 +113,6 @@ type GhnService = {
   service_type_id: number;
 };
 
-type GhnFeeData = {
-  total: number;
-  service_fee: number;
-};
-
 export async function fetchGhnAvailableServices(toDistrictId: number): Promise<GhnService[]> {
   ensureShippingFeeConfig();
   return ghnRequest<GhnService[]>("/v2/shipping-order/available-services", {
