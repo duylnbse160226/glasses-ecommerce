@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.GHN;
 
-internal sealed class GHNService : IGHNService
+public sealed class GHNService : IGHNService
 {
     private readonly HttpClient _httpClient;
     private readonly GHNSettings _settings;
