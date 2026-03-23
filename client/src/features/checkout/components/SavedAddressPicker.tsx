@@ -31,7 +31,7 @@ export function SavedAddressPicker({ addresses, selectedId, onSelect }: SavedAdd
         addr.venue,
         addr.ward,
         addr.district,
-        addr.city,
+        addr.province,
         addr.postalCode ?? "",
       ]
         .join("|")
@@ -61,7 +61,7 @@ export function SavedAddressPicker({ addresses, selectedId, onSelect }: SavedAdd
         addr.venue,
         addr.ward,
         addr.district,
-        addr.city,
+        addr.province,
         addr.postalCode ?? "",
       ]
         .join(" ")
@@ -227,7 +227,7 @@ export function SavedAddressPicker({ addresses, selectedId, onSelect }: SavedAdd
                         overflow: "hidden",
                       }}
                     >
-                      {addr.venue}, {addr.ward}, {addr.district}, {addr.city}{" "}
+                      {addr.venue}, {addr.ward}, {addr.district}, {addr.province}{" "}
                       {addr.postalCode ?? ""}
                     </Typography>
                   </Box>
