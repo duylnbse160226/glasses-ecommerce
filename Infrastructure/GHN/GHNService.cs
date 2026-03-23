@@ -4,6 +4,7 @@ using Application.Core;
 using Application.Interfaces;
 using Application.Orders.DTOs;
 using Infrastructure.Payments;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.GHN;
@@ -13,12 +14,23 @@ public sealed class GHNService : IGHNService
     private readonly HttpClient _httpClient;
     private readonly GHNSettings _settings;
     private readonly VnpaySettings _vnpaySettings;
+    private readonly IMemoryCache _cache;
 
-    public GHNService(HttpClient httpClient, IOptions<GHNSettings> settings, IOptions<VnpaySettings> vnpaySettings)
+    // Cache TTLs
+    private static readonly TimeSpan ProvinceTtl = TimeSpan.FromHours(24);
+    private static readonly TimeSpan DistrictTtl = TimeSpan.FromHours(24);
+    private static readonly TimeSpan WardTtl = TimeSpan.FromHours(6);
+
+    public GHNService(
+        HttpClient httpClient,
+        IOptions<GHNSettings> settings,
+        IOptions<VnpaySettings> vnpaySettings,
+        IMemoryCache cache)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _vnpaySettings = vnpaySettings.Value;
+        _cache = cache;
 
         _httpClient.BaseAddress = new Uri(_settings.BaseUrl);
         _httpClient.DefaultRequestHeaders.Add("Token", _settings.Token);
@@ -26,7 +38,6 @@ public sealed class GHNService : IGHNService
 
     public async Task<GHNCreateOrderResponseDto> CreateShippingOrderAsync(GHNCreateOrderRequestDto request)
     {
-
 
         int codAmountVnd = (int)Math.Round(request.CodAmount * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
         int insuranceValueVnd = request.InsuranceValue.HasValue
@@ -68,7 +79,7 @@ public sealed class GHNService : IGHNService
             insurance_value = insuranceValueVnd
         };
 
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/create");
+        using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/create");
         requestMessage.Headers.Add("ShopId", _settings.ShopId);
         requestMessage.Content = JsonContent.Create(payload);
 
@@ -89,7 +100,7 @@ public sealed class GHNService : IGHNService
 
         JsonElement data = jsonResponse.GetProperty("data");
 
-        return new GHNCreateOrderResponseDto
+        GHNCreateOrderResponseDto orderResponse = new GHNCreateOrderResponseDto
         {
             OrderCode = data.GetProperty("order_code").GetString() ?? "",
             TotalFee = data.GetProperty("total_fee").GetInt32(),
@@ -97,6 +108,8 @@ public sealed class GHNService : IGHNService
                 ? expectedTime.GetString() ?? ""
                 : ""
         };
+
+        return orderResponse;
     }
 
     public async Task<decimal> CalculateShippingFeeAsync(int toDistrictId, string toWardCode, int weight = 200, decimal insuranceValue = 0)
@@ -118,7 +131,7 @@ public sealed class GHNService : IGHNService
             insurance_value = insuranceValueVnd
         };
 
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/fee");
+        using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/fee");
         requestMessage.Headers.Add("ShopId", _settings.ShopId);
         requestMessage.Content = JsonContent.Create(requestInner);
 
@@ -137,11 +150,11 @@ public sealed class GHNService : IGHNService
             throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
         }
 
-        int totalTotalVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
+        int shippingFeeVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
 
         // Convert VND back to USD for the application to use
 
-        decimal totalUsd = Math.Round((decimal)totalTotalVnd / _vnpaySettings.UsdToVndRate, 2);
+        decimal totalUsd = Math.Round((decimal)shippingFeeVnd / _vnpaySettings.UsdToVndRate, 2);
 
 
         return totalUsd;
@@ -167,9 +180,90 @@ public sealed class GHNService : IGHNService
 
         string? token = jsonResponse.GetProperty("data").GetProperty("token").GetString();
 
-        // Return full URL to print A5
+        // Return full URL to print A5 using configured base URL
+        return $"{_settings.PrintOrderUrl}?token={token}";
+    }
 
-        return $"https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token={token}";
-        // Note: For production use: "https://online-gateway.ghn.vn/a5/public-api/printA5?token="
+    public async Task<IReadOnlyList<GHNProvinceDto>> GetProvincesAsync(CancellationToken ct = default)
+    {
+        const string cacheKey = "ghn:provinces";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<GHNProvinceDto>? cached))
+            return cached!;
+
+        HttpResponseMessage response = await _httpClient.GetAsync("master-data/province", ct);
+        JsonElement json = await ReadGhnResponseAsync(response, ct);
+
+        IReadOnlyList<GHNProvinceDto> result = json.EnumerateArray()
+            .Select(p => new GHNProvinceDto(
+                p.GetProperty("ProvinceID").GetInt32(),
+                p.GetProperty("ProvinceName").GetString() ?? string.Empty))
+            .ToList();
+
+        _cache.Set(cacheKey, result, ProvinceTtl);
+        return result;
+    }
+
+    public async Task<IReadOnlyList<GHNDistrictDto>> GetDistrictsAsync(int provinceId, CancellationToken ct = default)
+    {
+        string cacheKey = $"ghn:districts:{provinceId}";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<GHNDistrictDto>? cached))
+            return cached!;
+
+        using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, "master-data/district");
+        req.Content = JsonContent.Create(new { province_id = provinceId });
+        HttpResponseMessage response = await _httpClient.SendAsync(req, ct);
+        JsonElement json = await ReadGhnResponseAsync(response, ct);
+
+        IReadOnlyList<GHNDistrictDto> result = json.EnumerateArray()
+            .Select(d => new GHNDistrictDto(
+                d.GetProperty("DistrictID").GetInt32(),
+                d.GetProperty("DistrictName").GetString() ?? string.Empty,
+                d.GetProperty("ProvinceID").GetInt32()))
+            .ToList();
+
+        _cache.Set(cacheKey, result, DistrictTtl);
+        return result;
+    }
+
+    public async Task<IReadOnlyList<GHNWardDto>> GetWardsAsync(int districtId, CancellationToken ct = default)
+    {
+        string cacheKey = $"ghn:wards:{districtId}";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<GHNWardDto>? cached))
+            return cached!;
+
+        using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, "master-data/ward");
+        req.Content = JsonContent.Create(new { district_id = districtId });
+        HttpResponseMessage response = await _httpClient.SendAsync(req, ct);
+        JsonElement json = await ReadGhnResponseAsync(response, ct);
+
+        IReadOnlyList<GHNWardDto> result = json.EnumerateArray()
+            .Select(w => new GHNWardDto(
+                w.GetProperty("WardCode").GetString() ?? string.Empty,
+                w.GetProperty("WardName").GetString() ?? string.Empty,
+                w.GetProperty("DistrictID").GetInt32()))
+            .ToList();
+
+        _cache.Set(cacheKey, result, WardTtl);
+        return result;
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private static async Task<JsonElement> ReadGhnResponseAsync(HttpResponseMessage response, CancellationToken ct = default)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            string errorContent = await response.Content.ReadAsStringAsync(ct);
+            throw new Exception($"GHN API Error: {response.StatusCode} - {errorContent}");
+        }
+
+        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+
+        if (jsonResponse.ValueKind == JsonValueKind.Undefined)
+            throw new Exception("GHN API returned empty response");
+        if (jsonResponse.GetProperty("code").GetInt32() != 200)
+            throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
+
+        return jsonResponse.GetProperty("data");
     }
 }

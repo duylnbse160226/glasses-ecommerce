@@ -4,9 +4,9 @@ using FluentValidation;
 
 namespace Application.Addresses.Validators;
 
-public class BaseAddressValidator<T, TDto> : AbstractValidator<T> where TDto : BaseAddressDto
+public abstract class BaseAddressValidator<T, TDto> : AbstractValidator<T> where TDto : BaseAddressDto
 {
-    public BaseAddressValidator(Func<T, TDto> selector)
+    protected BaseAddressValidator(Func<T, TDto> selector)
     {
         RuleFor(x => selector(x).RecipientName)
             .NotEmpty()
@@ -40,11 +40,26 @@ public class BaseAddressValidator<T, TDto> : AbstractValidator<T> where TDto : B
             .MaximumLength(100)
             .WithMessage("District cannot exceed 100 characters.");
 
-        RuleFor(x => selector(x).City)
+        RuleFor(x => selector(x).Province)
             .NotEmpty()
-            .WithMessage("City is required.")
+            .WithMessage("Province is required.")
             .MaximumLength(100)
-            .WithMessage("City cannot exceed 100 characters.");
+            .WithMessage("Province cannot exceed 100 characters.");
+
+        RuleFor(x => selector(x).ProvinceId)
+            .GreaterThan(0)
+            .WithMessage("Province ID must be greater than 0.")
+            .When(x => selector(x).ProvinceId.HasValue);
+
+        RuleFor(x => selector(x).DistrictId)
+            .GreaterThan(0)
+            .WithMessage("District ID must be greater than 0.")
+            .When(x => selector(x).DistrictId.HasValue);
+
+        RuleFor(x => selector(x).WardCode)
+            .MaximumLength(20)
+            .WithMessage("Ward code cannot exceed 20 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(selector(x).WardCode));
 
         RuleFor(x => selector(x).PostalCode)
             .MaximumLength(20)
