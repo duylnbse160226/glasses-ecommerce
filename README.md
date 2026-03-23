@@ -31,9 +31,9 @@ Focused heavily on production-grade reliability:
 - **Zero-downtime deployments** to **Azure App Service** with **OIDC (JWT)** authentication.
 - Containerized local development via **Docker Compose** with secured secrets management.
 
-### Tech Stack
-
-`ASP.NET Core 9.0` · `Entity Framework Core` · `ASP.NET Identity` · `MediatR` · `AutoMapper` · `FluentValidation` · `Scalar API Reference` · `Cloudinary` · `SQL Server` · `Docker` · `GitHub Actions` · `Azure`
+**Frontend:** `React 19` · `Vite` · `TypeScript` · `Tailwind CSS v4` · `Material UI (MUI)` · `MobX` · `React Query` · `React Hook Form` · `Zod`<br>
+**Backend:** `ASP.NET Core 9.0` · `Entity Framework Core` · `MediatR` · `AutoMapper` · `FluentValidation` · `Scalar` · `Cloudinary` · `SQL Server`<br>
+**DevOps:** `Docker` · `GitHub Actions` · `Azure Apps`
 
 ---
 
@@ -77,12 +77,21 @@ Our infrastructure relies on reliable and industry-standard tools for deployment
 
 ## Engineering Highlights
 
+### Backend & Infrastructure
 | Area               | Detail                                                                                                                                                                                     |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Architecture**   | DDD + Clean Architecture with CQRS (MediatR) · Pipeline behaviors for validation & logging · Result pattern for error handling · Custom authorization policies                             |
 | **Data Integrity** | Pessimistic Concurrency · Explicit DB-level Transactions · Serializable isolation for promotions · Row-Level Locking (`UPDLOCK`) for inventory · Idempotent Retry against network failures |
 | **Performance**    | Extensive EF Core Indexing · Selective `IgnoreAutoIncludes()` to eliminate N+1 overhead on heavy joins                                                                                     |
 | **DevOps & CI/CD** | GitHub Actions for unified CI builds · Zero-downtime deployments to Azure App Service via OIDC (JWT) · Docker Compose for local dev · Secured secrets management                           |
+
+### Frontend UI & Architecture
+| Area               | Detail                                                                                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **State & Cache**  | Robust global state via **MobX** · High-performance server-state synchronization and caching using **React Query**                                                                         |
+| **Modern UI/UX**   | Lightning-fast builds with **React 19 + Vite** · Custom design system blending **Tailwind CSS v4** styling and **Material UI (MUI)** components · Fluid animations via **Framer Motion**   |
+| **Type-Safe Forms**| Complex, high-performance wizard forms driven by **React Hook Form** and strictly validated using **Zod** schemas                                                                          |
+| **Rich Features**  | Interactive location mapping with **Leaflet** · 3D visualizations via **Three.js** · Drag-and-drop operations with **dnd-kit** · Rich data analytics using **Recharts**                    |
 
 ---
 
