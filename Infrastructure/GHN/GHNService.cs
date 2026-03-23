@@ -26,9 +26,7 @@ public sealed class GHNService : IGHNService
 
     public async Task<GHNCreateOrderResponseDto> CreateShippingOrderAsync(GHNCreateOrderRequestDto request)
     {
-        // Add ShopId header for this request
-        _httpClient.DefaultRequestHeaders.Remove("ShopId");
-        _httpClient.DefaultRequestHeaders.Add("ShopId", _settings.ShopId);
+
 
         int codAmountVnd = (int)Math.Round(request.CodAmount * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
         int insuranceValueVnd = request.InsuranceValue.HasValue
@@ -70,7 +68,11 @@ public sealed class GHNService : IGHNService
             insurance_value = insuranceValueVnd
         };
 
-        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/create", payload);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/create");
+        requestMessage.Headers.Add("ShopId", _settings.ShopId);
+        requestMessage.Content = JsonContent.Create(payload);
+
+        HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -99,8 +101,6 @@ public sealed class GHNService : IGHNService
 
     public async Task<decimal> CalculateShippingFeeAsync(int toDistrictId, string toWardCode, int weight = 200, decimal insuranceValue = 0)
     {
-        _httpClient.DefaultRequestHeaders.Remove("ShopId");
-        _httpClient.DefaultRequestHeaders.Add("ShopId", _settings.ShopId);
 
         int insuranceValueVnd = (int)Math.Round(insuranceValue * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
 
@@ -118,7 +118,11 @@ public sealed class GHNService : IGHNService
             insurance_value = insuranceValueVnd
         };
 
-        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/fee", requestInner);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v2/shipping-order/fee");
+        requestMessage.Headers.Add("ShopId", _settings.ShopId);
+        requestMessage.Content = JsonContent.Create(requestInner);
+
+        HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
 
         if (!response.IsSuccessStatusCode)
         {

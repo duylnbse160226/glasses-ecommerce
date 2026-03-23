@@ -13,10 +13,10 @@ public class GHNWebhookController : BaseApiController
     [HttpPost]
     public async Task<IActionResult> HandleWebhook([FromBody] GHNWebhookPayloadDto payload, CancellationToken ct)
     {
-        // TODO: Validate GHN Webhook Token Signature here using Request.Headers if required by GHN
-        
+        // TODO in production - add token validation: Validate GHN Webhook Token Signature here using Request.Headers if required by GHN
+
         var result = await Mediator.Send(new ProcessGHNWebhook.Command { Payload = payload }, ct);
-        
+
         if (!result.IsSuccess)
         {
             // GHN should know we received it, even if we failed to process logically, 
