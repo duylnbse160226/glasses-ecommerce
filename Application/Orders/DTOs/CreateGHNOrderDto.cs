@@ -1,6 +1,9 @@
 namespace Application.Orders.DTOs;
 
-public class CreateGHNOrderDto
+/// <summary>
+/// Data transfer object for creating a GHN shipping order request from the client.
+/// </summary>
+public sealed class CreateGHNOrderDto
 {
     public int DistrictId { get; set; }
     public string WardCode { get; set; } = string.Empty;

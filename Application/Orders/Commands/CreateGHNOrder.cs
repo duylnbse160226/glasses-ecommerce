@@ -20,7 +20,7 @@ public sealed class CreateGHNOrder
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var order = await context.Orders
+            Order? order = await context.Orders
                 .Include(o => o.Address)
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.ProductVariant)
@@ -48,7 +48,7 @@ public sealed class CreateGHNOrder
             }
 
             // Map Order Items
-            var ghnItems = order.OrderItems.Select(oi => new GHNItemDto
+            List<GHNItemDto> ghnItems = order.OrderItems.Select(oi => new GHNItemDto
             {
                 Name = oi.ProductVariant.Product.ProductName,
                 Code = oi.ProductVariant.SKU,
@@ -57,7 +57,7 @@ public sealed class CreateGHNOrder
                 Weight = request.Dto.Weight / order.OrderItems.Count // Chia đều trọng lượng giả định
             }).ToList();
 
-            var ghnRequest = new GHNCreateOrderRequestDto
+            GHNCreateOrderRequestDto ghnRequest = new GHNCreateOrderRequestDto
             {
                 ToName = order.Address.RecipientName,
                 ToPhone = order.Address.RecipientPhone,
@@ -90,7 +90,7 @@ public sealed class CreateGHNOrder
             // Lưu TrackingCode vào ShipmentInfo
             if (order.ShipmentInfo == null)
             {
-                var newShipment = new ShipmentInfo
+                ShipmentInfo newShipment = new ShipmentInfo
                 {
                     OrderId = order.Id,
                     CarrierName = ShippingCarrier.GHN,
@@ -111,7 +111,7 @@ public sealed class CreateGHNOrder
             // (Optional) Update order status here? - Current status is Processing
             // Usually we leave order status update to explicit actions or webhook
 
-            var success = await context.SaveChangesAsync(cancellationToken) > 0;
+            bool success = await context.SaveChangesAsync(cancellationToken) > 0;
 
             if (!success)
                 return Result<string>.Failure("Failed to save tracking code.", 500);

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.GHN;
 
-public class GHNService : IGHNService
+public sealed class GHNService : IGHNService
 {
     private readonly HttpClient _httpClient;
     private readonly GHNSettings _settings;
@@ -30,8 +30,8 @@ public class GHNService : IGHNService
         _httpClient.DefaultRequestHeaders.Remove("ShopId");
         _httpClient.DefaultRequestHeaders.Add("ShopId", _settings.ShopId);
 
-        var codAmountVnd = (int)Math.Round(request.CodAmount * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
-        var insuranceValueVnd = request.InsuranceValue.HasValue 
+        int codAmountVnd = (int)Math.Round(request.CodAmount * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
+        int insuranceValueVnd = request.InsuranceValue.HasValue 
             ? (int)Math.Round(request.InsuranceValue.Value * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero)
             : 0;
 
@@ -64,28 +64,28 @@ public class GHNService : IGHNService
             insurance_value = Math.Min(insuranceValueVnd, 50000000)
         };
 
-        var response = await _httpClient.PostAsJsonAsync("v2/shipping-order/create", payload);
+        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/create", payload);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
+            string errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"GHN API Error: {response.StatusCode} - {errorContent}");
         }
 
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
 
         if (jsonResponse.GetProperty("code").GetInt32() != 200)
         {
             throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
         }
 
-        var data = jsonResponse.GetProperty("data");
+        JsonElement data = jsonResponse.GetProperty("data");
 
         return new GHNCreateOrderResponseDto
         {
             OrderCode = data.GetProperty("order_code").GetString() ?? "",
             TotalFee = data.GetProperty("total_fee").GetInt32(),
-            ExpectedDeliveryTime = data.TryGetProperty("expected_delivery_time", out var expectedTime)
+            ExpectedDeliveryTime = data.TryGetProperty("expected_delivery_time", out JsonElement expectedTime)
                 ? expectedTime.GetString() ?? ""
                 : ""
         };
@@ -96,7 +96,7 @@ public class GHNService : IGHNService
         _httpClient.DefaultRequestHeaders.Remove("ShopId");
         _httpClient.DefaultRequestHeaders.Add("ShopId", _settings.ShopId);
 
-        var insuranceValueVnd = (int)Math.Round(insuranceValue * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
+        int insuranceValueVnd = (int)Math.Round(insuranceValue * _vnpaySettings.UsdToVndRate, 0, MidpointRounding.AwayFromZero);
 
         var request = new
         {
@@ -107,25 +107,25 @@ public class GHNService : IGHNService
             insurance_value = Math.Min(insuranceValueVnd, 50000000) // Max allowed by GHN is 50,000,000 VND
         };
 
-        var response = await _httpClient.PostAsJsonAsync("v2/shipping-order/fee", request);
+        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/shipping-order/fee", request);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
+            string errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"GHN Shipping Fee Error: {response.StatusCode} - {errorContent}");
         }
 
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
 
         if (jsonResponse.GetProperty("code").GetInt32() != 200)
         {
             throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
         }
 
-        var totalTotalVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
+        int totalTotalVnd = jsonResponse.GetProperty("data").GetProperty("total").GetInt32();
         
         // Convert VND back to USD for the application to use
-        var totalUsd = Math.Round((decimal)totalTotalVnd / _vnpaySettings.UsdToVndRate, 2);
+        decimal totalUsd = Math.Round((decimal)totalTotalVnd / _vnpaySettings.UsdToVndRate, 2);
         
         return totalUsd;
     }
@@ -133,22 +133,22 @@ public class GHNService : IGHNService
     public async Task<string> GetOrderPrintUrlAsync(string orderCode)
     {
         var request = new { order_codes = new[] { orderCode } };
-        var response = await _httpClient.PostAsJsonAsync("v2/a5/gen-token", request);
+        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("v2/a5/gen-token", request);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
+            string errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"GHN API Error: {response.StatusCode} - {errorContent}");
         }
 
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
 
         if (jsonResponse.GetProperty("code").GetInt32() != 200)
         {
             throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
         }
 
-        var token = jsonResponse.GetProperty("data").GetProperty("token").GetString();
+        string? token = jsonResponse.GetProperty("data").GetProperty("token").GetString();
         
         // Return full URL to print A5
         return $"https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token={token}";

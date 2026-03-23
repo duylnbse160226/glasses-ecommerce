@@ -1,6 +1,9 @@
 namespace Application.Orders.DTOs;
 
-public class GHNCreateOrderRequestDto
+/// <summary>
+/// Data transfer object for the GHN order creation API request.
+/// </summary>
+public sealed class GHNCreateOrderRequestDto
 {
     public string ToName { get; set; } = string.Empty;
     public string ToPhone { get; set; } = string.Empty;
@@ -20,7 +23,10 @@ public class GHNCreateOrderRequestDto
     public decimal? InsuranceValue { get; set; }
 }
 
-public class GHNItemDto
+/// <summary>
+/// Data transfer object representing an item within a GHN order.
+/// </summary>
+public sealed class GHNItemDto
 {
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
@@ -29,14 +35,20 @@ public class GHNItemDto
     public int Weight { get; set; } = 50;
 }
 
-public class GHNCreateOrderResponseDto
+/// <summary>
+/// Data transfer object for the response from GHN after creating an order.
+/// </summary>
+public sealed class GHNCreateOrderResponseDto
 {
     public string OrderCode { get; set; } = string.Empty;
     public int TotalFee { get; set; }
     public string ExpectedDeliveryTime { get; set; } = string.Empty;
 }
 
-public class GHNPrintOrderResponseDto
+/// <summary>
+/// Data transfer object for the response containing the GHN print token.
+/// </summary>
+public sealed class GHNPrintOrderResponseDto
 {
     public string Token { get; set; } = string.Empty;
 }

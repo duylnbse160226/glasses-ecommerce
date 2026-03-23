@@ -23,7 +23,7 @@ public sealed class ProcessGHNWebhook
                 return Result<Unit>.Failure("Invalid ClientOrderCode in webhook payload.", 400);
             }
 
-            var order = await context.Orders
+            Order? order = await context.Orders
                 .Include(o => o.ShipmentInfo)
                 .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
 
@@ -47,7 +47,7 @@ public sealed class ProcessGHNWebhook
             }
 
             // Gọi UpdateOrderStatus để áp dụng thay đổi (với đầy đủ logic kho, payment...)
-            var updateDto = new UpdateOrderStatusDto
+            UpdateOrderStatusDto updateDto = new UpdateOrderStatusDto
             {
                 NewStatus = newStatus.Value,
                 Notes = $"GHN Webhook Update: {request.Payload.Status} - {request.Payload.Reason}",
@@ -55,7 +55,7 @@ public sealed class ProcessGHNWebhook
             };
 
             // Call internal handler (Lưu ý: System UserID để đánh dấu là tự động. Nêú cần, dùng Guid Empty hoặc tạo System User)
-            var result = await mediator.Send(new UpdateOrderStatus.Command
+            Result<Unit> result = await mediator.Send(new UpdateOrderStatus.Command
             {
                 OrderId = order.Id,
                 Dto = updateDto

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 [AllowAnonymous]
-public class ShippingController : BaseApiController
+public sealed class ShippingController : BaseApiController
 {
     [HttpGet("fee")]
     public async Task<IActionResult> GetShippingFee(
