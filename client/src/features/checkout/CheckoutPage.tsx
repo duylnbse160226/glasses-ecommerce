@@ -34,6 +34,17 @@ import { useCheckoutPage } from "./hooks/useCheckoutPage";
 import { isValidVietnamPhone } from "./utils";
 import { SavedAddressPicker } from "./components/SavedAddressPicker";
 
+const HIDDEN_PROVINCE_EXACT = new Set(["Hà Nội 02"]);
+const HIDDEN_PROVINCE_KEYWORDS = ["testalerttinh001"];
+
+function normalizeProvinceName(name: string): string {
+    return String(name ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "");
+}
+
 export default function CheckoutPage() {
     const navigate = useNavigate();
     const [provinces, setProvinces] = useState<GhnProvince[]>([]);
@@ -82,7 +93,13 @@ export default function CheckoutPage() {
                 setLoadingProvinces(true);
                 const data = await fetchGhnProvinces();
                 if (!active) return;
-                setProvinces(data);
+                setProvinces(
+                    data.filter((p) => {
+                        if (HIDDEN_PROVINCE_EXACT.has(p.ProvinceName)) return false;
+                        const normalized = normalizeProvinceName(p.ProvinceName);
+                        return !HIDDEN_PROVINCE_KEYWORDS.some((k) => normalized.includes(k));
+                    })
+                );
             } catch {
                 if (!active) return;
                 setProvinces([]);
@@ -97,10 +114,10 @@ export default function CheckoutPage() {
     }, []);
 
     useEffect(() => {
-        const province = findProvinceByName(provinces, address.city);
+        const province = findProvinceByName(provinces, address.province);
         const nextId = province?.ProvinceID ?? null;
         setSelectedProvinceId((prev) => (prev === nextId ? prev : nextId));
-    }, [provinces, address.city]);
+    }, [provinces, address.province]);
 
     useEffect(() => {
         let active = true;
@@ -176,6 +193,8 @@ export default function CheckoutPage() {
                     toDistrictId: selectedDistrictId,
                     toWardCode: ward.WardCode,
                     serviceId,
+                    // Keep preview consistent with backend checkout formula.
+                    insuranceValue: totalAmount,
                 });
                 if (!active) return;
                 setShippingFee(fee);
@@ -190,7 +209,7 @@ export default function CheckoutPage() {
         return () => {
             active = false;
         };
-    }, [selectedDistrictId, wards, address.ward]);
+    }, [selectedDistrictId, wards, address.ward, totalAmount]);
 
     return (
         <Box
@@ -317,7 +336,7 @@ export default function CheckoutPage() {
                                                 venue: addr.venue,
                                                 ward: addr.ward,
                                                 district: addr.district,
-                                                city: addr.city,
+                                                province: addr.province,
                                                 postalCode: addr.postalCode ?? "",
                                             }))
                                         }
@@ -504,14 +523,14 @@ export default function CheckoutPage() {
 
                                     <Grid item xs={12} md={4}>
                                         <TextField
-                                            label="City"
+                                            label="Province"
                                             fullWidth
                                             select
-                                            value={address.city}
+                                            value={address.province}
                                             onChange={(e) =>
                                                 setAddress((prev) => ({
                                                     ...prev,
-                                                    city: e.target.value,
+                                                    province: e.target.value,
                                                     district: "",
                                                     ward: "",
                                                 }))
@@ -520,6 +539,18 @@ export default function CheckoutPage() {
                                                 sx: {
                                                     height: 48,
                                                     borderRadius: 2,
+                                                },
+                                            }}
+                                            SelectProps={{
+                                                MenuProps: {
+                                                    PaperProps: {
+                                                        sx: {
+                                                            maxHeight: 280,
+                                                            overflowY: "auto",
+                                                            scrollbarWidth: "none",
+                                                            "&::-webkit-scrollbar": { display: "none" },
+                                                        },
+                                                    },
                                                 },
                                             }}
                                             disabled={loadingProvinces}
@@ -538,7 +569,7 @@ export default function CheckoutPage() {
                                             }}
                                         >
                                             <MenuItem value="">
-                                                {loadingProvinces ? "Loading cities..." : "Select city"}
+                                                {loadingProvinces ? "Loading provinces..." : "Select province"}
                                             </MenuItem>
                                             {provinces.map((p) => (
                                                 <MenuItem key={p.ProvinceID} value={p.ProvinceName}>
@@ -561,9 +592,6 @@ export default function CheckoutPage() {
                                                 setAddress((prev) => ({
                                                     ...prev,
                                                     venue: a.venue,
-                                                    ward: a.ward,
-                                                    district: a.district,
-                                                    city: a.city,
                                                     postalCode: a.postalCode ?? "",
                                                 }));
                                             }}
@@ -1122,6 +1150,7 @@ export default function CheckoutPage() {
                                                     const ward = findWardByName(wards, address.ward);
                                                     handlePlaceOrder({
                                                         shippingFee,
+                                                        provinceId: selectedProvinceId,
                                                         districtId: selectedDistrictId,
                                                         wardCode: ward?.WardCode ?? "",
                                                     });

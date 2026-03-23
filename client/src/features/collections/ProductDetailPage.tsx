@@ -543,57 +543,11 @@ export default function ProductDetailPage() {
                     {/* Actions */}
                     <Box sx={{ display: "flex", gap: 1.2, mt: 1, flexWrap: "wrap", flexDirection: "column" }}>
                         <Box sx={{ display: "flex", gap: 1.2, width: "100%", flexWrap: "wrap" }}>
-                        {/* Show Add to Cart / Select Lenses only if in stock */}
-                        {(currentVariant?.quantityAvailable ?? 0) > 0 && (
-                            <>
-                                {isEyeglasses ? (
-                                    <Button
-                                        variant="contained"
-                                        onClick={() =>
-                                            nav(`/product/${product.id}/lenses`, {
-                                                state: { variantId: currentVariant?.id ?? null },
-                                            })
-                                        }
-                                        sx={{
-                                            bgcolor: "#111827",
-                                            borderRadius: 1.75,
-                                            height: 46,
-                                            px: 3,
-                                            fontWeight: 900,
-                                            "&:hover": {
-                                                bgcolor: "#0b1220",
-                                                boxShadow: "0 14px 36px rgba(0,0,0,0.2)",
-                                            },
-                                        }}
-                                    >
-                                        Select lenses
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="contained"
-                                        onClick={handleAddToCart}
-                                        sx={{
-                                            bgcolor: "#111827",
-                                            borderRadius: 1.75,
-                                            height: 46,
-                                            px: 3,
-                                            fontWeight: 900,
-                                            "&:hover": { bgcolor: "#0b1220", boxShadow: "0 14px 36px rgba(0,0,0,0.2)" },
-                                        }}
-                                    >
-                                        Add to cart
-                                    </Button>
-                                )}
-                            </>
-                        )}
-
-                        {/* Show Pre-Order only if out of stock AND variant is enabled for pre-order */}
-                        {(currentVariant?.quantityAvailable ?? 0) === 0 && currentVariant?.isPreOrder && (
+                        {currentVariant?.isPreOrder ? (
                             <Button
                                 variant="contained"
                                 onClick={() => {
                                     if (isEyeglasses) {
-                                        // For eyeglasses: navigate to select lenses with pre-order flag
                                         nav(`/product/${product.id}/lenses`, {
                                             state: { 
                                                 variantId: currentVariant?.id ?? null,
@@ -626,6 +580,49 @@ export default function ProductDetailPage() {
                             >
                                 Pre-Order
                             </Button>
+                        ) : (
+                            <>
+                                {isEyeglasses ? (
+                                    <Button
+                                        variant="contained"
+                                        disabled={(currentVariant?.quantityAvailable ?? 0) <= 0}
+                                        onClick={() =>
+                                            nav(`/product/${product.id}/lenses`, {
+                                                state: { variantId: currentVariant?.id ?? null },
+                                            })
+                                        }
+                                        sx={{
+                                            bgcolor: "#111827",
+                                            borderRadius: 1.75,
+                                            height: 46,
+                                            px: 3,
+                                            fontWeight: 900,
+                                            "&:hover": {
+                                                bgcolor: "#0b1220",
+                                                boxShadow: "0 14px 36px rgba(0,0,0,0.2)",
+                                            },
+                                        }}
+                                    >
+                                        Select lenses
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="contained"
+                                        disabled={(currentVariant?.quantityAvailable ?? 0) <= 0}
+                                        onClick={handleAddToCart}
+                                        sx={{
+                                            bgcolor: "#111827",
+                                            borderRadius: 1.75,
+                                            height: 46,
+                                            px: 3,
+                                            fontWeight: 900,
+                                            "&:hover": { bgcolor: "#0b1220", boxShadow: "0 14px 36px rgba(0,0,0,0.2)" },
+                                        }}
+                                    >
+                                        Add to cart
+                                    </Button>
+                                )}
+                            </>
                         )}
 
                         {/* Wishlist button removed (not used). */}

@@ -20,7 +20,7 @@ const initialAddress: CheckoutShippingForm = {
   venue: "",
   ward: "",
   district: "",
-  city: "",
+  province: "",
   postalCode: "",
   orderNote: "",
 };
@@ -92,7 +92,7 @@ export function useCheckoutPage() {
         venue: defaultAddress.venue,
         ward: defaultAddress.ward,
         district: defaultAddress.district,
-        city: defaultAddress.city,
+        province: defaultAddress.province,
         postalCode: defaultAddress.postalCode ?? "",
         orderNote: prev.orderNote ?? "",
       };
@@ -169,10 +169,11 @@ export function useCheckoutPage() {
 
   const handlePlaceOrder = async (params?: {
     shippingFee?: number;
+    provinceId?: number | null;
     districtId?: number | null;
     wardCode?: string | null;
   }) => {
-    const shippingFee = params?.shippingFee ?? 0;
+    const provinceId = params?.provinceId ?? null;
     const districtId = params?.districtId ?? null;
     const wardCode = params?.wardCode?.trim() ?? "";
     if (isEmptyCart) {
@@ -212,7 +213,10 @@ export function useCheckoutPage() {
         venue: address.venue,
         ward: address.ward,
         district: address.district,
-        city: address.city,
+        province: address.province,
+        provinceId,
+        districtId,
+        wardCode,
         postalCode: address.postalCode || null,
         isDefault: setAsDefault,
       });
@@ -262,7 +266,10 @@ export function useCheckoutPage() {
               venue: (createdOrder.shippingAddress as { venue?: string }).venue ?? address.venue,
               ward: (createdOrder.shippingAddress as { ward?: string }).ward ?? address.ward,
               district: (createdOrder.shippingAddress as { district?: string }).district ?? address.district,
-              city: (createdOrder.shippingAddress as { city?: string }).city ?? address.city,
+              city:
+                (createdOrder.shippingAddress as { city?: string; province?: string }).city ??
+                (createdOrder.shippingAddress as { city?: string; province?: string }).province ??
+                address.province,
               postalCode: (createdOrder.shippingAddress as { postalCode?: string }).postalCode ?? address.postalCode,
             }
           : address;
@@ -317,8 +324,10 @@ export function useCheckoutPage() {
 
       const orderForUi = {
         ...orderForState,
-        shippingFee,
-        finalAmount: Math.max(0, orderForState.finalAmount + shippingFee),
+        // Prefer backend-calculated shipping fee to avoid client/server mismatch.
+        shippingFee: orderForState.shippingFee,
+        // Backend already includes shipping in finalAmount.
+        finalAmount: orderForState.finalAmount,
         items: orderItemsWithImage,
       };
 

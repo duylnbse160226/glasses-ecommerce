@@ -12,7 +12,7 @@ export interface CheckoutShippingForm {
   venue: string;
   ward: string;
   district: string;
-  city: string;
+  province: string;
   postalCode: string;
   orderNote?: string;
 }
