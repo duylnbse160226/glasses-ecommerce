@@ -12,8 +12,10 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import agent from "../../../../lib/api/agent";
+import { useAccount } from "../../../../lib/hooks/useAccount";
 
 export default function SecuritySection() {
+  const { logoutUser } = useAccount();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -65,12 +67,16 @@ export default function SecuritySection() {
       });
 
       if (response.status === 200) {
-        toast.success("Password changed successfully!");
+        toast.success("Password changed successfully! Signing you out for security...");
         setSuccess(true);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setTimeout(() => setSuccess(false), 5000);
+        // Sign out user - new password requires re-authentication
+        // This prevents SecurityStamp mismatch issues with stale sessions
+        setTimeout(() => {
+          logoutUser.mutate();
+        }, 1500);
       }
     } catch (err: unknown) {
       const message =
@@ -99,7 +105,7 @@ export default function SecuritySection() {
 
       {success && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          Your password has been changed successfully!
+          Your password has been changed successfully! You will be signed out and redirected to the login page. Please sign in with your new password.
         </Alert>
       )}
 
