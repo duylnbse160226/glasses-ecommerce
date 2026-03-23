@@ -225,24 +225,30 @@ public sealed class UpdateOrderStatus
                 // If shipping, require and create shipment info
                 if (newStatus == OrderStatus.Shipped)
                 {
-                    if (request.Dto.Shipment == null)
-                        return Result<Unit>.Failure("Shipment info is required when shipping an order.", 400);
-
-                    if (order.ShipmentInfo != null)
-                        return Result<Unit>.Failure("Shipment info already exists for this order.", 409);
-
-                    context.Set<ShipmentInfo>().Add(new ShipmentInfo
+                    if (order.ShipmentInfo == null)
                     {
-                        OrderId = order.Id,
-                        CarrierName = request.Dto.Shipment.CarrierName,
-                        TrackingCode = request.Dto.Shipment.TrackingCode,
-                        TrackingUrl = request.Dto.Shipment.TrackingUrl,
-                        EstimatedDeliveryAt = request.Dto.Shipment.EstimatedDeliveryAt,
-                        ShippingNotes = request.Dto.Shipment.ShippingNotes,
-                        ShippedAt = DateTime.UtcNow,
-                        CreatedBy = staffUserId,
-                        UpdatedAt = DateTime.UtcNow,
-                    });
+                        if (request.Dto.Shipment == null)
+                            return Result<Unit>.Failure("Shipment info is required when shipping an order without an existing shipment.", 400);
+
+                        context.Set<ShipmentInfo>().Add(new ShipmentInfo
+                        {
+                            OrderId = order.Id,
+                            CarrierName = request.Dto.Shipment.CarrierName,
+                            TrackingCode = request.Dto.Shipment.TrackingCode,
+                            TrackingUrl = request.Dto.Shipment.TrackingUrl,
+                            EstimatedDeliveryAt = request.Dto.Shipment.EstimatedDeliveryAt,
+                            ShippingNotes = request.Dto.Shipment.ShippingNotes,
+                            ShippedAt = DateTime.UtcNow,
+                            CreatedBy = staffUserId,
+                            UpdatedAt = DateTime.UtcNow,
+                        });
+                    }
+                    else
+                    {
+                        // Order already has ShipmentInfo (Flow GHN). Just update ShippedAt timestamp.
+                        order.ShipmentInfo.ShippedAt = DateTime.UtcNow;
+                        order.ShipmentInfo.UpdatedAt = DateTime.UtcNow;
+                    }
                 }
 
                 order.OrderStatus = newStatus;
