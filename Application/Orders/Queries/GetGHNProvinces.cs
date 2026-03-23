@@ -16,11 +16,15 @@ public sealed class GetGHNProvinces
         {
             try
             {
-                return Result<IReadOnlyList<GHNProvinceDto>>.Success(await ghnService.GetProvincesAsync());
+                return Result<IReadOnlyList<GHNProvinceDto>>.Success(await ghnService.GetProvincesAsync(ct));
+            }
+            catch (ArgumentException ex)
+            {
+                return Result<IReadOnlyList<GHNProvinceDto>>.Failure(ex.Message, 400);
             }
             catch (Exception ex)
             {
-                return Result<IReadOnlyList<GHNProvinceDto>>.Failure(ex.Message, 400);
+                return Result<IReadOnlyList<GHNProvinceDto>>.Failure($"Shipping service unavailable: {ex.Message}", 503);
             }
         }
     }

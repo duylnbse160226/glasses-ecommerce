@@ -20,11 +20,15 @@ public sealed class GetGHNWards
             try
             {
                 return Result<IReadOnlyList<GHNWardDto>>.Success(
-                    await ghnService.GetWardsAsync(request.DistrictId));
+                    await ghnService.GetWardsAsync(request.DistrictId, ct));
+            }
+            catch (ArgumentException ex)
+            {
+                return Result<IReadOnlyList<GHNWardDto>>.Failure(ex.Message, 400);
             }
             catch (Exception ex)
             {
-                return Result<IReadOnlyList<GHNWardDto>>.Failure(ex.Message, 400);
+                return Result<IReadOnlyList<GHNWardDto>>.Failure($"Shipping service unavailable: {ex.Message}", 503);
             }
         }
     }

@@ -4,6 +4,7 @@ using Application.Core;
 using Application.Interfaces;
 using Application.Orders.DTOs;
 using Infrastructure.Payments;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.GHN;
@@ -13,12 +14,23 @@ public sealed class GHNService : IGHNService
     private readonly HttpClient _httpClient;
     private readonly GHNSettings _settings;
     private readonly VnpaySettings _vnpaySettings;
+    private readonly IMemoryCache _cache;
 
-    public GHNService(HttpClient httpClient, IOptions<GHNSettings> settings, IOptions<VnpaySettings> vnpaySettings)
+    // Cache TTLs
+    private static readonly TimeSpan ProvinceTtl = TimeSpan.FromHours(24);
+    private static readonly TimeSpan DistrictTtl = TimeSpan.FromHours(24);
+    private static readonly TimeSpan WardTtl = TimeSpan.FromHours(6);
+
+    public GHNService(
+        HttpClient httpClient,
+        IOptions<GHNSettings> settings,
+        IOptions<VnpaySettings> vnpaySettings,
+        IMemoryCache cache)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _vnpaySettings = vnpaySettings.Value;
+        _cache = cache;
 
         _httpClient.BaseAddress = new Uri(_settings.BaseUrl);
         _httpClient.DefaultRequestHeaders.Add("Token", _settings.Token);
@@ -172,59 +184,80 @@ public sealed class GHNService : IGHNService
         return $"{_settings.PrintOrderUrl}?token={token}";
     }
 
-    public async Task<IReadOnlyList<GHNProvinceDto>> GetProvincesAsync()
+    public async Task<IReadOnlyList<GHNProvinceDto>> GetProvincesAsync(CancellationToken ct = default)
     {
-        HttpResponseMessage response = await _httpClient.GetAsync("master-data/province");
-        JsonElement json = await ReadGhnResponseAsync(response);
+        const string cacheKey = "ghn:provinces";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<GHNProvinceDto>? cached))
+            return cached!;
 
-        return json.EnumerateArray()
+        HttpResponseMessage response = await _httpClient.GetAsync("master-data/province", ct);
+        JsonElement json = await ReadGhnResponseAsync(response, ct);
+
+        IReadOnlyList<GHNProvinceDto> result = json.EnumerateArray()
             .Select(p => new GHNProvinceDto(
                 p.GetProperty("ProvinceID").GetInt32(),
                 p.GetProperty("ProvinceName").GetString() ?? string.Empty))
             .ToList();
+
+        _cache.Set(cacheKey, result, ProvinceTtl);
+        return result;
     }
 
-    public async Task<IReadOnlyList<GHNDistrictDto>> GetDistrictsAsync(int provinceId)
+    public async Task<IReadOnlyList<GHNDistrictDto>> GetDistrictsAsync(int provinceId, CancellationToken ct = default)
     {
+        string cacheKey = $"ghn:districts:{provinceId}";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<GHNDistrictDto>? cached))
+            return cached!;
+
         using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, "master-data/district");
         req.Content = JsonContent.Create(new { province_id = provinceId });
-        HttpResponseMessage response = await _httpClient.SendAsync(req);
-        JsonElement json = await ReadGhnResponseAsync(response);
+        HttpResponseMessage response = await _httpClient.SendAsync(req, ct);
+        JsonElement json = await ReadGhnResponseAsync(response, ct);
 
-        return json.EnumerateArray()
+        IReadOnlyList<GHNDistrictDto> result = json.EnumerateArray()
             .Select(d => new GHNDistrictDto(
                 d.GetProperty("DistrictID").GetInt32(),
                 d.GetProperty("DistrictName").GetString() ?? string.Empty,
                 d.GetProperty("ProvinceID").GetInt32()))
             .ToList();
+
+        _cache.Set(cacheKey, result, DistrictTtl);
+        return result;
     }
 
-    public async Task<IReadOnlyList<GHNWardDto>> GetWardsAsync(int districtId)
+    public async Task<IReadOnlyList<GHNWardDto>> GetWardsAsync(int districtId, CancellationToken ct = default)
     {
+        string cacheKey = $"ghn:wards:{districtId}";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<GHNWardDto>? cached))
+            return cached!;
+
         using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, "master-data/ward");
         req.Content = JsonContent.Create(new { district_id = districtId });
-        HttpResponseMessage response = await _httpClient.SendAsync(req);
-        JsonElement json = await ReadGhnResponseAsync(response);
+        HttpResponseMessage response = await _httpClient.SendAsync(req, ct);
+        JsonElement json = await ReadGhnResponseAsync(response, ct);
 
-        return json.EnumerateArray()
+        IReadOnlyList<GHNWardDto> result = json.EnumerateArray()
             .Select(w => new GHNWardDto(
                 w.GetProperty("WardCode").GetString() ?? string.Empty,
                 w.GetProperty("WardName").GetString() ?? string.Empty,
                 w.GetProperty("DistrictID").GetInt32()))
             .ToList();
+
+        _cache.Set(cacheKey, result, WardTtl);
+        return result;
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
 
-    private static async Task<JsonElement> ReadGhnResponseAsync(HttpResponseMessage response)
+    private static async Task<JsonElement> ReadGhnResponseAsync(HttpResponseMessage response, CancellationToken ct = default)
     {
         if (!response.IsSuccessStatusCode)
         {
-            string errorContent = await response.Content.ReadAsStringAsync();
+            string errorContent = await response.Content.ReadAsStringAsync(ct);
             throw new Exception($"GHN API Error: {response.StatusCode} - {errorContent}");
         }
 
-        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
 
         if (jsonResponse.GetProperty("code").GetInt32() != 200)
             throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");

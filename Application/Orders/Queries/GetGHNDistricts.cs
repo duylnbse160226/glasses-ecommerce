@@ -20,11 +20,15 @@ public sealed class GetGHNDistricts
             try
             {
                 return Result<IReadOnlyList<GHNDistrictDto>>.Success(
-                    await ghnService.GetDistrictsAsync(request.ProvinceId));
+                    await ghnService.GetDistrictsAsync(request.ProvinceId, ct));
+            }
+            catch (ArgumentException ex)
+            {
+                return Result<IReadOnlyList<GHNDistrictDto>>.Failure(ex.Message, 400);
             }
             catch (Exception ex)
             {
-                return Result<IReadOnlyList<GHNDistrictDto>>.Failure(ex.Message, 400);
+                return Result<IReadOnlyList<GHNDistrictDto>>.Failure($"Shipping service unavailable: {ex.Message}", 503);
             }
         }
     }
