@@ -22,33 +22,3 @@ public sealed class GHNCreateOrderRequestDto
     public decimal CodAmount { get; set; }
     public decimal? InsuranceValue { get; set; }
 }
-
-/// <summary>
-/// Data transfer object representing an item within a GHN order.
-/// </summary>
-public sealed class GHNItemDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Code { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
-    public int Weight { get; set; } = 50;
-}
-
-/// <summary>
-/// Data transfer object for the response from GHN after creating an order.
-/// </summary>
-public sealed class GHNCreateOrderResponseDto
-{
-    public string OrderCode { get; set; } = string.Empty;
-    public int TotalFee { get; set; }
-    public string ExpectedDeliveryTime { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Data transfer object for the response containing the GHN print token.
-/// </summary>
-public sealed class GHNPrintOrderResponseDto
-{
-    public string Token { get; set; } = string.Empty;
-}

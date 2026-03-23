@@ -172,4 +172,64 @@ public sealed class GHNService : IGHNService
         return $"https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token={token}";
         // Note: For production use: "https://online-gateway.ghn.vn/a5/public-api/printA5?token="
     }
+
+    public async Task<IReadOnlyList<GHNProvinceDto>> GetProvincesAsync()
+    {
+        HttpResponseMessage response = await _httpClient.GetAsync("master-data/province");
+        JsonElement json = await ReadGhnResponseAsync(response);
+
+        return json.EnumerateArray()
+            .Select(p => new GHNProvinceDto(
+                p.GetProperty("ProvinceID").GetInt32(),
+                p.GetProperty("ProvinceName").GetString() ?? string.Empty))
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<GHNDistrictDto>> GetDistrictsAsync(int provinceId)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, "master-data/district");
+        req.Content = JsonContent.Create(new { province_id = provinceId });
+        HttpResponseMessage response = await _httpClient.SendAsync(req);
+        JsonElement json = await ReadGhnResponseAsync(response);
+
+        return json.EnumerateArray()
+            .Select(d => new GHNDistrictDto(
+                d.GetProperty("DistrictID").GetInt32(),
+                d.GetProperty("DistrictName").GetString() ?? string.Empty,
+                d.GetProperty("ProvinceID").GetInt32()))
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<GHNWardDto>> GetWardsAsync(int districtId)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, "master-data/ward");
+        req.Content = JsonContent.Create(new { district_id = districtId });
+        HttpResponseMessage response = await _httpClient.SendAsync(req);
+        JsonElement json = await ReadGhnResponseAsync(response);
+
+        return json.EnumerateArray()
+            .Select(w => new GHNWardDto(
+                w.GetProperty("WardCode").GetString() ?? string.Empty,
+                w.GetProperty("WardName").GetString() ?? string.Empty,
+                w.GetProperty("DistrictID").GetInt32()))
+            .ToList();
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private static async Task<JsonElement> ReadGhnResponseAsync(HttpResponseMessage response)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            string errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"GHN API Error: {response.StatusCode} - {errorContent}");
+        }
+
+        JsonElement jsonResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        if (jsonResponse.GetProperty("code").GetInt32() != 200)
+            throw new Exception($"GHN API Business Error: {jsonResponse.GetProperty("message").GetString()}");
+
+        return jsonResponse.GetProperty("data");
+    }
 }

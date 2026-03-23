@@ -24,4 +24,16 @@ public sealed class ShippingController : BaseApiController
             InsuranceValue = insuranceValue
         }, ct));
     }
+
+    [HttpGet("provinces")]
+    public async Task<IActionResult> GetProvinces(CancellationToken ct)
+        => HandleResult(await Mediator.Send(new GetGHNProvinces.Query(), ct));
+
+    [HttpGet("districts")]
+    public async Task<IActionResult> GetDistricts([FromQuery] int provinceId, CancellationToken ct)
+        => HandleResult(await Mediator.Send(new GetGHNDistricts.Query { ProvinceId = provinceId }, ct));
+
+    [HttpGet("wards")]
+    public async Task<IActionResult> GetWards([FromQuery] int districtId, CancellationToken ct)
+        => HandleResult(await Mediator.Send(new GetGHNWards.Query { DistrictId = districtId }, ct));
 }
