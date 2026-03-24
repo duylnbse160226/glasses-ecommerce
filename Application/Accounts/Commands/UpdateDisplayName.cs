@@ -23,7 +23,9 @@ public sealed class UpdateDisplayName
             if (string.IsNullOrWhiteSpace(request.DisplayName))
                 return Result<Unit>.Failure("Display name cannot be empty.", 400);
 
-            if (request.DisplayName.Length > 100)
+            string newDisplayName = request.DisplayName.Trim();
+
+            if (newDisplayName.Length > 100)
                 return Result<Unit>.Failure("Display name cannot exceed 100 characters.", 400);
 
             // Get current user
@@ -34,7 +36,6 @@ public sealed class UpdateDisplayName
                 return Result<Unit>.Failure("User not found.", 404);
 
             // Update display name
-            string newDisplayName = request.DisplayName.Trim();
             if (user.DisplayName == newDisplayName)
             {
                 return Result<Unit>.Success(Unit.Value);
