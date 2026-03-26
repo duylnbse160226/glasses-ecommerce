@@ -8,6 +8,7 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 import ChatbotWidget from "../../features/chatbot/ChatbotWidget";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import agent from "../../lib/api/agent";
+import { ChatbotProvider } from "../../features/chatbot/ChatbotContext";
 
 function App() {
   const location = useLocation();
@@ -114,46 +115,48 @@ function App() {
   }, [isDashboard]);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
-      }}
-    >
-      <CssBaseline /> {/*Reset Css*/}
+    <ChatbotProvider>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAF5 100%)",
+        }}
+      >
+        <CssBaseline /> {/*Reset Css*/}
 
-      {isHome ? (
-        <>
-          <NavBar appearance="hero" collapsed={navCollapsed} />
-          <Box component="main" sx={{ flex: 1 }}>
-            <CollectionLandingPage />
-          </Box>
-          <Box sx={{ mt: "auto" }}>
-            <Footer />
-          </Box>
-          <ScrollToTopButton />
-          {isChatbotEnabled && <ChatbotWidget />}
-        </>
-      ) : isDashboard ? (
-        <DashboardLayout />
-      ) : (
-        <>
-          <NavBar collapsed={navCollapsed} />
-          <Box component="main" sx={{ flex: 1 }}>
-            <Container maxWidth="xl" sx={{ mt: isCollectionsPage ? 0 : 3 }}>
-              <Outlet />
-            </Container>
-          </Box>
-          <Box sx={{ mt: "auto" }}>
-            <Footer />
-          </Box>
-          <ScrollToTopButton />
-          {isChatbotEnabled && <ChatbotWidget />}
-        </>
-      )}
-    </Box>
+        {isHome ? (
+          <>
+            <NavBar appearance="hero" collapsed={navCollapsed} />
+            <Box component="main" sx={{ flex: 1 }}>
+              <CollectionLandingPage />
+            </Box>
+            <Box sx={{ mt: "auto" }}>
+              <Footer />
+            </Box>
+            <ScrollToTopButton />
+            {isChatbotEnabled && <ChatbotWidget />}
+          </>
+        ) : isDashboard ? (
+          <DashboardLayout />
+        ) : (
+          <>
+            <NavBar collapsed={navCollapsed} />
+            <Box component="main" sx={{ flex: 1 }}>
+              <Container maxWidth="xl" sx={{ mt: isCollectionsPage ? 0 : 3 }}>
+                <Outlet />
+              </Container>
+            </Box>
+            <Box sx={{ mt: "auto" }}>
+              <Footer />
+            </Box>
+            <ScrollToTopButton />
+            {isChatbotEnabled && <ChatbotWidget />}
+          </>
+        )}
+      </Box>
+    </ChatbotProvider>
   );
 }
 
