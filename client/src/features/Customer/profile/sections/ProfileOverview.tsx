@@ -111,6 +111,8 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
   const photoList = Array.isArray(photos) ? photos : [];
   const galleryBusy = isUploadingPhoto || isDeletingPhoto || isSettingMainPhoto;
   const canAttemptRemoveAvatar = photoList.length > 0;
+  const isSelfProfileView = !userId || userId === currentUser?.id;
+  const emailValue = isSelfProfileView ? (currentUser?.email ?? "Not available") : "Not available";
   const displayAvatarSrc = useMemo(
     () => (profile ? avatarImageSrcFromPhotos(photoList, profile.imageUrl) : undefined),
     [profile, photoList],
@@ -354,7 +356,7 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
         <Divider />
         <EditableInfoRow label="User ID" value={profile.id} />
         <EditableInfoRow label="Display Name" value={profile.displayName} onEdit={handleOpenEditDisplayNameDialog} />
-        <EditableInfoRow label="Email" value={currentUser?.email ?? "Not available"} />
+        <EditableInfoRow label="Email" value={emailValue} />
         <Box sx={{ py: 2.2, px: { xs: 1.5, md: 2 } }}>
           <Typography
             sx={{
@@ -407,7 +409,14 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={editDisplayNameDialogOpen} onClose={handleCloseEditDisplayNameDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editDisplayNameDialogOpen}
+        onClose={() => {
+          if (!isUpdatingDisplayName) handleCloseEditDisplayNameDialog();
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700, color: "#111111" }}>Edit display name</DialogTitle>
         <DialogContent sx={{ pt: 1.5 }}>
           <TextField
