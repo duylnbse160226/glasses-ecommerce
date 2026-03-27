@@ -4,7 +4,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -318,22 +317,6 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
             <Typography sx={{ mt: 0.5, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(17,17,17,0.56)" }}>
               Personal account
             </Typography>
-            <Chip
-              label="Verified Member"
-              size="small"
-              sx={{
-                mt: 1.5,
-                height: 24,
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                fontWeight: 700,
-                borderRadius: 1,
-                color: "#111111",
-                bgcolor: "rgba(17,17,17,0.06)",
-                border: "1px solid rgba(0,0,0,0.1)",
-              }}
-            />
           </Box>
         </Box>
       </Paper>

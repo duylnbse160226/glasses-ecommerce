@@ -88,6 +88,9 @@ export default function AddressesSection() {
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingWards, setLoadingWards] = useState(false);
+  const [provinceLoadError, setProvinceLoadError] = useState<string | null>(null);
+  const [districtLoadError, setDistrictLoadError] = useState<string | null>(null);
+  const [wardLoadError, setWardLoadError] = useState<string | null>(null);
 
   const addressList = useMemo(() => (Array.isArray(addresses) ? addresses : []), [addresses]);
   const visibleProvinces = useMemo(
@@ -99,6 +102,17 @@ export default function AddressesSection() {
       }),
     [provinces],
   );
+  const hasUnresolvedGhnSelection = useMemo(() => {
+    const hasProvinceText = formData.province.trim().length > 0;
+    const hasDistrictText = formData.district.trim().length > 0;
+    const hasWardText = formData.ward.trim().length > 0;
+    if (!hasProvinceText && !hasDistrictText && !hasWardText) return false;
+    return (
+      (!formData.provinceId && hasProvinceText) ||
+      (!formData.districtId && hasDistrictText) ||
+      (!formData.wardCode && hasWardText)
+    );
+  }, [formData.province, formData.provinceId, formData.district, formData.districtId, formData.ward, formData.wardCode]);
   const isLoading_all = isLoading || isCreating || isUpdating || isDeleting || isSetting;
   const actionBtnSx = {
     textTransform: "none",
@@ -149,6 +163,10 @@ export default function AddressesSection() {
       !formData.province.trim()
     ) {
       toast.error("Please fill in all required fields.");
+      return;
+    }
+    if (!formData.provinceId || !formData.districtId || !formData.wardCode) {
+      toast.error("Please select province, district, and ward from the dropdowns to confirm shipping area.");
       return;
     }
 
@@ -217,12 +235,16 @@ export default function AddressesSection() {
     const loadProvinces = async () => {
       try {
         setLoadingProvinces(true);
+        setProvinceLoadError(null);
         const data = await fetchGhnProvinces();
         if (!active) return;
         setProvinces(data);
-      } catch {
+      } catch (err) {
         if (!active) return;
         setProvinces([]);
+        setProvinceLoadError(
+          err instanceof Error ? err.message : "Failed to load provinces. Please try again.",
+        );
       } finally {
         if (active) setLoadingProvinces(false);
       }
@@ -246,6 +268,8 @@ export default function AddressesSection() {
     if (!provinceId) {
       setDistricts([]);
       setWards([]);
+      setDistrictLoadError(null);
+      setWardLoadError(null);
       if (!formData.province.trim()) {
         setFormData((prev) => ({
           ...prev,
@@ -260,12 +284,16 @@ export default function AddressesSection() {
     const loadDistricts = async () => {
       try {
         setLoadingDistricts(true);
+        setDistrictLoadError(null);
         const data = await fetchGhnDistricts(provinceId);
         if (!active) return;
         setDistricts(data);
-      } catch {
+      } catch (err) {
         if (!active) return;
         setDistricts([]);
+        setDistrictLoadError(
+          err instanceof Error ? err.message : "Failed to load districts. Please try again.",
+        );
       } finally {
         if (active) setLoadingDistricts(false);
       }
@@ -288,6 +316,7 @@ export default function AddressesSection() {
     const districtId = formData.districtId ?? null;
     if (!districtId) {
       setWards([]);
+      setWardLoadError(null);
       if (!formData.district.trim()) {
         setFormData((prev) => ({ ...prev, ward: "", wardCode: null }));
       }
@@ -296,12 +325,16 @@ export default function AddressesSection() {
     const loadWards = async () => {
       try {
         setLoadingWards(true);
+        setWardLoadError(null);
         const data = await fetchGhnWards(districtId);
         if (!active) return;
         setWards(data);
-      } catch {
+      } catch (err) {
         if (!active) return;
         setWards([]);
+        setWardLoadError(
+          err instanceof Error ? err.message : "Failed to load wards. Please try again.",
+        );
       } finally {
         if (active) setLoadingWards(false);
       }
@@ -523,6 +556,8 @@ export default function AddressesSection() {
                 fullWidth
                 disabled={isLoading_all || loadingProvinces}
                 placeholder="Select province"
+                error={Boolean(provinceLoadError)}
+                helperText={provinceLoadError ?? undefined}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -559,6 +594,8 @@ export default function AddressesSection() {
                 fullWidth
                 disabled={isLoading_all || !formData.provinceId || loadingDistricts}
                 placeholder="Select district"
+                error={Boolean(districtLoadError)}
+                helperText={districtLoadError ?? undefined}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -593,6 +630,8 @@ export default function AddressesSection() {
                 fullWidth
                 disabled={isLoading_all || !formData.districtId || loadingWards}
                 placeholder="Select ward"
+                error={Boolean(wardLoadError)}
+                helperText={wardLoadError ?? undefined}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
@@ -630,6 +669,11 @@ export default function AddressesSection() {
               placeholder="Search address or enter street / venue"
               fullWidth
             />
+            {hasUnresolvedGhnSelection && (
+              <Alert severity="warning">
+                We could not fully match this address with GHN data. Please confirm Province, District, and Ward from the dropdowns.
+              </Alert>
+            )}
 
             <TextField
               label="Postal Code"

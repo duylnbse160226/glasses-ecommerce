@@ -1,7 +1,7 @@
 import { Box, Container, CssBaseline } from "@mui/material";
 import NavBar from "./NavBar";
 import DashboardLayout from "./DashboardLayout";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigationType } from "react-router";
 import CollectionLandingPage from "../../features/collections/CollectionLandingPage";
 import Footer from "./Footer";
 import ScrollToTopButton from "../components/ScrollToTopButton";
@@ -12,6 +12,7 @@ import { ChatbotProvider } from "../../features/chatbot/ChatbotContext";
 
 function App() {
   const location = useLocation();
+  const navigationType = useNavigationType();
   const [isChatbotEnabled, setIsChatbotEnabled] = useState(true);
 
   // Check feature toggle for chatbot on mount and when returning to app
@@ -55,15 +56,11 @@ function App() {
   const [navCollapsed, setNavCollapsed] = useState(false);
   const lastScrollYRef = useRef(0);
 
-  useEffect(() => {
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
-    }
-  }, []);
-
   useLayoutEffect(() => {
+    // Preserve browser/native history restoration for Back/Forward.
+    if (navigationType === "POP") return;
     const forceScrollTop = () => {
-      window.scrollTo({ top: 0, behavior: "auto" });
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
@@ -75,7 +72,7 @@ function App() {
       window.cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, [location.pathname]);
+  }, [location.pathname, navigationType]);
 
   useEffect(() => {
     if (isDashboard) {
