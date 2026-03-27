@@ -258,9 +258,10 @@ export default function AddressesSection() {
   useEffect(() => {
     const province = findProvinceByName(provinces, formData.province);
     const nextProvinceId = province?.ProvinceID ?? null;
-    if (nextProvinceId === (formData.provinceId ?? null)) return;
-    setFormData((prev) => ({ ...prev, provinceId: nextProvinceId }));
-  }, [provinces, formData.province, formData.provinceId]);
+    setFormData((prev) =>
+      nextProvinceId === (prev.provinceId ?? null) ? prev : { ...prev, provinceId: nextProvinceId },
+    );
+  }, [provinces, formData.province]);
 
   useEffect(() => {
     let active = true;
@@ -270,15 +271,13 @@ export default function AddressesSection() {
       setWards([]);
       setDistrictLoadError(null);
       setWardLoadError(null);
-      if (!formData.province.trim()) {
-        setFormData((prev) => ({
-          ...prev,
-          district: "",
-          ward: "",
-          districtId: null,
-          wardCode: null,
-        }));
-      }
+      setFormData((prev) => ({
+        ...prev,
+        district: "",
+        ward: "",
+        districtId: null,
+        wardCode: null,
+      }));
       return;
     }
     const loadDistricts = async () => {
@@ -302,14 +301,15 @@ export default function AddressesSection() {
     return () => {
       active = false;
     };
-  }, [formData.provinceId, formData.province]);
+  }, [formData.provinceId]);
 
   useEffect(() => {
     const district = findDistrictByName(districts, formData.district);
     const nextDistrictId = district?.DistrictID ?? null;
-    if (nextDistrictId === (formData.districtId ?? null)) return;
-    setFormData((prev) => ({ ...prev, districtId: nextDistrictId }));
-  }, [districts, formData.district, formData.districtId]);
+    setFormData((prev) =>
+      nextDistrictId === (prev.districtId ?? null) ? prev : { ...prev, districtId: nextDistrictId },
+    );
+  }, [districts, formData.district]);
 
   useEffect(() => {
     let active = true;
@@ -317,9 +317,7 @@ export default function AddressesSection() {
     if (!districtId) {
       setWards([]);
       setWardLoadError(null);
-      if (!formData.district.trim()) {
-        setFormData((prev) => ({ ...prev, ward: "", wardCode: null }));
-      }
+      setFormData((prev) => ({ ...prev, ward: "", wardCode: null }));
       return;
     }
     const loadWards = async () => {
@@ -343,14 +341,15 @@ export default function AddressesSection() {
     return () => {
       active = false;
     };
-  }, [formData.districtId, formData.district]);
+  }, [formData.districtId]);
 
   useEffect(() => {
     const ward = findWardByName(wards, formData.ward);
     const nextWardCode = ward?.WardCode ?? null;
-    if (nextWardCode === (formData.wardCode ?? null)) return;
-    setFormData((prev) => ({ ...prev, wardCode: nextWardCode }));
-  }, [wards, formData.ward, formData.wardCode]);
+    setFormData((prev) =>
+      nextWardCode === (prev.wardCode ?? null) ? prev : { ...prev, wardCode: nextWardCode },
+    );
+  }, [wards, formData.ward]);
 
   if (isError) {
     return (

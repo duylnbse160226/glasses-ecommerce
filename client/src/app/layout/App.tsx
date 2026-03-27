@@ -10,14 +10,25 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import agent from "../../lib/api/agent";
 import { ChatbotProvider } from "../../features/chatbot/ChatbotContext";
 
+const CHATBOT_TOGGLE_COOLDOWN_MS = 10 * 60 * 1000;
+
 function App() {
   const location = useLocation();
   const navigationType = useNavigationType();
   const [isChatbotEnabled, setIsChatbotEnabled] = useState(true);
+  const lastChatbotToggleCheckRef = useRef(0);
+  const checkingChatbotToggleRef = useRef(false);
 
-  // Check feature toggle for chatbot on mount and when returning to app
+  // Check chatbot toggle on mount + when tab becomes visible (with cooldown).
   useEffect(() => {
-    const checkChatbotToggle = async () => {
+    const checkChatbotToggle = async (force = false) => {
+      if (checkingChatbotToggleRef.current) return;
+      const now = Date.now();
+      if (!force && now - lastChatbotToggleCheckRef.current < CHATBOT_TOGGLE_COOLDOWN_MS) {
+        return;
+      }
+
+      checkingChatbotToggleRef.current = true;
       try {
         const response = await agent.get<boolean>(
           "/feature-toggles/check/Chatbot"
@@ -25,24 +36,23 @@ function App() {
         setIsChatbotEnabled(response.data);
       } catch {
         setIsChatbotEnabled(true); // Fail-open: show feature by default
+      } finally {
+        lastChatbotToggleCheckRef.current = now;
+        checkingChatbotToggleRef.current = false;
       }
     };
 
-    checkChatbotToggle();
-
-    // Re-check feature toggle every 30 seconds while app is active
-    const interval = setInterval(checkChatbotToggle, 30000);
+    void checkChatbotToggle(true);
 
     // Also check when window regains focus (user returns from other app/tab)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        checkChatbotToggle();
+        void checkChatbotToggle();
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);

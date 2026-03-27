@@ -88,6 +88,7 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(menuAnchor);
   const [removeAvatarDialogOpen, setRemoveAvatarDialogOpen] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [editDisplayNameDialogOpen, setEditDisplayNameDialogOpen] = useState(false);
   const [editDisplayNameValue, setEditDisplayNameValue] = useState("");
 
@@ -152,24 +153,35 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
   };
 
   const handleConfirmRemoveAvatar = async () => {
-    setRemoveAvatarDialogOpen(false);
+    if (isRemovingAvatar) return;
+    setIsRemovingAvatar(true);
     try {
-      const { data: fresh } = await refetchPhotos();
+      let fresh: unknown;
+      try {
+        ({ data: fresh } = await refetchPhotos());
+      } catch {
+        toast.error("Could not refresh your photo list. Please try again.");
+        return;
+      }
       const list = Array.isArray(fresh) ? fresh : photoList;
       const target = profile ? resolveMainPhotoFromList(list, profile.imageUrl) : null;
 
       if (target) {
         await deletePhotoAsync(target.id);
         toast.success("Profile photo removed.");
+        setRemoveAvatarDialogOpen(false);
         return;
       }
       if (!list.length) {
         toast.info("There is no photo in your gallery to remove.");
+        setRemoveAvatarDialogOpen(false);
         return;
       }
       toast.error("Could not match your current photo on server. Please refresh and try again.");
     } catch {
       // Already surfaced by mutation interceptor/toast.
+    } finally {
+      setIsRemovingAvatar(false);
     }
   };
 
@@ -362,7 +374,12 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
         </Box>
       </Paper>
 
-      <Dialog open={removeAvatarDialogOpen} onClose={() => setRemoveAvatarDialogOpen(false)}>
+      <Dialog
+        open={removeAvatarDialogOpen}
+        onClose={() => {
+          if (!isRemovingAvatar) setRemoveAvatarDialogOpen(false);
+        }}
+      >
         <DialogTitle sx={{ fontWeight: 700, color: "#111111" }}>Remove profile photo?</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: "rgba(17,17,17,0.68)" }}>
@@ -370,11 +387,22 @@ export default function ProfileOverview({ userId }: ProfileOverviewProps) {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button variant="outlined" onClick={() => setRemoveAvatarDialogOpen(false)} sx={{ textTransform: "none", borderRadius: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setRemoveAvatarDialogOpen(false)}
+            disabled={isRemovingAvatar}
+            sx={{ textTransform: "none", borderRadius: 1 }}
+          >
             Cancel
           </Button>
-          <Button variant="contained" color="error" onClick={() => void handleConfirmRemoveAvatar()} sx={{ textTransform: "none", borderRadius: 1 }}>
-            Remove
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => void handleConfirmRemoveAvatar()}
+            disabled={isRemovingAvatar}
+            sx={{ textTransform: "none", borderRadius: 1 }}
+          >
+            {isRemovingAvatar ? <CircularProgress size={18} sx={{ color: "#FFFFFF" }} /> : "Remove"}
           </Button>
         </DialogActions>
       </Dialog>
