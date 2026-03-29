@@ -20,38 +20,35 @@ export default defineConfig({
             return undefined;
           }
 
+          const inPackage = (packageName: string): boolean => {
+            const normalizedId = id.replace(/\\/g, "/");
+            return normalizedId.includes(`/node_modules/${packageName}/`);
+          };
+
           if (
-            id.includes("node_modules/react") ||
-            id.includes("node_modules/react-dom") ||
-            id.includes("node_modules/react-router") ||
-            id.includes("node_modules/@mui") ||
-            id.includes("node_modules/@emotion")
+            inPackage("react") ||
+            inPackage("react-dom") ||
+            inPackage("react-router") ||
+            inPackage("react-router-dom") ||
+            inPackage("@mui") ||
+            inPackage("@emotion")
           ) {
             return "vendor-ui";
           }
 
-          if (id.includes("node_modules/@tanstack")) {
+          if (inPackage("@tanstack")) {
             return "vendor-query";
           }
 
-          if (
-            id.includes("node_modules/three") ||
-            id.includes("node_modules/@types/three")
-          ) {
+          if (inPackage("three")) {
             return "vendor-three";
           }
 
-          if (
-            id.includes("node_modules/recharts") ||
-            id.includes("node_modules/d3")
-          ) {
+          if (inPackage("recharts") || inPackage("d3")) {
             return "vendor-charts";
           }
 
-          if (
-            id.includes("node_modules/leaflet") ||
-            id.includes("node_modules/react-leaflet")
-          ) {
+          if (inPackage("leaflet") || inPackage("react-leaflet")) {
             return "vendor-maps";
           }
 

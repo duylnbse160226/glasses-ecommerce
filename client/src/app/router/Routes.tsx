@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import type { ReactElement } from "react";
 import App from "../layout/App";
 import AuthLayout from "../layout/AuthLayout";
+import RouteLoadingFallback from "./RouteLoadingFallback";
 
 import Counter from "../../features/counter/Counter";
 import RequireRole from "./RequireRole";
@@ -196,37 +197,6 @@ const PromotionsScreen = lazy(
 const PreOrderSummaryScreen = lazy(
   () => import("../../features/Manager/screens/PreOrderSummaryScreen"),
 );
-
-function RouteLoadingFallback(): ReactElement {
-  return (
-    <div
-      style={{
-        minHeight: "40vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: "10px",
-        color: "#4b5563",
-      }}
-    >
-      <div
-        style={{
-          width: "28px",
-          height: "28px",
-          borderRadius: "9999px",
-          border: "3px solid #d1d5db",
-          borderTopColor: "#1f2937",
-          animation: "route-loading-spin 0.8s linear infinite",
-        }}
-      />
-      <span style={{ fontSize: "13px", fontWeight: 600 }}>Loading page...</span>
-      <style>
-        {"@keyframes route-loading-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }"}
-      </style>
-    </div>
-  );
-}
 
 function lazyElement(element: ReactElement): ReactElement {
   return <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>;
