@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router";
 import {
+  Avatar,
   Box,
   Button,
   CircularProgress,
@@ -229,13 +230,47 @@ function OutboundRecordRow({ record }: { record: InventoryOutboundRecordItem }) 
                             gap: 1,
                           }}
                         >
-                          <Box sx={{ color: "#171717", fontSize: 13, fontWeight: 600 }}>
-                            {item.variantName || item.sku || item.productVariantId}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              minWidth: 0,
+                            }}
+                          >
+                            <Avatar
+                              src={item.productImageUrl ?? undefined}
+                              alt={item.productImageAlt ?? item.productName ?? "Product image"}
+                              variant="rounded"
+                              sx={{ width: 34, height: 34, flexShrink: 0 }}
+                            />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Box sx={{ color: "#171717", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {item.productName || item.variantName || item.sku || item.productVariantId}
+                              </Box>
+                              <Box sx={{ color: "#8A8A8A", fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {item.variantName || "—"} · SKU: {item.sku || "—"}
+                              </Box>
+                            </Box>
                           </Box>
-                          <Box sx={{ color: "#6B6B6B", fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
-                            Qty {item.quantity}
+                          <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                            <Box sx={{ color: "#6B6B6B", fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
+                              Qty {item.quantity}
+                            </Box>
+                            {item.notes && (
+                              <Box sx={{ color: "#8A8A8A", fontSize: 12.5 }}>
+                                Notes: {item.notes}
+                              </Box>
+                            )}
                           </Box>
                         </Box>
+                        {(!item.productName || !item.productImageUrl) && (
+                          <Box sx={{ px: 1.5, pb: 0.8 }}>
+                            <Box sx={{ color: "#A0A0A0", fontSize: 12 }}>
+                              Product variant ID: {item.productVariantId}
+                            </Box>
+                          </Box>
+                        )}
                         {index < (detail.items?.length ?? 0) - 1 && (
                           <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.06)" }} />
                         )}

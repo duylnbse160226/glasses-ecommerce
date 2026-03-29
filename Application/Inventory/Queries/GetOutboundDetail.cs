@@ -52,8 +52,40 @@ public sealed class GetOutboundDetail
                 {
                     TransactionId = t.Id,
                     ProductVariantId = t.ProductVariantId,
+                    ProductId = t.ProductVariant != null ? t.ProductVariant.ProductId : (Guid?)null,
+                    ProductName = t.ProductVariant != null && t.ProductVariant.Product != null
+                        ? t.ProductVariant.Product.ProductName
+                        : null,
                     VariantName = t.ProductVariant.VariantName,
                     SKU = t.ProductVariant.SKU,
+                    ProductImageUrl = t.ProductVariant != null
+                        ? t.ProductVariant.Images
+                            .Where(img => !img.IsDeleted)
+                            .OrderBy(img => img.DisplayOrder)
+                            .Select(img => img.ImageUrl)
+                            .FirstOrDefault()
+                          ?? (t.ProductVariant.Product != null
+                              ? t.ProductVariant.Product.Images
+                                  .Where(img => !img.IsDeleted && img.ProductId != null)
+                                  .OrderBy(img => img.DisplayOrder)
+                                  .Select(img => img.ImageUrl)
+                                  .FirstOrDefault()
+                              : null)
+                        : null,
+                    ProductImageAlt = t.ProductVariant != null
+                        ? t.ProductVariant.Images
+                            .Where(img => !img.IsDeleted)
+                            .OrderBy(img => img.DisplayOrder)
+                            .Select(img => img.AltText)
+                            .FirstOrDefault()
+                          ?? (t.ProductVariant.Product != null
+                              ? t.ProductVariant.Product.Images
+                                  .Where(img => !img.IsDeleted && img.ProductId != null)
+                                  .OrderBy(img => img.DisplayOrder)
+                                  .Select(img => img.AltText)
+                                  .FirstOrDefault()
+                              : null)
+                        : null,
                     Quantity = t.Quantity,
                     Notes = t.Notes,
                     CreatedAt = t.CreatedAt,
@@ -90,8 +122,12 @@ public sealed class GetOutboundDetail
                 {
                     TransactionId = t.TransactionId,
                     ProductVariantId = t.ProductVariantId,
+                    ProductId = t.ProductId,
+                    ProductName = t.ProductName,
                     VariantName = t.VariantName,
                     SKU = t.SKU,
+                    ProductImageUrl = t.ProductImageUrl,
+                    ProductImageAlt = t.ProductImageAlt,
                     Quantity = t.Quantity,
                     Notes = t.Notes
                 }).ToList()
