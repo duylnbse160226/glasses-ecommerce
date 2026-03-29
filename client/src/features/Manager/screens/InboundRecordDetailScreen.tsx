@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  Avatar,
   Box,
   Button,
   Chip,
@@ -28,10 +29,19 @@ import axios from "axios";
 
 import agent from "../../../lib/api/agent";
 import type { InboundRecordDto } from "../../../lib/types/inventory";
-import { useApproveInbound, useRejectInbound } from "../../../lib/hooks/useManagerInboundActions";
+import {
+  useApproveInbound,
+  useRejectInbound,
+} from "../../../lib/hooks/useManagerInboundActions";
+
+type ApiErrorPayload = {
+  detail?: string;
+  title?: string;
+  message?: string;
+};
 
 function getStatusColor(
-  status: string
+  status: string,
 ): "default" | "success" | "error" | "warning" {
   switch (status) {
     case "Approved":
@@ -55,6 +65,21 @@ export default function InboundRecordDetailScreen() {
   const rejectMutation = useRejectInbound();
   const isActioning = approveMutation.isPending || rejectMutation.isPending;
 
+  const {
+    data: record,
+    isLoading,
+    error,
+  } = useQuery<InboundRecordDto>({
+    queryKey: ["manager-inbound-detail", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const res = await agent.get<InboundRecordDto>(
+        `/manager/inventory/inbound/${id}`,
+      );
+      return res.data;
+    },
+  });
+
   if (!id) {
     return (
       <Box sx={{ px: 4, py: 4 }}>
@@ -62,14 +87,6 @@ export default function InboundRecordDetailScreen() {
       </Box>
     );
   }
-
-  const { data: record, isLoading, error } = useQuery<InboundRecordDto>({
-    queryKey: ["manager-inbound-detail", id],
-    queryFn: async () => {
-      const res = await agent.get<InboundRecordDto>(`/manager/inventory/inbound/${id}`);
-      return res.data;
-    },
-  });
 
   if (isLoading) {
     return (
@@ -100,7 +117,9 @@ export default function InboundRecordDetailScreen() {
           >
             Back
           </Button>
-          <Typography color="error">Failed to load inbound record details</Typography>
+          <Typography color="error">
+            Failed to load inbound record details
+          </Typography>
         </Stack>
       </Box>
     );
@@ -117,12 +136,21 @@ export default function InboundRecordDetailScreen() {
       toast.success("Inbound record approved successfully");
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as any;
+        const data = error.response?.data as
+          | ApiErrorPayload
+          | string
+          | undefined;
         const message =
           (typeof data === "string" && data) ||
-          data?.detail ||
-          data?.title ||
-          data?.message ||
+          (typeof data === "object" && data !== null
+            ? data.detail
+            : undefined) ||
+          (typeof data === "object" && data !== null
+            ? data.title
+            : undefined) ||
+          (typeof data === "object" && data !== null
+            ? data.message
+            : undefined) ||
           "Failed to approve record";
         toast.error(message);
       } else {
@@ -143,17 +171,29 @@ export default function InboundRecordDetailScreen() {
     }
 
     try {
-      await rejectMutation.mutateAsync({ id, rejectionReason: rejectionReason.trim() });
+      await rejectMutation.mutateAsync({
+        id,
+        rejectionReason: rejectionReason.trim(),
+      });
       toast.success("Inbound record rejected successfully");
       setRejectDialogOpen(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as any;
+        const data = error.response?.data as
+          | ApiErrorPayload
+          | string
+          | undefined;
         const message =
           (typeof data === "string" && data) ||
-          data?.detail ||
-          data?.title ||
-          data?.message ||
+          (typeof data === "object" && data !== null
+            ? data.detail
+            : undefined) ||
+          (typeof data === "object" && data !== null
+            ? data.title
+            : undefined) ||
+          (typeof data === "object" && data !== null
+            ? data.message
+            : undefined) ||
           "Failed to reject record";
         toast.error(message);
       } else {
@@ -181,11 +221,18 @@ export default function InboundRecordDetailScreen() {
       <Grid container spacing={3}>
         {/* Summary Card */}
         <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)" }}>
+          <Paper
+            elevation={0}
+            sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)" }}
+          >
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} md={3}>
                 <Box>
-                  <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                  <Typography
+                    fontSize={12}
+                    color="text.secondary"
+                    fontWeight={700}
+                  >
                     RECORD ID
                   </Typography>
                   <Typography
@@ -200,7 +247,11 @@ export default function InboundRecordDetailScreen() {
 
               <Grid item xs={12} sm={6} md={3}>
                 <Box>
-                  <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                  <Typography
+                    fontSize={12}
+                    color="text.secondary"
+                    fontWeight={700}
+                  >
                     STATUS
                   </Typography>
                   <Chip
@@ -214,7 +265,11 @@ export default function InboundRecordDetailScreen() {
 
               <Grid item xs={12} sm={6} md={3}>
                 <Box>
-                  <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                  <Typography
+                    fontSize={12}
+                    color="text.secondary"
+                    fontWeight={700}
+                  >
                     SOURCE TYPE
                   </Typography>
                   <Typography fontSize={14} fontWeight={700} sx={{ mt: 0.5 }}>
@@ -225,7 +280,11 @@ export default function InboundRecordDetailScreen() {
 
               <Grid item xs={12} sm={6} md={3}>
                 <Box>
-                  <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                  <Typography
+                    fontSize={12}
+                    color="text.secondary"
+                    fontWeight={700}
+                  >
                     TOTAL ITEMS
                   </Typography>
                   <Typography fontSize={14} fontWeight={700} sx={{ mt: 0.5 }}>
@@ -237,7 +296,11 @@ export default function InboundRecordDetailScreen() {
               {record.sourceReference && (
                 <Grid item xs={12} sm={6} md={3}>
                   <Box>
-                    <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                    <Typography
+                      fontSize={12}
+                      color="text.secondary"
+                      fontWeight={700}
+                    >
                       SOURCE REFERENCE
                     </Typography>
                     <Typography fontSize={13} fontWeight={700} sx={{ mt: 0.5 }}>
@@ -249,7 +312,11 @@ export default function InboundRecordDetailScreen() {
 
               <Grid item xs={12} sm={6} md={3}>
                 <Box>
-                  <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                  <Typography
+                    fontSize={12}
+                    color="text.secondary"
+                    fontWeight={700}
+                  >
                     CREATED AT
                   </Typography>
                   <Typography fontSize={13} fontWeight={700} sx={{ mt: 0.5 }}>
@@ -260,7 +327,11 @@ export default function InboundRecordDetailScreen() {
 
               <Grid item xs={12} sm={6} md={3}>
                 <Box>
-                  <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                  <Typography
+                    fontSize={12}
+                    color="text.secondary"
+                    fontWeight={700}
+                  >
                     CREATED BY
                   </Typography>
                   <Typography fontSize={13} fontWeight={700} sx={{ mt: 0.5 }}>
@@ -272,7 +343,11 @@ export default function InboundRecordDetailScreen() {
               {record.notes && (
                 <Grid item xs={12}>
                   <Box>
-                    <Typography fontSize={12} color="text.secondary" fontWeight={700}>
+                    <Typography
+                      fontSize={12}
+                      color="text.secondary"
+                      fontWeight={700}
+                    >
                       NOTES
                     </Typography>
                     <Typography fontSize={13} sx={{ mt: 0.5 }}>
@@ -288,15 +363,30 @@ export default function InboundRecordDetailScreen() {
         {/* Approval/Rejection Status */}
         {(record.approvedAt || record.rejectedAt) && (
           <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)" }}>
-              <Typography sx={{ fontSize: 18, fontWeight: 800, mb: 2 }} color="text.primary">
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                border: "1px solid rgba(0,0,0,0.08)",
+              }}
+            >
+              <Typography
+                sx={{ fontSize: 18, fontWeight: 800, mb: 2 }}
+                color="text.primary"
+              >
                 Decision History
               </Typography>
 
               {record.approvedAt && (
                 <Box sx={{ mb: 2 }}>
                   <Stack direction="row" spacing={2} alignItems="flex-start">
-                    <Chip label="Approved" color="success" size="small" variant="outlined" />
+                    <Chip
+                      label="Approved"
+                      color="success"
+                      size="small"
+                      variant="outlined"
+                    />
                     <Box>
                       <Typography fontSize={13} fontWeight={700}>
                         Approved by {record.approvedByName ?? "—"}
@@ -312,7 +402,12 @@ export default function InboundRecordDetailScreen() {
               {record.rejectedAt && (
                 <Box>
                   <Stack direction="row" spacing={2} alignItems="flex-start">
-                    <Chip label="Rejected" color="error" size="small" variant="outlined" />
+                    <Chip
+                      label="Rejected"
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                    />
                     <Box flex={1}>
                       <Typography fontSize={13} fontWeight={700}>
                         Rejected by {record.rejectedByName ?? "—"}
@@ -321,7 +416,14 @@ export default function InboundRecordDetailScreen() {
                         {new Date(record.rejectedAt).toLocaleString()}
                       </Typography>
                       {record.rejectionReason && (
-                        <Box sx={{ mt: 1, p: 1.5, bgcolor: "rgba(211,47,47,0.08)", borderRadius: 1 }}>
+                        <Box
+                          sx={{
+                            mt: 1,
+                            p: 1.5,
+                            bgcolor: "rgba(211,47,47,0.08)",
+                            borderRadius: 1,
+                          }}
+                        >
                           <Typography fontSize={12} fontWeight={700}>
                             Reason
                           </Typography>
@@ -340,18 +442,29 @@ export default function InboundRecordDetailScreen() {
 
         {/* Items Table */}
         <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)" }}>
-            <Typography sx={{ fontSize: 18, fontWeight: 800, mb: 2 }} color="text.primary">
+          <Paper
+            elevation={0}
+            sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)" }}
+          >
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 800, mb: 2 }}
+              color="text.primary"
+            >
               Items ({record.items.length})
             </Typography>
 
-            <TableContainer sx={{ borderRadius: 2, border: "1px solid rgba(0,0,0,0.08)" }}>
+            <TableContainer
+              sx={{ borderRadius: 2, border: "1px solid rgba(0,0,0,0.08)" }}
+            >
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ bgcolor: "rgba(0,0,0,0.02)" }}>
+                    <TableCell sx={{ fontWeight: 900 }}>Product</TableCell>
                     <TableCell sx={{ fontWeight: 900 }}>SKU</TableCell>
                     <TableCell sx={{ fontWeight: 900 }}>Variant Name</TableCell>
-                    <TableCell sx={{ fontWeight: 900 }}>Product Variant ID</TableCell>
+                    <TableCell sx={{ fontWeight: 900 }}>
+                      Product Variant ID
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 900 }} align="right">
                       Quantity
                     </TableCell>
@@ -359,12 +472,51 @@ export default function InboundRecordDetailScreen() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {record.items.map((item: any) => (
+                  {record.items.map((item) => (
                     <TableRow key={item.id} hover>
-                      <TableCell sx={{ fontFamily: "monospace", fontWeight: 700 }}>
-                        {item.sku}
+                      <TableCell>
+                        <Stack
+                          direction="row"
+                          spacing={1.5}
+                          alignItems="center"
+                        >
+                          <Avatar
+                            src={item.productImageUrl ?? undefined}
+                            alt={
+                              item.productImageAlt ??
+                              item.productName ??
+                              "Product image"
+                            }
+                            variant="rounded"
+                            sx={{ width: 36, height: 36 }}
+                          />
+                          {item.productId ? (
+                            <Typography
+                              component={Link}
+                              to={`/manager/products/${item.productId}`}
+                              fontSize={13}
+                              fontWeight={700}
+                              sx={{
+                                textDecoration: "none",
+                                color: "primary.main",
+                                "&:hover": { textDecoration: "underline" },
+                              }}
+                            >
+                              {item.productName ?? "—"}
+                            </Typography>
+                          ) : (
+                            <Typography fontSize={13} fontWeight={700}>
+                              {item.productName ?? "—"}
+                            </Typography>
+                          )}
+                        </Stack>
                       </TableCell>
-                      <TableCell>{item.variantName}</TableCell>
+                      <TableCell
+                        sx={{ fontFamily: "monospace", fontWeight: 700 }}
+                      >
+                        {item.sku ?? "—"}
+                      </TableCell>
+                      <TableCell>{item.variantName ?? "—"}</TableCell>
                       <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
                         {item.productVariantId.slice(0, 8)}…
                       </TableCell>
@@ -411,7 +563,12 @@ export default function InboundRecordDetailScreen() {
       </Grid>
 
       {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} fullWidth maxWidth="sm">
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={() => setRejectDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Reject Inbound Record</DialogTitle>
         <DialogContent>
           <TextField
@@ -426,7 +583,10 @@ export default function InboundRecordDetailScreen() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRejectDialogOpen(false)} disabled={isActioning}>
+          <Button
+            onClick={() => setRejectDialogOpen(false)}
+            disabled={isActioning}
+          >
             Cancel
           </Button>
           <Button

@@ -16,9 +16,13 @@ export interface InboundRecordListDto {
 export interface InboundRecordItemDto {
   id: string;
   productVariantId: string;
-  productVariantName: string | null;
+  productId: string | null;
+  productName: string | null;
+  variantName: string | null;
+  sku: string | null;
+  productImageUrl: string | null;
+  productImageAlt: string | null;
   quantity: number;
-  unitPrice: number | null;
   notes: string | null;
 }
 

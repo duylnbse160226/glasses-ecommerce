@@ -286,10 +286,46 @@ public sealed class MappingProfiles : Profile
 
         // Inbound record item mappings
         CreateMap<InboundRecordItem, Application.Inventory.DTOs.InboundRecordItemDto>()
+            .ForMember(d => d.ProductId, o => o.MapFrom(s =>
+                s.ProductVariant != null ? s.ProductVariant.ProductId : (Guid?)null))
+            .ForMember(d => d.ProductName, o => o.MapFrom(s =>
+                s.ProductVariant != null && s.ProductVariant.Product != null
+                    ? s.ProductVariant.Product.ProductName
+                    : null))
             .ForMember(d => d.VariantName, o => o.MapFrom(s =>
                 s.ProductVariant != null ? s.ProductVariant.VariantName : null))
             .ForMember(d => d.SKU, o => o.MapFrom(s =>
-                s.ProductVariant != null ? s.ProductVariant.SKU : null));
+                s.ProductVariant != null ? s.ProductVariant.SKU : null))
+            .ForMember(d => d.ProductImageUrl, o => o.MapFrom(s =>
+                s.ProductVariant != null
+                    ? s.ProductVariant.Images
+                        .Where(img => !img.IsDeleted)
+                        .OrderBy(img => img.DisplayOrder)
+                        .Select(img => img.ImageUrl)
+                        .FirstOrDefault()
+                      ?? (s.ProductVariant.Product != null
+                          ? s.ProductVariant.Product.Images
+                              .Where(img => !img.IsDeleted && img.ProductId != null)
+                              .OrderBy(img => img.DisplayOrder)
+                              .Select(img => img.ImageUrl)
+                              .FirstOrDefault()
+                          : null)
+                    : null))
+            .ForMember(d => d.ProductImageAlt, o => o.MapFrom(s =>
+                s.ProductVariant != null
+                    ? s.ProductVariant.Images
+                        .Where(img => !img.IsDeleted)
+                        .OrderBy(img => img.DisplayOrder)
+                        .Select(img => img.AltText)
+                        .FirstOrDefault()
+                      ?? (s.ProductVariant.Product != null
+                          ? s.ProductVariant.Product.Images
+                              .Where(img => !img.IsDeleted && img.ProductId != null)
+                              .OrderBy(img => img.DisplayOrder)
+                              .Select(img => img.AltText)
+                              .FirstOrDefault()
+                          : null)
+                    : null));
 
         // AfterSales mappings
         CreateMap<TicketAttachment, TicketAttachmentDto>();

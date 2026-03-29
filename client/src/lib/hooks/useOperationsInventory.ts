@@ -73,8 +73,12 @@ export interface InventoryTransactionsResponse {
 export interface InventoryRecordDetailItem {
   id: string;
   productVariantId: string;
+  productId: string | null;
+  productName: string | null;
   variantName: string | null;
   sku: string | null;
+  productImageUrl: string | null;
+  productImageAlt: string | null;
   quantity: number;
   notes: string | null;
 }
@@ -195,7 +199,9 @@ export interface PreOrderSummaryResponseDto {
   items: PreOrderSummaryItemDto[];
 }
 
-async function createInbound(payload: InventoryAdjustPayload): Promise<unknown> {
+async function createInbound(
+  payload: InventoryAdjustPayload,
+): Promise<unknown> {
   const normalizedNotes = payload.notes?.trim() || null;
   const normalizedSourceType = payload.sourceType?.trim() || "Supplier";
   const itemPayload = {
@@ -235,7 +241,9 @@ async function createInbound(payload: InventoryAdjustPayload): Promise<unknown> 
   return res.data;
 }
 
-async function createOutbound(payload: InventoryOutboundPayload): Promise<unknown> {
+async function createOutbound(
+  payload: InventoryOutboundPayload,
+): Promise<unknown> {
   const normalizedNotes = payload.notes?.trim() || null;
 
   const res = await agent.post("/operations/inventory/outbound", {
@@ -279,7 +287,9 @@ async function fetchInventoryCatalog(
     totalCount: data?.totalCount ?? 0,
     pageNumber: data?.pageNumber ?? pageNumber,
     pageSize: data?.pageSize ?? pageSize,
-    totalPages: data?.totalPages ?? Math.max(1, Math.ceil((data?.totalCount ?? 0) / pageSize)),
+    totalPages:
+      data?.totalPages ??
+      Math.max(1, Math.ceil((data?.totalCount ?? 0) / pageSize)),
   };
 }
 
@@ -288,15 +298,18 @@ async function fetchInventoryTransactions(
 ): Promise<InventoryTransactionsResponse> {
   const pageNumber = params.pageNumber ?? 1;
   const pageSize = params.pageSize ?? 10;
-  const res = await agent.get<InventoryTransactionsResponse>("/operations/inventory/transactions", {
-    params: {
-      pageNumber,
-      pageSize,
-      transactionType: params.transactionType || undefined,
-      referenceType: params.referenceType || undefined,
-      productVariantId: params.productVariantId || undefined,
+  const res = await agent.get<InventoryTransactionsResponse>(
+    "/operations/inventory/transactions",
+    {
+      params: {
+        pageNumber,
+        pageSize,
+        transactionType: params.transactionType || undefined,
+        referenceType: params.referenceType || undefined,
+        productVariantId: params.productVariantId || undefined,
+      },
     },
-  });
+  );
   const data = res.data;
   return {
     items: Array.isArray(data?.items) ? data.items : [],
@@ -309,8 +322,12 @@ async function fetchInventoryTransactions(
   };
 }
 
-async function fetchInventoryRecordDetail(id: string): Promise<InventoryRecordDetail> {
-  const res = await agent.get<InventoryRecordDetail>(`/operations/inventory/inbound/${id}`);
+async function fetchInventoryRecordDetail(
+  id: string,
+): Promise<InventoryRecordDetail> {
+  const res = await agent.get<InventoryRecordDetail>(
+    `/operations/inventory/inbound/${id}`,
+  );
   const data = res.data;
   return {
     id: data?.id ?? id,
@@ -336,13 +353,16 @@ async function fetchInventoryInboundRecords(
 ): Promise<InventoryInboundRecordsResponse> {
   const pageNumber = params.pageNumber ?? 1;
   const pageSize = params.pageSize ?? 10;
-  const res = await agent.get<InventoryInboundRecordsResponse>("/operations/inventory/inbound", {
-    params: {
-      pageNumber,
-      pageSize,
-      status: params.status || undefined,
+  const res = await agent.get<InventoryInboundRecordsResponse>(
+    "/operations/inventory/inbound",
+    {
+      params: {
+        pageNumber,
+        pageSize,
+        status: params.status || undefined,
+      },
     },
-  });
+  );
   const data = res.data;
   return {
     items: Array.isArray(data?.items) ? data.items : [],
@@ -360,13 +380,16 @@ async function fetchInventoryOutboundRecords(
 ): Promise<InventoryOutboundRecordsResponse> {
   const pageNumber = params.pageNumber ?? 1;
   const pageSize = params.pageSize ?? 10;
-  const res = await agent.get<InventoryOutboundRecordsResponse>("/operations/inventory/outbound", {
-    params: {
-      pageNumber,
-      pageSize,
-      orderId: params.orderId || undefined,
+  const res = await agent.get<InventoryOutboundRecordsResponse>(
+    "/operations/inventory/outbound",
+    {
+      params: {
+        pageNumber,
+        pageSize,
+        orderId: params.orderId || undefined,
+      },
     },
-  });
+  );
   const data = res.data;
   return {
     items: Array.isArray(data?.items) ? data.items : [],
@@ -428,7 +451,9 @@ export function useInventoryCatalog(params: InventoryCatalogParams = {}) {
   });
 }
 
-export function useInventoryTransactions(params: InventoryTransactionsParams = {}) {
+export function useInventoryTransactions(
+  params: InventoryTransactionsParams = {},
+) {
   return useQuery({
     queryKey: ["operations", "inventory", "transactions", params],
     queryFn: () => fetchInventoryTransactions(params),
@@ -443,7 +468,9 @@ export function useInventoryRecordDetail(id: string | undefined) {
   });
 }
 
-export function useInventoryInboundRecords(params: InventoryInboundRecordsParams = {}) {
+export function useInventoryInboundRecords(
+  params: InventoryInboundRecordsParams = {},
+) {
   return useQuery({
     queryKey: ["operations", "inventory", "inbound-records", params],
     queryFn: () => fetchInventoryInboundRecords(params),
@@ -470,25 +497,34 @@ export function useCreateInventoryOutbound() {
   });
 }
 
-
-export function useInventoryOutboundRecords(params: InventoryOutboundRecordsParams = {}) {
+export function useInventoryOutboundRecords(
+  params: InventoryOutboundRecordsParams = {},
+) {
   return useQuery({
-    queryKey: ['operations', 'inventory', 'outbound-records', params],
+    queryKey: ["operations", "inventory", "outbound-records", params],
     queryFn: () => fetchInventoryOutboundRecords(params),
   });
 }
 
 export function useInventoryOutboundDetail(orderId: string | undefined) {
   return useQuery({
-    queryKey: ['operations', 'inventory', 'outbound-detail', orderId],
-    queryFn: () => (orderId ? fetchInventoryOutboundDetail(orderId) : Promise.resolve({} as InventoryOutboundRecordDetail)),
+    queryKey: ["operations", "inventory", "outbound-detail", orderId],
+    queryFn: () =>
+      orderId
+        ? fetchInventoryOutboundDetail(orderId)
+        : Promise.resolve({} as InventoryOutboundRecordDetail),
     enabled: !!orderId,
   });
 }
 
 export function usePreOrderSummary(includeEmptyPreOrders: boolean = false) {
   return useQuery({
-    queryKey: ['manager', 'inventory', 'preorder-summary', includeEmptyPreOrders],
+    queryKey: [
+      "manager",
+      "inventory",
+      "preorder-summary",
+      includeEmptyPreOrders,
+    ],
     queryFn: () => fetchPreOrderSummary(includeEmptyPreOrders),
   });
 }
