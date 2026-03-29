@@ -52,8 +52,34 @@ public sealed class GetOutboundDetail
                 {
                     TransactionId = t.Id,
                     ProductVariantId = t.ProductVariantId,
+                    ProductId = t.ProductVariant != null ? t.ProductVariant.ProductId : (Guid?)null,
+                    ProductName = t.ProductVariant != null && t.ProductVariant.Product != null
+                        ? t.ProductVariant.Product.ProductName
+                        : null,
                     VariantName = t.ProductVariant.VariantName,
                     SKU = t.ProductVariant.SKU,
+                    VariantFirstImage = t.ProductVariant != null
+                        ? t.ProductVariant.Images
+                            .Where(img => !img.IsDeleted)
+                            .OrderBy(img => img.DisplayOrder)
+                            .Select(img => new
+                            {
+                                img.ImageUrl,
+                                img.AltText
+                            })
+                            .FirstOrDefault()
+                        : null,
+                    ProductFirstImage = t.ProductVariant != null && t.ProductVariant.Product != null
+                        ? t.ProductVariant.Product.Images
+                            .Where(img => !img.IsDeleted && img.ProductId != null)
+                            .OrderBy(img => img.DisplayOrder)
+                            .Select(img => new
+                            {
+                                img.ImageUrl,
+                                img.AltText
+                            })
+                            .FirstOrDefault()
+                        : null,
                     Quantity = t.Quantity,
                     Notes = t.Notes,
                     CreatedAt = t.CreatedAt,
@@ -90,8 +116,16 @@ public sealed class GetOutboundDetail
                 {
                     TransactionId = t.TransactionId,
                     ProductVariantId = t.ProductVariantId,
+                    ProductId = t.ProductId,
+                    ProductName = t.ProductName,
                     VariantName = t.VariantName,
                     SKU = t.SKU,
+                    ProductImageUrl = t.VariantFirstImage != null
+                        ? t.VariantFirstImage.ImageUrl
+                        : (t.ProductFirstImage != null ? t.ProductFirstImage.ImageUrl : null),
+                    ProductImageAlt = t.VariantFirstImage != null
+                        ? t.VariantFirstImage.AltText
+                        : (t.ProductFirstImage != null ? t.ProductFirstImage.AltText : null),
                     Quantity = t.Quantity,
                     Notes = t.Notes
                 }).ToList()

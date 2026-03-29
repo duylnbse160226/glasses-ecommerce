@@ -97,6 +97,8 @@ export interface InventoryRecordDetail {
   approvedBy: string | null;
   approvedByName: string | null;
   rejectedAt: string | null;
+  rejectedBy: string | null;
+  rejectedByName: string | null;
   rejectionReason: string | null;
   items: InventoryRecordDetailItem[];
 }
@@ -143,8 +145,12 @@ export interface InventoryOutboundRecordItem {
 export interface InventoryOutboundRecordDetailItem {
   id: string;
   productVariantId: string;
+  productId: string | null;
+  productName: string | null;
   variantName: string | null;
   sku: string | null;
+  productImageUrl: string | null;
+  productImageAlt: string | null;
   quantity: number;
   notes: string | null;
 }
@@ -343,6 +349,8 @@ async function fetchInventoryRecordDetail(
     approvedBy: data?.approvedBy ?? null,
     approvedByName: data?.approvedByName ?? null,
     rejectedAt: data?.rejectedAt ?? null,
+    rejectedBy: data?.rejectedBy ?? null,
+    rejectedByName: data?.rejectedByName ?? null,
     rejectionReason: data?.rejectionReason ?? null,
     items: Array.isArray(data?.items) ? data.items : [],
   };
@@ -409,6 +417,51 @@ async function fetchInventoryOutboundDetail(
     `/operations/inventory/outbound/${orderId}`,
   );
   const data = res.data;
+  type RawOutboundDetailItem = {
+    id?: string;
+    transactionId?: string;
+    productVariantId?: string;
+    productId?: string | null;
+    productName?: string | null;
+    variantName?: string | null;
+    sku?: string | null;
+    productImageUrl?: string | null;
+    productImageAlt?: string | null;
+    quantity?: number;
+    notes?: string | null;
+  };
+
+  const rawItems: RawOutboundDetailItem[] = Array.isArray(data?.items)
+    ? (data.items as RawOutboundDetailItem[])
+    : [];
+
+  const normalizedItems: InventoryOutboundRecordDetailItem[] = rawItems.reduce(
+    (acc: InventoryOutboundRecordDetailItem[], item: RawOutboundDetailItem) => {
+      const resolvedId = (item.id ?? item.transactionId ?? "").trim();
+      const resolvedProductVariantId = (item.productVariantId ?? "").trim();
+
+      if (!resolvedId || !resolvedProductVariantId) {
+        return acc;
+      }
+
+      acc.push({
+        id: resolvedId,
+        productVariantId: resolvedProductVariantId,
+        productId: item.productId ?? null,
+        productName: item.productName ?? null,
+        variantName: item.variantName ?? null,
+        sku: item.sku ?? null,
+        productImageUrl: item.productImageUrl ?? null,
+        productImageAlt: item.productImageAlt ?? null,
+        quantity: item.quantity ?? 0,
+        notes: item.notes ?? null,
+      });
+
+      return acc;
+    },
+    [],
+  );
+
   return {
     orderId: data?.orderId ?? orderId,
     orderNumber: data?.orderNumber ?? null,
@@ -419,7 +472,7 @@ async function fetchInventoryOutboundDetail(
     recordedAt: data?.recordedAt ?? "",
     recordedBy: data?.recordedBy ?? null,
     recordedByName: data?.recordedByName ?? null,
-    items: Array.isArray(data?.items) ? data.items : [],
+    items: normalizedItems,
   };
 }
 

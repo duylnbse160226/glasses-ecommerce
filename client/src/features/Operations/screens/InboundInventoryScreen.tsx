@@ -3,6 +3,7 @@ import { NavLink } from "react-router";
 import {
   Alert,
   Autocomplete,
+  Avatar,
   Box,
   Button,
   Chip,
@@ -238,15 +239,33 @@ function InboundRecordRow({ record }: { record: InventoryInboundRecordItem }) {
                       <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
                         Status: {detail.status || "—"}
                       </Typography>
-                      <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
-                        Reference: {detail.sourceReference || "—"}
-                      </Typography>
+                      {detail.sourceReference && (
+                        <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+                          Reference: {detail.sourceReference}
+                        </Typography>
+                      )}
+                      {detail.approvedAt && (
+                        <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+                          Approved by: {detail.approvedByName || "—"}
+                        </Typography>
+                      )}
+                      {detail.rejectedAt && (
+                        <Typography sx={{ fontSize: 13, color: "#6B6B6B" }}>
+                          Rejected by: {detail.rejectedByName || "—"}
+                        </Typography>
+                      )}
                     </Stack>
                   </Box>
 
                   {detail.notes && (
                     <Typography sx={{ mt: 1.5, color: "#6B6B6B", fontSize: 13 }}>
                       Notes: {detail.notes}
+                    </Typography>
+                  )}
+
+                  {detail.rejectionReason && (
+                    <Typography sx={{ mt: 1.2, color: "#8E3B3B", fontSize: 13 }}>
+                      Rejection reason: {detail.rejectionReason}
                     </Typography>
                   )}
 
@@ -274,13 +293,40 @@ function InboundRecordRow({ record }: { record: InventoryInboundRecordItem }) {
                             gap: 1,
                           }}
                         >
-                          <Box sx={{ color: "#171717", fontSize: 13, fontWeight: 600 }}>
-                            {item.variantName || item.sku || item.productVariantId}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              minWidth: 0,
+                            }}
+                          >
+                            <Avatar
+                              src={item.productImageUrl ?? undefined}
+                              alt={item.productImageAlt ?? item.productName ?? "Product image"}
+                              variant="rounded"
+                              sx={{ width: 34, height: 34, flexShrink: 0 }}
+                            />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Box sx={{ color: "#171717", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {item.productName || "Unknown product"}
+                              </Box>
+                              <Box sx={{ color: "#8A8A8A", fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {item.variantName || "—"} · SKU: {item.sku || "—"}
+                              </Box>
+                            </Box>
                           </Box>
                           <Box sx={{ color: "#6B6B6B", fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
                             Qty {item.quantity}
                           </Box>
                         </Box>
+                        {item.notes && (
+                          <Box sx={{ px: 1.5, pb: 0.8 }}>
+                            <Typography sx={{ color: "#8A8A8A", fontSize: 12.5 }}>
+                              Notes: {item.notes}
+                            </Typography>
+                          </Box>
+                        )}
                         {index < (detail.items?.length ?? 0) - 1 && (
                           <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.06)" }} />
                         )}
