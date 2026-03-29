@@ -5,44 +5,77 @@ import App from "../layout/App";
 import AuthLayout from "../layout/AuthLayout";
 
 import Counter from "../../features/counter/Counter";
-
-import CollectionLandingPage from "../../features/collections/CollectionLandingPage";
-import CollectionPage from "../../features/collections/CollectionPage";
-import ProductDetailPage from "../../features/collections/ProductDetailPage";
-import SelectLensesPage from "../../features/collections/SelectLensesPage";
-
-import LoginForm from "../../features/account/LoginForm";
-import RegisterForm from "../../features/account/RegisterForm";
-import PostLoginRedirect from "../../features/account/PostLoginRedirect";
-import ForgotPasswordForm from "../../features/account/ForgotPasswordForm";
-import ResetPasswordForm from "../../features/account/ResetPasswordForm";
-
-import TestErrors from "../../features/errors/TestErrors";
-import NotFound from "../../features/errors/NotFound";
-import ServerError from "../../features/errors/ServerError";
-
-import CartPage from "../../features/cart/CartPage";
-
-import CheckoutPage from "../../features/checkout/CheckoutPage";
-import OrderSuccessPage from "../../features/collections/OrderSuccessPage";
-import PaymentResultPage from "../../features/payment/PaymentResultPage";
-import OrdersPage from "../../features/orders/OrdersPage";
-import OrderDetailPage from "../../features/orders/OrderDetailPage";
-import ProfilePage from "../../features/Customer/profile/ProfilePage";
 import RequireRole from "./RequireRole";
-import SalesLayout from "../../features/Sales/SalesLayout";
-import { OverviewScreen as SalesOverviewScreen } from "../../features/Sales/screens/OverviewScreen";
-import { OrdersScreen as SalesOrdersScreen } from "../../features/Sales/screens/OrdersScreen";
-import { TicketsScreen as SalesTicketsScreen } from "../../features/Sales/screens/TicketsScreen";
-import AdminDashboard from "../../features/Admin/AdminDashboard";
-import AdminLayout from "../../features/Admin/AdminLayout";
-import RoleManagement from "../../features/Admin/RoleManagement";
-import AdminPolicies from "../../features/Admin/AdminPolicies";
-import {
-  PoliciesGuaranteePage,
-  PoliciesLensReplacementPage,
-} from "../../features/policies/PoliciesListPage";
-import AdminFeatureToggles from "../../features/Admin/AdminFeatureToggles";
+
+const CollectionLandingPage = lazy(
+  () => import("../../features/collections/CollectionLandingPage"),
+);
+const CollectionPage = lazy(() => import("../../features/collections/CollectionPage"));
+const ProductDetailPage = lazy(
+  () => import("../../features/collections/ProductDetailPage"),
+);
+const SelectLensesPage = lazy(
+  () => import("../../features/collections/SelectLensesPage"),
+);
+
+const LoginForm = lazy(() => import("../../features/account/LoginForm"));
+const RegisterForm = lazy(() => import("../../features/account/RegisterForm"));
+const PostLoginRedirect = lazy(
+  () => import("../../features/account/PostLoginRedirect"),
+);
+const ForgotPasswordForm = lazy(
+  () => import("../../features/account/ForgotPasswordForm"),
+);
+const ResetPasswordForm = lazy(
+  () => import("../../features/account/ResetPasswordForm"),
+);
+
+const TestErrors = lazy(() => import("../../features/errors/TestErrors"));
+const NotFound = lazy(() => import("../../features/errors/NotFound"));
+const ServerError = lazy(() => import("../../features/errors/ServerError"));
+
+const CartPage = lazy(() => import("../../features/cart/CartPage"));
+const CheckoutPage = lazy(() => import("../../features/checkout/CheckoutPage"));
+const OrderSuccessPage = lazy(
+  () => import("../../features/collections/OrderSuccessPage"),
+);
+const PaymentResultPage = lazy(
+  () => import("../../features/payment/PaymentResultPage"),
+);
+const OrdersPage = lazy(() => import("../../features/orders/OrdersPage"));
+const OrderDetailPage = lazy(() => import("../../features/orders/OrderDetailPage"));
+const ProfilePage = lazy(() => import("../../features/Customer/profile/ProfilePage"));
+
+const SalesLayout = lazy(() => import("../../features/Sales/SalesLayout"));
+const SalesOverviewScreen = lazy(() =>
+  import("../../features/Sales/screens/OverviewScreen").then((m) => ({
+    default: m.OverviewScreen,
+  })),
+);
+const SalesOrdersScreen = lazy(() =>
+  import("../../features/Sales/screens/OrdersScreen").then((m) => ({
+    default: m.OrdersScreen,
+  })),
+);
+const SalesTicketsScreen = lazy(() =>
+  import("../../features/Sales/screens/TicketsScreen").then((m) => ({
+    default: m.TicketsScreen,
+  })),
+);
+
+const AdminDashboard = lazy(() => import("../../features/Admin/AdminDashboard"));
+const AdminLayout = lazy(() => import("../../features/Admin/AdminLayout"));
+const RoleManagement = lazy(() => import("../../features/Admin/RoleManagement"));
+const AdminPolicies = lazy(() => import("../../features/Admin/AdminPolicies"));
+const PoliciesGuaranteePage = lazy(
+  () => import("../../features/policies/PoliciesListPage").then((m) => ({ default: m.PoliciesGuaranteePage })),
+);
+const PoliciesLensReplacementPage = lazy(
+  () => import("../../features/policies/PoliciesListPage").then((m) => ({ default: m.PoliciesLensReplacementPage })),
+);
+const AdminFeatureToggles = lazy(
+  () => import("../../features/Admin/AdminFeatureToggles"),
+);
 
 const OperationsLayout = lazy(
   () => import("../../features/Operations/OperationsLayout"),
@@ -161,11 +194,14 @@ export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
     children: [
-      { path: "login", element: <LoginForm /> },
-      { path: "register", element: <RegisterForm /> },
-      { path: "forgot-password", element: <ForgotPasswordForm /> },
-      { path: "reset-password", element: <ResetPasswordForm /> },
-      { path: "auth/redirect", element: <PostLoginRedirect /> },
+      { path: "login", element: lazyElement(<LoginForm />) },
+      { path: "register", element: lazyElement(<RegisterForm />) },
+      {
+        path: "forgot-password",
+        element: lazyElement(<ForgotPasswordForm />),
+      },
+      { path: "reset-password", element: lazyElement(<ResetPasswordForm />) },
+      { path: "auth/redirect", element: lazyElement(<PostLoginRedirect />) },
     ],
   },
 
@@ -174,7 +210,7 @@ export const router = createBrowserRouter([
   // ======================
   {
     path: "/product/:id/lenses",
-    element: <SelectLensesPage />,
+    element: lazyElement(<SelectLensesPage />),
   },
 
   // ======================
@@ -185,7 +221,7 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       // Landing page (was /collections)
-      { index: true, element: <CollectionLandingPage /> },
+      { index: true, element: lazyElement(<CollectionLandingPage />) },
 
       // ======================
       // ROLE-BASED AREAS
@@ -195,11 +231,11 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "sales",
-            element: <SalesLayout />,
+            element: lazyElement(<SalesLayout />),
             children: [
-              { index: true, element: <SalesOverviewScreen /> },
-              { path: "orders", element: <SalesOrdersScreen /> },
-              { path: "tickets", element: <SalesTicketsScreen /> },
+              { index: true, element: lazyElement(<SalesOverviewScreen />) },
+              { path: "orders", element: lazyElement(<SalesOrdersScreen />) },
+              { path: "tickets", element: lazyElement(<SalesTicketsScreen />) },
             ],
           },
         ],
@@ -274,7 +310,7 @@ export const router = createBrowserRouter([
                 path: "products/create",
                 element: lazyElement(<ManagerProductCreateWizardScreen />),
               },
-              { path: "products/:id", element: <ProductDetailPage /> },
+              { path: "products/:id", element: lazyElement(<ProductDetailPage />) },
               {
                 path: "products/:id/edit",
                 element: lazyElement(<ManagerProductEdit />),
@@ -304,12 +340,15 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "admin",
-            element: <AdminLayout />,
+            element: lazyElement(<AdminLayout />),
             children: [
-              { index: true, element: <AdminDashboard /> },
-              { path: "roles", element: <RoleManagement /> },
-              { path: "policies", element: <AdminPolicies /> },
-              { path: "feature-toggles", element: <AdminFeatureToggles /> },
+              { index: true, element: lazyElement(<AdminDashboard />) },
+              { path: "roles", element: lazyElement(<RoleManagement />) },
+              { path: "policies", element: lazyElement(<AdminPolicies />) },
+              {
+                path: "feature-toggles",
+                element: lazyElement(<AdminFeatureToggles />),
+              },
             ],
           },
         ],
@@ -321,44 +360,44 @@ export const router = createBrowserRouter([
         children: [
           // Keep /collections working, but redirect index to /
           { index: true, element: <Navigate replace to="/" /> }, // /collections
-          { path: ":category", element: <CollectionPage /> }, // /collections/glasses
+          { path: ":category", element: lazyElement(<CollectionPage />) }, // /collections/glasses
         ],
       },
 
       // Policies (customer-facing pages)
-      { path: "policies", element: <PoliciesGuaranteePage /> },
+      { path: "policies", element: lazyElement(<PoliciesGuaranteePage />) },
       {
         path: "policies/guarantee",
         element: <Navigate replace to="/policies" />,
       },
       {
         path: "policies/lens-replacement",
-        element: <PoliciesLensReplacementPage />,
+        element: lazyElement(<PoliciesLensReplacementPage />),
       },
 
       // ✅ Product detail
-      { path: "product/:id", element: <ProductDetailPage /> }, // /product/g1
+      { path: "product/:id", element: lazyElement(<ProductDetailPage />) }, // /product/g1
 
       // Other pages
       { path: "counter", element: <Counter /> },
-      { path: "profile", element: <ProfilePage /> },
+      { path: "profile", element: lazyElement(<ProfilePage />) },
 
       // Errors
-      { path: "errors", element: <TestErrors /> },
-      { path: "server-error", element: <ServerError /> },
-      { path: "not-found", element: <NotFound /> },
+      { path: "errors", element: lazyElement(<TestErrors />) },
+      { path: "server-error", element: lazyElement(<ServerError />) },
+      { path: "not-found", element: lazyElement(<NotFound />) },
 
       // Guest / customer
-      { path: "cart", element: <CartPage /> },
-      { path: "checkout", element: <CheckoutPage /> },
-      { path: "order-success", element: <OrderSuccessPage /> },
-      { path: "payment/result", element: <PaymentResultPage /> },
+      { path: "cart", element: lazyElement(<CartPage />) },
+      { path: "checkout", element: lazyElement(<CheckoutPage />) },
+      { path: "order-success", element: lazyElement(<OrderSuccessPage />) },
+      { path: "payment/result", element: lazyElement(<PaymentResultPage />) },
       {
         path: "orders",
         element: <Outlet />,
         children: [
-          { index: true, element: <OrdersPage /> },
-          { path: ":id", element: <OrderDetailPage /> },
+          { index: true, element: lazyElement(<OrdersPage />) },
+          { path: ":id", element: lazyElement(<OrderDetailPage />) },
         ],
       },
 
