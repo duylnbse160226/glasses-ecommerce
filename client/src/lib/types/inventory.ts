@@ -20,11 +20,9 @@ export interface InboundRecordItemDto {
   productName: string | null;
   variantName: string | null;
   sku: string | null;
-  productVariantName: string | null;
   productImageUrl: string | null;
   productImageAlt: string | null;
   quantity: number;
-  unitPrice: number | null;
   notes: string | null;
 }
 

@@ -76,7 +76,6 @@ export interface InventoryRecordDetailItem {
   productId: string | null;
   productName: string | null;
   variantName: string | null;
-  productVariantName: string | null;
   sku: string | null;
   productImageUrl: string | null;
   productImageAlt: string | null;

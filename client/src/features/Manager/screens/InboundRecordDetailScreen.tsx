@@ -516,9 +516,7 @@ export default function InboundRecordDetailScreen() {
                       >
                         {item.sku ?? "—"}
                       </TableCell>
-                      <TableCell>
-                        {item.variantName ?? item.productVariantName ?? "—"}
-                      </TableCell>
+                      <TableCell>{item.variantName ?? "—"}</TableCell>
                       <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
                         {item.productVariantId.slice(0, 8)}…
                       </TableCell>
